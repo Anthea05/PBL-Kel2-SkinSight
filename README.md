@@ -27,7 +27,7 @@ Proyek ini dikembangkan oleh mahasiswa Program Studi Teknik Informatika, Politek
 ## ✨ Fitur Utama
 - **📝 Kuis Kondisi Kulit & Gaya Hidup**: Pengumpulan data awal (alergi, pola makan, kebiasaan) sebelum pemindaian.
 - **📸 Smart Skin Scan**: Pemindaian area kulit (wajah, tangan, punggung, kaki) langsung menggunakan kamera smartphone.
-- **🧠 Analisis Machine Learning**: Deteksi kondisi/masalah kulit dengan akurasi tinggi menggunakan model *Convolutional Neural Network (CNN)*.
+- **🧠 Analisis Machine Learning**: Deteksi kondisi/masalah kulit dengan akurasi tinggi menggunakan model.
 - **🧪 Rekomendasi Ingredients**: Saran bahan aktif perawatan kulit yang aman dan sesuai dengan hasil analisis.
 - **🛍️ Katalog Skincare (Filter Harga)**: Rekomendasi produk riil di pasaran yang bisa disaring berdasarkan *budget* pengguna.
 - **🥗 Edukasi & Pola Hidup**: Tips harian dan saran nutrisi untuk perawatan kulit secara holistik.
