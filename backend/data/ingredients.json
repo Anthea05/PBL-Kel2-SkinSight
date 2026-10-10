@@ -1,0 +1,121 @@
+[
+  {
+    "name": "Niacinamide",
+    "slug": "niacinamide",
+    "aliases": ["nicotinamide", "vitamin b3"],
+    "description": "Turunan vitamin B3 yang membantu mengontrol produksi minyak, memperkuat skin barrier, serta menyamarkan tampilan pori dan noda.",
+    "caution": "Umumnya mudah ditoleransi, tetapi konsentrasi tinggi dapat memicu kemerahan pada sebagian orang. Mulai dari konsentrasi rendah."
+  },
+  {
+    "name": "Salicylic Acid",
+    "slug": "salicylic-acid",
+    "aliases": ["bha", "beta hydroxy acid", "asam salisilat"],
+    "description": "Eksfoliant golongan BHA yang larut minyak sehingga dapat membersihkan pori dan membantu mengurangi komedo.",
+    "caution": "Dapat membuat kulit kering atau iritasi; gunakan bertahap dan pakai sunscreen. Konsultasikan ke dokter bila sedang hamil atau menyusui."
+  },
+  {
+    "name": "Zinc PCA",
+    "slug": "zinc-pca",
+    "aliases": ["zinc pidolate"],
+    "description": "Garam zinc yang membantu mengontrol minyak berlebih dan menenangkan kulit.",
+    "caution": null
+  },
+  {
+    "name": "Hyaluronic Acid",
+    "slug": "hyaluronic-acid",
+    "aliases": ["sodium hyaluronate", "hyaluronan", "asam hialuronat"],
+    "description": "Humektan yang menarik dan mengikat air sehingga kulit terhidrasi tanpa terasa berat.",
+    "caution": null
+  },
+  {
+    "name": "Ceramide",
+    "slug": "ceramide",
+    "aliases": ["ceramides", "ceramide np", "ceramide ap", "ceramide eop"],
+    "description": "Lipid alami penyusun skin barrier yang membantu mengunci kelembapan dan melindungi kulit dari iritan.",
+    "caution": null
+  },
+  {
+    "name": "Glycerin",
+    "slug": "glycerin",
+    "aliases": ["glycerol", "gliserin"],
+    "description": "Humektan klasik yang menjaga kelembapan kulit dan cocok untuk hampir semua jenis kulit.",
+    "caution": null
+  },
+  {
+    "name": "Panthenol",
+    "slug": "panthenol",
+    "aliases": ["provitamin b5", "pro vitamin b5", "d panthenol", "dexpanthenol"],
+    "description": "Provitamin B5 yang menenangkan, melembapkan, dan membantu pemulihan skin barrier.",
+    "caution": null
+  },
+  {
+    "name": "Centella Asiatica",
+    "slug": "centella-asiatica",
+    "aliases": ["cica", "gotu kola", "pegagan", "madecassoside", "asiaticoside"],
+    "description": "Ekstrak tanaman pegagan yang membantu menenangkan kulit kemerahan dan iritasi.",
+    "caution": null
+  },
+  {
+    "name": "Squalane",
+    "slug": "squalane",
+    "aliases": [],
+    "description": "Emolien ringan yang melembapkan dan melembutkan kulit tanpa terasa lengket.",
+    "caution": null
+  },
+  {
+    "name": "Shea Butter",
+    "slug": "shea-butter",
+    "aliases": ["butyrospermum parkii"],
+    "description": "Emolien kaya lemak yang melembutkan dan mengunci kelembapan pada kulit kering.",
+    "caution": "Teksturnya berat; pemilik kulit berminyak atau berjerawat sebaiknya mencoba sedikit dulu."
+  },
+  {
+    "name": "Tea Tree Oil",
+    "slug": "tea-tree-oil",
+    "aliases": ["tea tree", "melaleuca alternifolia"],
+    "description": "Minyak esensial yang sering dipakai pada perawatan kulit berjerawat karena sifat antibakterinya.",
+    "caution": "Dapat memicu iritasi atau alergi kontak. Jangan dipakai murni tanpa diencerkan."
+  },
+  {
+    "name": "Retinol",
+    "slug": "retinol",
+    "aliases": ["retinoid", "vitamin a", "retinyl palmitate"],
+    "description": "Turunan vitamin A yang membantu regenerasi sel kulit, memperbaiki tekstur, dan menyamarkan garis halus.",
+    "caution": "Dapat menyebabkan kering, kemerahan, atau mengelupas. Pakai di malam hari dan wajib sunscreen. Tidak dianjurkan saat hamil."
+  },
+  {
+    "name": "Vitamin C",
+    "slug": "vitamin-c",
+    "aliases": ["ascorbic acid", "ascorbyl glucoside", "sodium ascorbyl phosphate", "magnesium ascorbyl phosphate", "ethyl ascorbic acid", "3 o ethyl ascorbic acid"],
+    "description": "Antioksidan yang membantu mencerahkan kulit kusam dan melindungi kulit dari radikal bebas.",
+    "caution": "Bentuk ascorbic acid murni bisa terasa perih pada kulit sensitif."
+  },
+  {
+    "name": "Allantoin",
+    "slug": "allantoin",
+    "aliases": [],
+    "description": "Bahan penenang yang membantu melembutkan kulit dan mengurangi rasa tidak nyaman.",
+    "caution": null
+  },
+  {
+    "name": "Aloe Vera",
+    "slug": "aloe-vera",
+    "aliases": ["aloe barbadensis", "lidah buaya"],
+    "description": "Ekstrak lidah buaya yang memberi hidrasi ringan dan sensasi menenangkan.",
+    "caution": null
+  },
+  {
+    "name": "Fragrance",
+    "slug": "fragrance",
+    "aliases": ["parfum", "perfume", "pewangi", "wewangian"],
+    "description": "Pewangi produk. Bukan bahan aktif perawatan, tetapi termasuk pemicu alergi dan iritasi yang umum.",
+    "caution": "Hindari jika kulit sensitif atau punya riwayat alergi pewangi."
+  },
+  {
+    "name": "Alcohol Denat",
+    "slug": "alcohol-denat",
+    "aliases": ["denatured alcohol", "sd alcohol", "ethanol", "alkohol"],
+    "description": "Pelarut yang membuat produk cepat kering di kulit; pada sebagian orang dapat membuat kulit kering.",
+    "caution": "Hindari jika kulit kering atau sensitif."
+  }
+]

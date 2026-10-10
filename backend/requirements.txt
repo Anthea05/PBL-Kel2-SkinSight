@@ -1,0 +1,28 @@
+# --- Web framework & server ---
+fastapi==0.141.1
+starlette==1.7.0     # di-pin: FastAPI tidak membatasi versi atas starlette
+uvicorn[standard]==0.53.0
+python-multipart==0.0.32
+
+# --- Database ---
+SQLAlchemy==2.0.54
+alembic==1.20.0
+psycopg[binary]==3.3.6
+
+# --- Validasi & konfigurasi ---
+pydantic==2.13.5
+pydantic-settings==2.15.0
+python-dotenv==1.2.3 # membaca .env (pydantic-settings & tests/conftest.py)
+email-validator==2.3.0
+
+# --- Keamanan (JWT + hash password Argon2) ---
+PyJWT==2.14.0
+argon2-cffi==25.1.0
+
+# --- Lain-lain ---
+httpx==0.28.1        # client ML_MODE=remote + TestClient
+pillow==12.3.0       # validasi gambar upload
+tzdata==2026.4       # data zona waktu (Windows / image slim)
+
+# --- Testing ---
+pytest==9.1.1

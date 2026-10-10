@@ -1,0 +1,12 @@
+# Dependency tambahan KHUSUS ML_MODE=local (tidak dibutuhkan untuk mode mock/remote).
+#
+# PyTorch versi CPU dipasang terpisah dari index resmi PyTorch (lebih kecil dari versi CUDA):
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch==2.11.0 torchvision==0.26.0
+# Versi torch 2.11.0 sama dengan yang tercatat di log notebook training (branch Rafazl).
+# Di Docker, langkah ini otomatis jika build dengan INSTALL_ML=true.
+
+# Model branch Rafazl = YOLOv8n-cls, dilatih dengan Ultralytics 8.4.175 (tercatat di notebook).
+ultralytics==8.4.175
+
+# Opsional, HANYA jika tim ML beralih ke model TensorFlow/Keras (.keras / .h5):
+# tensorflow-cpu==<isi versi yang sama dengan saat training>

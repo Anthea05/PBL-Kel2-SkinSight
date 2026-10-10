@@ -1,0 +1,135 @@
+[
+  {
+    "type": "tip",
+    "condition": null,
+    "title": "Gunakan sunscreen setiap hari",
+    "summary": "Pakai SPF 30+ setiap pagi, termasuk saat cuaca mendung.",
+    "content": "Sinar UV tetap ada saat cuaca mendung dan dapat menembus kaca. Gunakan sunscreen SPF 30 atau lebih setiap pagi sebagai langkah terakhir skincare. Ulangi pemakaian setiap 2-3 jam jika banyak beraktivitas di luar ruangan atau berkeringat."
+  },
+  {
+    "type": "tip",
+    "condition": null,
+    "title": "Bersihkan wajah dengan lembut",
+    "summary": "Cuci muka 2 kali sehari dengan cleanser lembut, hindari scrub kasar.",
+    "content": "Cuci wajah pagi dan malam dengan pembersih yang lembut. Gunakan air suam-suam kuku, lalu keringkan dengan menepuk-nepuk handuk bersih. Hindari scrub berbutir kasar dan menggosok terlalu keras karena dapat merusak skin barrier."
+  },
+  {
+    "type": "tip",
+    "condition": null,
+    "title": "Lakukan patch test untuk produk baru",
+    "summary": "Coba produk baru di area kecil selama 24-48 jam.",
+    "content": "Sebelum memakai produk baru di seluruh wajah, oleskan sedikit di belakang telinga atau lengan bagian dalam selama 24-48 jam. Hentikan pemakaian jika muncul gatal, kemerahan, atau rasa terbakar. Langkah ini penting terutama jika kamu punya riwayat alergi."
+  },
+  {
+    "type": "tip",
+    "condition": null,
+    "title": "Tidur cukup dan kelola stres",
+    "summary": "Usahakan tidur 7-9 jam setiap malam.",
+    "content": "Kurang tidur dan stres berkepanjangan dapat membuat kulit tampak kusam dan memperburuk beberapa masalah kulit. Usahakan tidur 7-9 jam setiap malam dan sisihkan waktu untuk relaksasi, misalnya olahraga ringan atau peregangan."
+  },
+  {
+    "type": "tip",
+    "condition": null,
+    "title": "Ganti sarung bantal secara rutin",
+    "summary": "Ganti sarung bantal 1-2 kali seminggu.",
+    "content": "Sarung bantal menampung minyak, keringat, dan sisa produk rambut. Menggantinya 1-2 kali seminggu membantu menjaga kebersihan kulit wajah, terutama bila kamu mudah berjerawat."
+  },
+  {
+    "type": "tip",
+    "condition": "oily",
+    "title": "Jangan lewatkan pelembap",
+    "summary": "Pilih pelembap bertekstur gel yang non-comedogenic.",
+    "content": "Kulit berminyak tetap membutuhkan hidrasi. Melewatkan pelembap justru bisa membuat kulit terasa kering dan tidak nyaman. Pilih pelembap bertekstur gel atau water-based dengan label non-comedogenic."
+  },
+  {
+    "type": "tip",
+    "condition": "oily",
+    "title": "Kontrol kilap tanpa cuci muka berlebihan",
+    "summary": "Pakai kertas minyak di siang hari; cuci muka cukup 2 kali sehari.",
+    "content": "Mencuci muka terlalu sering dapat mengikis kelembapan alami kulit. Untuk mengatasi kilap di siang hari, tepuk perlahan wajah dengan kertas minyak (blotting paper) tanpa menggosok."
+  },
+  {
+    "type": "tip",
+    "condition": "dry",
+    "title": "Oleskan pelembap saat kulit masih lembap",
+    "summary": "Pakai pelembap 1-3 menit setelah cuci muka.",
+    "content": "Mengoleskan pelembap ketika kulit masih sedikit lembap membantu mengunci air di kulit. Pilih pelembap bertekstur krim yang mengandung ceramide atau humektan seperti glycerin dan hyaluronic acid."
+  },
+  {
+    "type": "tip",
+    "condition": "dry",
+    "title": "Hindari mandi air terlalu panas",
+    "summary": "Air panas dapat mengikis minyak alami kulit.",
+    "content": "Mandi atau mencuci muka dengan air yang terlalu panas dan terlalu lama dapat membuat kulit semakin kering. Gunakan air suam-suam kuku dan batasi waktu mandi sekitar 5-10 menit."
+  },
+  {
+    "type": "tip",
+    "condition": "combination",
+    "title": "Rawat setiap area sesuai kebutuhannya",
+    "summary": "Area T-zone dan pipi bisa membutuhkan perawatan berbeda.",
+    "content": "Pada kulit kombinasi, area T-zone cenderung berminyak sedangkan pipi normal atau kering. Kamu bisa memakai produk kontrol minyak (misalnya yang mengandung BHA) hanya di T-zone, dan pelembap yang lebih kaya di area pipi."
+  },
+  {
+    "type": "tip",
+    "condition": "normal",
+    "title": "Pertahankan rutinitas yang sederhana",
+    "summary": "Cleanser, pelembap, dan sunscreen sudah cukup.",
+    "content": "Kulit normal umumnya tidak membutuhkan banyak produk. Rutinitas dasar berupa pembersih lembut, pelembap, dan sunscreen di pagi hari sudah membantu menjaga kondisi kulit. Tambahkan produk baru satu per satu agar mudah memantau reaksinya."
+  },
+  {
+    "type": "nutrition",
+    "condition": null,
+    "title": "Cukupi kebutuhan air minum",
+    "summary": "Sekitar 8 gelas (kurang lebih 2 liter) per hari, sesuaikan dengan aktivitas.",
+    "content": "Kebutuhan cairan berbeda-beda pada tiap orang, tetapi sekitar 8 gelas (kurang lebih 2 liter) per hari adalah patokan umum bagi orang dewasa. Tambah asupan saat cuaca panas atau banyak berkeringat. Pilih air putih dibanding minuman manis."
+  },
+  {
+    "type": "nutrition",
+    "condition": null,
+    "title": "Perbanyak sayur dan buah berwarna",
+    "summary": "Sumber vitamin C, vitamin A, dan antioksidan.",
+    "content": "Sayur dan buah berwarna seperti wortel, bayam, tomat, jeruk, dan pepaya mengandung vitamin dan antioksidan yang berperan menjaga kesehatan kulit. Usahakan ada sayur dan buah di setiap waktu makan."
+  },
+  {
+    "type": "nutrition",
+    "condition": "oily",
+    "title": "Batasi makanan tinggi gula",
+    "summary": "Kurangi minuman manis dan makanan berindeks glikemik tinggi.",
+    "content": "Beberapa penelitian mengaitkan pola makan tinggi gula dan berindeks glikemik tinggi (misalnya minuman manis, roti putih, dan camilan manis) dengan masalah jerawat. Pilih karbohidrat kompleks seperti nasi merah, oat, dan ubi."
+  },
+  {
+    "type": "nutrition",
+    "condition": "oily",
+    "title": "Konsumsi makanan sumber zinc",
+    "summary": "Zinc terdapat pada daging tanpa lemak, telur, kacang-kacangan, dan biji labu.",
+    "content": "Zinc adalah mineral yang berperan dalam kesehatan kulit. Sumbernya antara lain daging tanpa lemak, seafood, telur, kacang-kacangan, dan biji labu. Konsultasikan ke tenaga kesehatan sebelum mengonsumsi suplemen zinc."
+  },
+  {
+    "type": "nutrition",
+    "condition": "dry",
+    "title": "Penuhi asupan lemak sehat omega-3",
+    "summary": "Contohnya ikan kembung, sarden, salmon, chia seed, dan kenari.",
+    "content": "Asam lemak omega-3 membantu menjaga lapisan pelindung kulit. Sumbernya antara lain ikan kembung, sarden, salmon, chia seed, dan kenari (walnut). Usahakan makan ikan sekitar 2 kali seminggu."
+  },
+  {
+    "type": "nutrition",
+    "condition": "dry",
+    "title": "Pilih makanan sumber vitamin E",
+    "summary": "Contohnya alpukat, almond, dan biji bunga matahari.",
+    "content": "Vitamin E adalah antioksidan larut lemak yang berperan melindungi sel kulit. Sumbernya antara lain alpukat, almond, biji bunga matahari, dan minyak nabati."
+  },
+  {
+    "type": "nutrition",
+    "condition": "combination",
+    "title": "Kurangi gorengan dan makanan cepat saji",
+    "summary": "Pilih makanan yang dikukus, direbus, atau dipanggang.",
+    "content": "Pola makan yang tinggi makanan cepat saji umumnya rendah serat dan nutrisi penting. Pilih cara memasak yang lebih sehat seperti dikukus, direbus, atau dipanggang, lalu imbangi dengan sayur dan buah."
+  },
+  {
+    "type": "nutrition",
+    "condition": "normal",
+    "title": "Jaga pola makan gizi seimbang",
+    "summary": "Karbohidrat kompleks, protein, lemak sehat, sayur, dan buah.",
+    "content": "Untuk menjaga kulit tetap sehat, terapkan pola makan gizi seimbang: karbohidrat kompleks, protein (ikan, telur, tempe, tahu), lemak sehat, serta sayur dan buah setiap hari."
+  }
+]

@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment lokal (berisi secret) - JANGAN di-commit
+.env
+
+# Foto scan (data sensitif; hanya ada jika SAVE_SCAN_IMAGES=true)
+storage/
+
+# File model ML (biner, dibagikan terpisah oleh tim ML)
+ml_models/*
+!ml_models/README.md
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store

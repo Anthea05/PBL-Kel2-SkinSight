@@ -1,0 +1,22 @@
+[
+  {
+    "code": "combination",
+    "name": "Kulit Kombinasi",
+    "description": "Area T-zone (dahi, hidung, dagu) cenderung berminyak, sedangkan pipi normal atau kering. Perawatan perlu menyeimbangkan kontrol minyak dan hidrasi."
+  },
+  {
+    "code": "dry",
+    "name": "Kulit Kering",
+    "description": "Kulit terasa kencang atau ketarik, tampak kusam, dan kadang bersisik karena kurang kelembapan dan minyak alami. Fokus perawatan pada hidrasi dan perbaikan skin barrier."
+  },
+  {
+    "code": "normal",
+    "name": "Kulit Normal",
+    "description": "Produksi minyak relatif seimbang dan kulit jarang terasa terlalu kering maupun berminyak. Fokus perawatan pada menjaga kelembapan dan perlindungan dari sinar matahari."
+  },
+  {
+    "code": "oily",
+    "name": "Kulit Berminyak",
+    "description": "Produksi sebum berlebih sehingga wajah tampak mengilap, pori lebih terlihat, dan lebih rentan berkomedo atau berjerawat. Fokus perawatan pada kontrol minyak tanpa membuat kulit dehidrasi."
+  }
+]

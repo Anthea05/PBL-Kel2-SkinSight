@@ -1,0 +1,24 @@
+[
+  {"condition": "oily", "ingredient": "niacinamide", "priority": 1, "note": "Membantu mengontrol sebum dan menyamarkan tampilan pori."},
+  {"condition": "oily", "ingredient": "salicylic-acid", "priority": 2, "note": "Membersihkan pori dari minyak berlebih dan membantu mencegah komedo."},
+  {"condition": "oily", "ingredient": "zinc-pca", "priority": 3, "note": "Membantu menyeimbangkan produksi minyak."},
+  {"condition": "oily", "ingredient": "hyaluronic-acid", "priority": 4, "note": "Menghidrasi tanpa rasa berat; kulit berminyak tetap butuh hidrasi."},
+  {"condition": "oily", "ingredient": "tea-tree-oil", "priority": 5, "note": "Pilihan pendukung untuk kulit berminyak yang rentan berjerawat."},
+
+  {"condition": "combination", "ingredient": "niacinamide", "priority": 1, "note": "Menyeimbangkan T-zone yang berminyak sekaligus memperkuat skin barrier."},
+  {"condition": "combination", "ingredient": "hyaluronic-acid", "priority": 2, "note": "Menjaga hidrasi area pipi yang cenderung normal atau kering."},
+  {"condition": "combination", "ingredient": "salicylic-acid", "priority": 3, "note": "Gunakan terutama di area T-zone yang mudah berkomedo."},
+  {"condition": "combination", "ingredient": "centella-asiatica", "priority": 4, "note": "Menenangkan kulit bila muncul kemerahan."},
+
+  {"condition": "dry", "ingredient": "ceramide", "priority": 1, "note": "Memperbaiki skin barrier dan mengunci kelembapan."},
+  {"condition": "dry", "ingredient": "hyaluronic-acid", "priority": 2, "note": "Menarik air ke kulit untuk hidrasi."},
+  {"condition": "dry", "ingredient": "glycerin", "priority": 3, "note": "Humektan dasar yang menjaga kulit tetap lembap."},
+  {"condition": "dry", "ingredient": "squalane", "priority": 4, "note": "Emolien ringan untuk melembutkan kulit kering."},
+  {"condition": "dry", "ingredient": "shea-butter", "priority": 5, "note": "Mengunci kelembapan pada area yang sangat kering."},
+  {"condition": "dry", "ingredient": "panthenol", "priority": 6, "note": "Menenangkan kulit kering yang terasa perih atau ketarik."},
+
+  {"condition": "normal", "ingredient": "hyaluronic-acid", "priority": 1, "note": "Menjaga hidrasi harian."},
+  {"condition": "normal", "ingredient": "vitamin-c", "priority": 2, "note": "Antioksidan untuk menjaga kulit tetap cerah."},
+  {"condition": "normal", "ingredient": "niacinamide", "priority": 3, "note": "Membantu menjaga skin barrier tetap sehat."},
+  {"condition": "normal", "ingredient": "aloe-vera", "priority": 4, "note": "Memberi hidrasi ringan dan rasa menenangkan."}
+]

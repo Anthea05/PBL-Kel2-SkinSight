@@ -1,0 +1,1 @@
+"""Backend API SkinSight (FastAPI)."""
