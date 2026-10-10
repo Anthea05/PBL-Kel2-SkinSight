@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:skinsight/main.dart';
+
+Future<void> _openLogin(WidgetTester tester) async {
+  await tester.pumpWidget(const SkinSightApp());
+  await tester.pumpAndSettle();
+  final startButton = find.byKey(const Key('start-button'));
+  await tester.ensureVisible(startButton);
+  await tester.pumpAndSettle();
+  await tester.tap(startButton);
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  for (final size in const [Size(320, 568), Size(390, 844)]) {
+    testWidgets('login page is responsive at ${size.width}px', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await _openLogin(tester);
+
+      expect(find.text('Selamat datang kembali'), findsOneWidget);
+      expect(find.byKey(const Key('login-email')), findsOneWidget);
+      expect(find.byKey(const Key('login-password')), findsOneWidget);
+      expect(find.text('Masuk dengan Google'), findsOneWidget);
+      expect(find.text('Belum punya akun?'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('dummy email and password can log in', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await _openLogin(tester);
+
+    final email = tester.widget<TextFormField>(
+      find.byKey(const Key('login-email')),
+    );
+    final passwordField = find.byKey(const Key('login-password'));
+    final password = tester.widget<TextFormField>(passwordField);
+    final passwordEditor = tester.widget<EditableText>(
+      find.descendant(of: passwordField, matching: find.byType(EditableText)),
+    );
+    expect(email.controller?.text, 'alea@skinsight.id');
+    expect(password.controller?.text, 'skinsight123');
+    expect(passwordEditor.obscureText, isTrue);
+
+    await tester.tap(find.byKey(const Key('login-submit')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aktivitas Kulit'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Google login is disabled with Segera hadir (FR-03)', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await _openLogin(tester);
+
+    final button = tester.widget<OutlinedButton>(
+      find.byKey(const Key('login-google')),
+    );
+    expect(button.onPressed, isNull);
+    expect(find.text('Segera hadir'), findsOneWidget);
+    expect(find.text('Masuk dengan Google'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Daftar link opens the registration form', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await _openLogin(tester);
+    await tester.ensureVisible(find.byKey(const Key('login-register-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('login-register-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Buat akun SkinSight'), findsOneWidget);
+    expect(find.byKey(const Key('register-name')), findsOneWidget);
+    expect(find.text('Daftar'), findsOneWidget);
+    expect(find.byKey(const Key('login-google')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+}

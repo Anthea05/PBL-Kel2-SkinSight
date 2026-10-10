@@ -1,0 +1,26 @@
+name: skinsight
+description: SkinSight - modern Flutter prototype for skin condition screening.
+publish_to: "none"
+version: 2.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2
+  image_picker: ^1.1.2
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.2
+  camera: ^0.12.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - lib/assets/images/

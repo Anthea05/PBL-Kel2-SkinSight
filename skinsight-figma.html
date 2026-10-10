@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkinSight — Mobile Screens for Figma</title>
+<style>
+  :root{
+    --teal:#168A78; --deep:#087467; --navy:#13263A; --muted:#5A6D78;
+    --faint:#829194; --bg:#F4F6F6; --card:#ffffff; --border:#E2E9E7;
+    --track:#E4EAEF; --disabled:#CBD5E1; --cream:#FFF8EB; --mint:#F7FBF7;
+    --chip:#E5F7F2; --red:#FF6470; --amber:#FFB131; --blue:#2DA6F2;
+    --sky:#2FC1ED;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Plus Jakarta Sans",sans-serif;
+    background:#2B2F33; color:#fff; padding:40px 32px 64px;
+  }
+  body > h1{font-size:28px;font-weight:800;letter-spacing:-.5px}
+  body > p{color:#9AA9B0;font-size:14px;margin:8px 0 32px}
+  .board{display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start}
+  .screen-set{display:flex;flex-direction:column;gap:12px}
+  .screen-set > span{font-size:14px;font-weight:700;color:#D7E0E3}
+  .screen-set > span small{color:#78878A;font-weight:500}
+  .phone{
+    width:390px;height:844px;border-radius:36px;overflow:hidden;position:relative;
+    background:var(--bg);color:var(--navy);display:flex;flex-direction:column;flex-shrink:0;
+  }
+  .statusbar{display:flex;justify-content:space-between;align-items:center;
+    padding:16px 28px 4px;font-size:14px;font-weight:700}
+  .statusbar .sig{display:flex;gap:5px;align-items:flex-end}
+  .statusbar .sig i{display:block;width:3px;background:#13263A;border-radius:2px}
+  .homebar{display:flex;justify-content:center;padding:10px 0 12px}
+  .homebar i{width:120px;height:5px;border-radius:99px;background:#13263A;opacity:.85}
+  .body{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+  .scroll{flex:1;overflow:hidden;display:flex;flex-direction:column}
+
+  /* shared bits */
+  .brand{display:flex;align-items:center;justify-content:center;gap:10px}
+  .brand .mark{width:30px;height:30px;border:2.5px solid var(--teal);border-radius:50%;position:relative}
+  .brand .mark::after{content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;
+    background:var(--teal);border-radius:50%;transform:translate(-50%,-50%)}
+  .brand b{font-size:22px;font-weight:900;letter-spacing:-.5px}
+  .brand b em{font-style:normal;color:var(--teal)}
+  .btn-primary{display:flex;align-items:center;justify-content:center;height:56px;border-radius:30px;
+    background:linear-gradient(135deg,#169481,#087B6D);color:#fff;font-size:18px;font-weight:800}
+  .btn-flat{display:flex;align-items:center;justify-content:center;height:52px;border-radius:26px;
+    background:var(--teal);color:#fff;font-size:16px;font-weight:700}
+  .btn-disabled{background:var(--disabled)}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px}
+  .chip{display:inline-flex;align-items:center;padding:5px 10px;border-radius:8px;
+    background:var(--chip);color:var(--deep);font-size:12px;font-weight:800}
+  .field{background:#fff;border:1px solid #DCEBE7;border-radius:18px;padding:14px 16px;
+    display:flex;align-items:center;gap:12px}
+  .field .dot{width:34px;height:34px;border-radius:12px;background:#E4F4F0;flex-shrink:0}
+  .field small{display:block;font-size:11px;color:var(--muted)}
+  .field b{font-size:14px}
+  .backbtn{width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+  /* START */
+  .start{background:var(--mint)}
+  .start .body{padding:26px 20px 20px;align-items:center;text-align:center}
+  .start h2{font-size:46px;line-height:.98;letter-spacing:-1.5px;font-weight:900;color:#064E48;margin-top:34px}
+  .start h2 span{color:#1BA18E}
+  .start .sub{color:#8BA7A2;font-size:16px;font-weight:600;line-height:1.4;margin:14px 0 6px}
+  .scene{position:relative;width:100%;flex:1;min-height:0;margin:8px 0}
+  .scene .avatar{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:200px;height:200px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#FFE3D3,#F4A98E 60%,#E08A6D);}
+  .scene .avatar::after{content:"";position:absolute;left:50%;top:44%;width:110px;height:130px;
+    transform:translate(-50%,-40%);border-radius:60px;background:linear-gradient(#FFD9C5,#FFB69F)}
+  .tile{position:absolute;width:64px;height:64px;background:rgba(255,255,255,.9);
+    border:2px solid #fff;border-radius:18px;display:flex;align-items:center;justify-content:center}
+  .link{color:var(--deep);font-weight:700;font-size:14px;margin-top:8px}
+
+  /* LOGIN */
+  .login{background:var(--mint)}
+  .login .body{padding:26px 28px 20px}
+  .login .ava{width:110px;height:110px;border-radius:50%;background:#fff;margin:22px auto 14px;
+    border:3px solid #fff;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 35% 30%,#FFE3D3,#F4A98E 70%)}
+  .login h2{font-size:27px;font-weight:900;text-align:center;letter-spacing:-.5px}
+  .login .c{text-align:center;margin:8px 0 4px}
+  .login .cap{text-align:center;color:var(--muted);font-size:14px;margin-bottom:20px}
+  .login .gap{height:13px}
+  .or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:16px 0}
+  .or::before,.or::after{content:"";flex:1;height:1px;background:#D7E4E1}
+  .gbtn{background:#fff;border:1px solid #D8E7E3;border-radius:20px;height:54px;
+    display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:15px}
+  .gbtn .g{color:#4285F4;font-weight:900;font-size:19px}
+  .soon{text-align:center;color:var(--muted);font-size:12px;margin-top:6px}
+  .swap{text-align:center;color:var(--muted);font-size:14px;margin-top:auto;padding-top:20px}
+  .swap b{color:var(--deep)}
+
+  /* HOME */
+  .hero{margin:10px 16px 0;padding:14px 16px;border-radius:0 0 20px 20px;
+    background:linear-gradient(#E3F4F0,var(--cream))}
+  .hrow{display:flex;align-items:center;gap:10px}
+  .ava-sm{width:42px;height:42px;border-radius:50%;background:#E6F4EF;border:2px solid #fff;
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--deep);font-size:13px}
+  .hrow .who{flex:1}
+  .hrow .who small{display:block;font-size:11px;color:var(--muted)}
+  .hrow .who b{font-size:16px}
+  .bell{width:40px;height:40px;border-radius:50%;background:#fff;position:relative}
+  .bell::after{content:"";position:absolute;top:9px;right:10px;width:8px;height:8px;
+    background:#FF5C63;border-radius:50%;border:1.5px solid #fff}
+  .heromain{display:flex;align-items:center;margin-top:10px}
+  .heromain .t{flex:1}
+  .heromain .t b{font-size:24px;font-weight:900}
+  .heromain .t b em{font-style:normal;color:var(--teal)}
+  .heromain .t p{font-size:12px;color:var(--muted);margin:6px 0 10px}
+  .pillbtn{display:inline-flex;align-items:center;gap:8px;background:var(--teal);color:#fff;
+    border-radius:24px;padding:5px 5px 5px 14px;font-size:14px;font-weight:800}
+  .pillbtn i{width:34px;height:34px;border-radius:50%;background:#fff;font-style:normal}
+  .girl{width:120px;height:140px;border-radius:60px;
+    background:radial-gradient(circle at 35% 30%,#FFE3D3,#F4A98E 65%);position:relative;flex-shrink:0}
+  .sect{padding:12px 16px 0}
+  .secthead{display:flex;align-items:center;margin-bottom:10px}
+  .secthead b{font-size:17px;flex:1}
+  .secthead span{font-size:12px;color:var(--deep);font-weight:700}
+  .scan{padding:13px 14px}
+  .scan .top{display:flex;align-items:center;gap:10px}
+  .scan .ic{width:44px;height:44px;border-radius:12px;background:#168A78;flex-shrink:0}
+  .scan .top .tt{flex:1}
+  .scan .top .tt b{font-size:15px}
+  .scan .top .tt small{display:block;font-size:11px;color:var(--faint)}
+  .score{text-align:right}
+  .score b{font-size:24px;color:var(--deep)}
+  .score b small{font-size:11px;color:var(--muted);font-weight:600}
+  .badge{display:inline-block;background:#DDF6E7;color:var(--deep);font-size:10px;font-weight:700;
+    border-radius:8px;padding:4px 8px;margin-top:4px}
+  .div{height:1px;background:#E4E8E7;margin:12px 0}
+  .metrics{display:flex}
+  .metric{flex:1;text-align:center;padding:0 4px}
+  .metric .m{display:flex;align-items:center;justify-content:center;gap:6px}
+  .metric .m i{width:28px;height:28px;border-radius:9px;font-style:normal;flex-shrink:0}
+  .metric small{font-size:11px;color:var(--navy)}
+  .metric b{display:block;font-size:15px}
+  .bar{height:5px;border-radius:99px;margin-top:7px}
+  .hist{margin-top:12px;padding:12px 14px;height:150px;position:relative;overflow:hidden}
+  .hist .hh{display:flex;align-items:center;gap:8px}
+  .hist .hh .ic{width:32px;height:32px;border-radius:10px;background:#168A78;flex-shrink:0}
+  .hist .hh b{font-size:14px}
+  .hist .hh small{display:block;font-size:11px;color:#819093}
+  .hist .hh small em{font-style:normal;color:var(--deep);font-weight:800}
+  .bars{position:absolute;left:18px;bottom:10px;display:flex;align-items:flex-end;gap:5px}
+  .bars i{width:10px;border-radius:6px 6px 0 0;background:#168A78}
+  .btag{position:absolute;right:64px;top:44px;background:linear-gradient(#55C69E,#168A78);color:#fff;
+    font-size:9px;font-weight:800;text-align:center;border-radius:10px;padding:7px 9px;line-height:1.2}
+  .cat{position:absolute;right:6px;bottom:-6px;width:104px;height:104px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#FFE3D3,#F4A98E 70%)}
+  .bottomnav{margin:8px 16px 0;background:#fff;border:1px solid var(--border);border-radius:20px;
+    height:64px;display:flex;align-items:center;justify-content:space-around;position:relative}
+  .bottomnav .ni{text-align:center;font-size:11px;color:#78878A}
+  .bottomnav .ni.on{color:var(--deep);font-weight:800}
+  .fab{position:absolute;top:-16px;left:50%;transform:translateX(-50%);width:58px;height:58px;
+    border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center}
+  .fab i{width:48px;height:48px;border-radius:50%;background:var(--teal);font-style:normal}
+
+  /* QUIZ */
+  .quiz{background:#F6F8F7}
+  .quiz .body{padding:12px 20px 14px}
+  .qtop{display:flex;align-items:center;gap:10px}
+  .qtop b{font-size:15px}
+  .qdot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+  .qtrack{flex:1;height:7px;border-radius:99px;background:var(--track);position:relative;overflow:hidden}
+  .qtrack i{position:absolute;left:0;top:0;bottom:0;width:20%;background:var(--teal);border-radius:99px}
+  .qx{width:36px;height:36px;border-radius:50%;background:#fff;border:1px solid #E3EAF0;
+    display:flex;align-items:center;justify-content:center;color:#8A9BA5;font-size:16px}
+  .q{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:10px 0}
+  .q h2{font-size:21px;line-height:1.3}
+  .q p{font-size:13px;color:#7B8B95;margin-top:6px}
+  .opt{background:#fff;border:1px solid #E3EAF0;border-radius:16px;padding:15px 14px;
+    display:flex;align-items:center;gap:12px;margin-top:10px;min-height:56px}
+  .opt.sel{border:1.5px solid var(--teal)}
+  .opt .r{width:22px;height:22px;border-radius:50%;border:2px solid #A9CCE3;flex-shrink:0;position:relative}
+  .opt.sel .r{border-color:var(--teal)}
+  .opt.sel .r::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:10px;
+    background:var(--teal);border-radius:50%;transform:translate(-50%,-50%)}
+  .opt b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* SCAN */
+  .scanpg{background:#13263A;color:#fff}
+  .scanpg .statusbar{color:#fff}
+  .scanpg .statusbar .sig i{background:#fff}
+  .scanhead{display:flex;align-items:center;gap:12px;padding:10px 20px}
+  .scanhead .backbtn{background:rgba(255,255,255,.14);border:none;color:#fff}
+  .scanhead b{font-size:18px}
+  .finder{flex:1;margin:6px 20px;border-radius:24px;background:#1E3448;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center}
+  .finder .oval{width:210px;height:280px;border:3px dashed rgba(255,255,255,.55);border-radius:50%}
+  .finder .hint{position:absolute;bottom:22px;font-size:13px;color:#C7D4DC}
+  .shutterbar{display:flex;align-items:center;justify-content:space-around;padding:20px 40px 6px}
+  .thumb{width:52px;height:52px;border-radius:14px;background:#2A4358;border:1px solid #3A546C}
+  .shutter{width:74px;height:74px;border-radius:50%;border:4px solid #fff;display:flex;
+    align-items:center;justify-content:center}
+  .shutter::after{content:"";width:56px;height:56px;border-radius:50%;background:#fff}
+  .flip{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14)}
+
+  /* RESULT */
+  .result .body{padding:12px 20px}
+  .rhead{text-align:center}
+  .rhead b{font-size:22px}
+  .rhead .chip{margin-top:6px}
+  .bigscore{margin-top:12px;padding:16px;text-align:center}
+  .bigscore .n{font-size:52px;font-weight:900;color:var(--deep);line-height:1}
+  .bigscore .n small{font-size:14px;color:var(--muted);font-weight:600}
+  .bigscore p{font-size:15px;font-weight:800;margin-top:4px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:1px;color:var(--teal);margin:16px 0 8px}
+  .tabs{display:flex;background:#EDF2F1;border-radius:12px;padding:4px;margin-bottom:10px}
+  .tabs span{flex:1;text-align:center;font-size:13px;font-weight:700;padding:8px;border-radius:9px;color:var(--muted)}
+  .tabs span.on{background:#fff;color:var(--navy)}
+  .routine{padding:12px 14px;font-size:14px}
+  .routine li{list-style:none;padding:7px 0;border-bottom:1px solid var(--border)}
+  .routine li:last-child{border:none}
+  .zat{margin-top:8px;padding:12px 14px}
+  .zat li{list-style:none;display:flex;gap:10px;padding:8px 0;align-items:center}
+  .zat .zi{width:34px;height:34px;border-radius:10px;background:#E4F4F0;flex-shrink:0}
+  .zat small{display:block;color:var(--muted);font-size:12px}
+  .avoid{background:#FFF0F0;border-radius:10px;padding:9px 12px;font-size:13px;margin-top:8px}
+
+  /* HISTORY */
+  .history .body{padding:12px 20px}
+  .history h2{font-size:22px;text-align:center}
+  .filter{display:flex;gap:8px;margin:12px 0}
+  .filter span{font-size:12px;font-weight:700;border:1px solid var(--border);background:#fff;
+    border-radius:99px;padding:7px 13px;color:var(--muted)}
+  .filter span.on{background:var(--deep);color:#fff;border-color:var(--deep)}
+  .dh{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--muted);margin:6px 0 8px}
+  .hitem{background:#fff;border:1px solid var(--border);border-radius:16px;padding:12px 14px;
+    display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .hitem .ic{width:44px;height:44px;border-radius:12px;flex-shrink:0}
+  .hitem .tt{flex:1}
+  .hitem .tt b{font-size:14px}
+  .hitem .tt small{display:block;font-size:11px;color:var(--faint)}
+  .hitem .sc{text-align:right}
+  .hitem .sc b{font-size:20px;color:var(--deep)}
+  .hitem .sc small{display:block;font-size:10px;color:var(--muted)}
+
+  /* PROFILE */
+  .profile{background:linear-gradient(#2FC1ED 0%,#E6F7F3 26%,#FFF8EB 100%)}
+  .profile .body{padding:12px 20px}
+  .phead{display:flex;align-items:center}
+  .phead b{flex:1;text-align:center;font-size:24px}
+  .pava{width:96px;height:96px;border-radius:50%;margin:14px auto 8px;border:3px solid #fff;
+    background:radial-gradient(circle at 35% 30%,#FFE3D3,#F4A98E 70%)}
+  .pname{text-align:center;font-size:19px;font-weight:800}
+  .pmail{text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px}
+  .prow{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 16px;
+    display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:14px;font-weight:600}
+  .prow span{flex:1}
+  .prow em{font-style:normal;color:#B9C6CD}
+  .logout{margin-top:14px;background:#E6535F;color:#fff;border-radius:16px;height:52px;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+</style>
+</head>
+<body>
+<h1>SkinSight — Mobile Screens</h1>
+<p>8 layar @ 390×844 untuk plugin html.to.design — teks &amp; warna menyalin aplikasi (teal #168A78, navy #13263A).</p>
+
+<div class="board">
+
+  <!-- 1 START -->
+  <div class="screen-set"><span>01 — Start <small>/</small></span>
+  <div class="phone start">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="body">
+      <div class="brand"><span class="mark"></span><b>Skin<em>Sight</em></b></div>
+      <h2>Start your<br><span>skin journey</span></h2>
+      <p class="sub">Kenali kondisi kulitmu<br>untuk perawatan yang tepat.</p>
+      <div class="scene">
+        <div class="avatar"></div>
+        <div class="tile" style="left:6px;top:8%"><svg width="34" height="34" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" fill="#FFD9C5"/><path d="M3 13c3-4 5 1 8-2s5-4 10-1v6a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-3z" fill="#FFB69F"/></svg></div>
+        <div class="tile" style="right:6px;top:10%"><svg width="32" height="32" viewBox="0 0 24 24"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z" fill="#67BEEA"/></svg></div>
+        <div class="tile" style="left:10px;bottom:6%"><svg width="34" height="34" viewBox="0 0 24 24"><rect x="4" y="12" width="4" height="8" rx="1.5" fill="#7AD5B7"/><rect x="10" y="8" width="4" height="12" rx="1.5" fill="#7AD5B7"/><rect x="16" y="4" width="4" height="16" rx="1.5" fill="#7AD5B7"/></svg></div>
+        <div class="tile" style="right:10px;bottom:5%"><svg width="34" height="34" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#79D7B6" stroke-width="3.2" stroke-linecap="round"/></svg></div>
+      </div>
+      <div class="btn-primary" style="width:100%">Mulai</div>
+      <div class="link">Sudah punya akun? Masuk</div>
+    </div>
+    <div class="homebar"><i></i></div>
+  </div></div>
+
+  <!-- 2 LOGIN -->
+  <div class="screen-set"><span>02 — Login <small>/login</small></span>
+  <div class="phone login">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="body">
+      <div class="brand"><span class="mark"></span><b>Skin<em>Sight</em></b></div>
+      <div class="ava"></div>
+      <h2>Selamat datang kembali</h2>
+      <div class="c"><span class="chip">Demo</span></div>
+      <p class="cap">Masuk untuk melanjutkan perjalanan kulitmu.</p>
+      <div class="field"><span class="dot"></span><div><small>Alamat email</small><b>alea@skinsight.id</b></div></div>
+      <div class="gap"></div>
+      <div class="field"><span class="dot"></span><div><small>Password</small><b>••••••••••</b></div></div>
+      <div style="height:20px"></div>
+      <div class="btn-flat">Masuk</div>
+      <div class="or">atau</div>
+      <div class="gbtn"><span class="g">G</span> Masuk dengan Google</div>
+      <p class="soon">Segera hadir</p>
+      <p class="swap">Belum punya akun? <b>Daftar</b></p>
+    </div>
+    <div class="homebar"><i></i></div>
+  </div></div>
+
+  <!-- 3 HOME -->
+  <div class="screen-set"><span>03 — Dashboard <small>/home</small></span>
+  <div class="phone">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="scroll">
+      <div class="hero">
+        <div class="hrow">
+          <div class="ava-sm">A</div>
+          <div class="who"><small>Good Morning,</small><b>Alea</b></div>
+          <div class="bell"></div>
+        </div>
+        <div class="heromain">
+          <div class="t"><b>Skin<em>Analyze</em></b><p>Kulit sehat cerminan kesehatan menyeluruh.</p>
+            <span class="pillbtn">Mulai scan <i></i></span></div>
+          <div class="girl"></div>
+        </div>
+      </div>
+      <div class="sect">
+        <div class="secthead"><b>Aktivitas Kulit</b><span>Lihat Semua &gt;</span></div>
+        <div class="card scan">
+          <div class="top">
+            <div class="ic"></div>
+            <div class="tt"><b>Scan Terakhir</b><small>Kemarin, 20:15</small></div>
+            <div class="score"><b>82<small>/100</small></b><br><span class="badge">Kondisi Kulit Baik</span></div>
+          </div>
+          <div class="div"></div>
+          <div class="metrics">
+            <div class="metric"><div class="m"><i style="background:#FFE3E5"></i><div style="text-align:left"><small>Kemerahan</small><b>34%</b></div></div><div class="bar" style="background:#FFE3E5"><div style="width:34%;height:100%;background:#FF6470;border-radius:99px"></div></div></div>
+            <div class="metric"><div class="m"><i style="background:#FFF3DC"></i><div style="text-align:left"><small>Minyak</small><b>68%</b></div></div><div class="bar" style="background:#FFF3DC"><div style="width:68%;height:100%;background:#FFB131;border-radius:99px"></div></div></div>
+            <div class="metric"><div class="m"><i style="background:#E3F2FD"></i><div style="text-align:left"><small>Hidrasi</small><b>78%</b></div></div><div class="bar" style="background:#E3F2FD"><div style="width:78%;height:100%;background:#2DA6F2;border-radius:99px"></div></div></div>
+          </div>
+        </div>
+        <div class="card hist">
+          <div class="hh"><div class="ic"></div><div><b>Riwayat Perubahan</b><small>3 scan terakhir <em>+4 poin</em></small></div></div>
+          <div class="btag">KULITMU<br>MAKIN SEHAT!</div>
+          <div class="cat"></div>
+          <div class="bars">
+            <i style="height:18px;opacity:.25"></i><i style="height:24px;opacity:.35"></i><i style="height:30px;opacity:.45"></i><i style="height:26px;opacity:.55"></i><i style="height:30px;opacity:.65"></i><i style="height:35px;opacity:.8"></i><i style="height:43px"></i>
+          </div>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <div class="ni on">Beranda</div><div class="fab"><i></i></div><div class="ni">Bantuan</div>
+      </div>
+      <div style="height:10px"></div>
+    </div>
+    <div class="homebar"><i></i></div>
+  </div></div>
+
+  <!-- 4 QUIZ -->
+  <div class="screen-set"><span>04 — Quiz <small>Breeze 1/5</small></span>
+  <div class="phone quiz">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="body">
+      <div class="qtop"><b>1/5</b><span class="qdot"></span><div class="qtrack"><i></i></div><div class="qx">✕</div></div>
+      <div class="q">
+        <h2>Bagaimana rasa kulit wajahmu saat bangun pagi?</h2>
+        <p>Pilih satu yang paling menggambarkan.</p>
+      </div>
+      <div class="opt"><span class="r"></span><b>Berminyak di T-Zone</b></div>
+      <div class="opt"><span class="r"></span><b>Mengilap di seluruh wajah</b></div>
+      <div class="opt"><span class="r"></span><b>Kering dan ketarik</b></div>
+      <div class="opt"><span class="r"></span><b>Lembap pas</b></div>
+      <div style="height:14px"></div>
+      <div class="btn-flat btn-disabled">Lanjut</div>
+    </div>
+    <div class="homebar"><i></i></div>
+  </div></div>
+
+  <!-- 5 SCAN -->
+  <div class="screen-set"><span>05 — Scan <small>kamera</small></span>
+  <div class="phone scanpg">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="scanhead"><div class="backbtn">‹</div><b>Scan Wajah</b></div>
+    <div class="finder"><div class="oval"></div><div class="hint">Posisikan wajah di dalam oval</div></div>
+    <div class="shutterbar"><div class="thumb"></div><div class="shutter"></div><div class="flip"></div></div>
+    <div class="homebar"><i style="background:#fff"></i></div>
+  </div></div>
+
+  <!-- 6 RESULT -->
+  <div class="screen-set"><span>06 — Result <small>rekomendasi</small></span>
+  <div class="phone result">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="body">
+      <div class="rhead"><b>Hasil Rekomendasi</b><br><span class="chip">Hasil scan tersimpan</span></div>
+      <div class="card bigscore"><div class="n">82<small>/100</small></div><p>Kombinasi (T-Zone)</p></div>
+      <div class="eyebrow">HASIL ANALISIS</div>
+      <div class="eyebrow" style="margin-top:0">Rutinitas</div>
+      <div class="tabs"><span class="on">Pagi</span><span>Malam</span></div>
+      <div class="card routine"><li>Cuci muka lembut.</li><li>Tabir surya.</li></div>
+      <div class="card zat" style="margin-top:10px">
+        <b style="font-size:14px">Zat aktif yang cocok</b>
+        <li><span class="zi"></span><div><b style="font-size:13px">Niacinamide</b><small>Menyeimbangkan minyak.</small></div></li>
+        <li><span class="zi"></span><div><b style="font-size:13px">Hyaluronic Acid</b><small>Menjaga hidrasi.</small></div></li>
+      </div>
+      <div class="avoid"><b>Zat aktif yang dihindari</b><br>Alkohol denat</div>
+      <div style="height:12px"></div>
+      <div class="btn-flat">Simpan ke riwayat</div>
+    </div>
+    <div class="homebar"><i></i></div>
+  </div></div>
+
+  <!-- 7 HISTORY -->
+  <div class="screen-set"><span>07 — History <small>/history</small></span>
+  <div class="phone history">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="body">
+      <h2>Riwayat Analisis</h2>
+      <div class="filter"><span class="on">Terbaru</span><span>Terlama</span><span>Pilih tanggal</span></div>
+      <div class="dh">DAFTAR SCAN</div>
+      <div class="hitem"><div class="ic" style="background:#E4F4F0"></div><div class="tt"><b>Kombinasi (T-Zone)</b><small>3 Okt · 20:15</small></div><div class="sc"><b>82</b><small>skor</small></div></div>
+      <div class="hitem"><div class="ic" style="background:#FFF0F0"></div><div class="tt"><b>Kemerahan ringan</b><small>27 Sep · 08:30</small></div><div class="sc"><b>78</b><small>skor</small></div></div>
+      <div class="hitem"><div class="ic" style="background:#FFF3DC"></div><div class="tt"><b>Breakout dagu</b><small>14 Sep · 21:00</small></div><div class="sc"><b>72</b><small>skor</small></div></div>
+    </div>
+    <div class="homebar"><i></i></div>
+  </div></div>
+
+  <!-- 8 PROFILE -->
+  <div class="screen-set"><span>08 — Profile <small>/profile</small></span>
+  <div class="phone profile">
+    <div class="statusbar"><span>9:41</span><span class="sig"><i style="height:6px"></i><i style="height:9px"></i><i style="height:12px"></i></span></div>
+    <div class="body">
+      <div class="phead"><div class="backbtn">‹</div><b>Profil Saya</b><div style="width:44px"></div></div>
+      <div class="pava"></div>
+      <p class="pname">Alea</p>
+      <p class="pmail">alea@skinsight.id</p>
+      <div class="prow"><span>Ubah nama</span><em>›</em></div>
+      <div class="prow"><span>Ubah nomor telepon</span><em>›</em></div>
+      <div class="prow"><span>Ubah alamat email</span><em>›</em></div>
+      <div class="prow"><span>Ubah password</span><em>›</em></div>
+      <div class="logout">Keluar</div>
+    </div>
+    <div class="homebar"><i></i></div>
+  </div></div>
+
+</div>
+</body>
+</html>
