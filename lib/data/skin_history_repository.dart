@@ -1,84 +1,57 @@
 import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import '../models/skin_analysis.dart';
+import 'skin_journey_store.dart';
 
-/// In-memory repository used as a small dummy backend for the prototype.
-class SkinHistoryRepository {
+/// Real user actions only; no preloaded fake scores or skin findings.
+/// In-memory MVP demo; persistent storage is a backend integration task.
+class SkinHistoryRepository extends ChangeNotifier {
   SkinHistoryRepository._();
+  static final SkinHistoryRepository instance = SkinHistoryRepository._();
+  final List<SkinAnalysis> _records = [];
 
-  static final instance = SkinHistoryRepository._();
-
-  final List<SkinAnalysis> _records = [
-    SkinAnalysis(
-      id: 'scan-2026-10-03',
-      analyzedAt: DateTime(2026, 10, 3, 20, 15),
-      score: 82,
-      title: 'Kombinasi (T-Zone)',
-      skinType: 'Kombinasi (T-Zone)',
-      oil: 68,
-      pores: 52,
-      acne: 46,
-      redness: 34,
-    ),
-    SkinAnalysis(
-      id: 'scan-2026-09-27',
-      analyzedAt: DateTime(2026, 9, 27, 8, 30),
-      score: 78,
-      title: 'Kemerahan ringan',
-      skinType: 'Sensitif Ringan',
-      oil: 55,
-      pores: 58,
-      acne: 31,
-      redness: 48,
-    ),
-    SkinAnalysis(
-      id: 'scan-2026-09-14',
-      analyzedAt: DateTime(2026, 9, 14, 21),
-      score: 72,
-      title: 'Breakout dagu',
-      skinType: 'Rentan Berjerawat',
-      oil: 74,
-      pores: 49,
-      acne: 62,
-      redness: 41,
-    ),
-  ];
-
-  Future<List<SkinAnalysis>> fetchHistory({
-    DateTime? date,
-    bool newestFirst = true,
-  }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 160));
-    final items = _records.where((record) {
-      if (date == null) return true;
-      return record.analyzedAt.year == date.year &&
-          record.analyzedAt.month == date.month &&
-          record.analyzedAt.day == date.day;
-    }).toList();
-    items.sort(
-      (a, b) => newestFirst
-          ? b.analyzedAt.compareTo(a.analyzedAt)
-          : a.analyzedAt.compareTo(b.analyzedAt),
-    );
-    return List.unmodifiable(items);
+  Future<List<SkinAnalysis>> fetchHistory({DateTime? date, bool newestFirst = true}) async {
+    final result = _records.where((r) => date == null ||
+        (date.year == r.analyzedAt.year && date.month == r.analyzedAt.month && date.day == r.analyzedAt.day)).toList();
+    result.sort((a,b) => newestFirst ? b.analyzedAt.compareTo(a.analyzedAt) :
+      a.analyzedAt.compareTo(b.analyzedAt));
+    return List.unmodifiable(result);
   }
 
-  Future<SkinAnalysis> saveLatest(Uint8List? selfieBytes) async {
-    await Future<void>.delayed(const Duration(milliseconds: 220));
+  List<SkinAnalysis> get records => List.unmodifiable(_records);
+
+  Future<SkinAnalysis> saveLatest(Uint8List? bytes,
+      {List<String> findings = const [], String? skinType, bool modelConnected = false, bool isDemo = false,
+       Map<String, int> detectionCounts = const {},
+       Map<String, double> segmentationAreas = const {},
+       Map<String, double> classConfidences = const {},
+       double? skinTypeConfidence, String? modelVersion,
+       String quality = 'unchecked'}) async {
     final now = DateTime.now();
     final record = SkinAnalysis(
-      id: 'scan-${now.microsecondsSinceEpoch}',
-      analyzedAt: now,
-      score: 82,
-      title: 'Kombinasi (T-Zone)',
-      skinType: 'Kombinasi (T-Zone)',
-      oil: 68,
-      pores: 52,
-      acne: 46,
-      redness: 34,
-      selfieBytes: selfieBytes,
+      id: 'scan-${now.microsecondsSinceEpoch}', analyzedAt: now,
+      score: 0, oil: 0, pores: 0, acne: 0, redness: 0,
+      title: (modelConnected || isDemo) && findings.isNotEmpty
+          ? 'Temuan: ${findings.join(', ')}'
+          : 'Foto pemantauan tersimpan',
+      skinType: skinType ?? 'Belum diklasifikasikan',
+      selfieBytes: bytes, visualFindings: findings,
+      modelConnected: modelConnected, isDemo: isDemo, detectionCounts: detectionCounts,
+      segmentationAreas: segmentationAreas,
+      classConfidences: classConfidences,
+      skinTypeConfidence: skinTypeConfidence, modelVersion: modelVersion,
     );
     _records.insert(0, record);
+    if (bytes != null) {
+      SkinJourneyStore.instance.addPhoto(bytes,
+        visualFindings: findings, skinType: skinType, modelConnected: modelConnected,
+        isDemo: isDemo,
+        detectionCounts: detectionCounts,
+        segmentationAreas: segmentationAreas,
+        confidences: classConfidences, skinTypeConfidence: skinTypeConfidence,
+        modelVersion: modelVersion, quality: quality);
+    }
+    notifyListeners();
     return record;
   }
 }

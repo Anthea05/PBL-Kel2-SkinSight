@@ -1,796 +1,320 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-
+import '../data/skin_demo_data.dart';
 import '../data/skin_history_repository.dart';
+import '../data/skin_journey_store.dart';
 import '../models/skin_analysis.dart';
+import '../theme/skin_theme.dart';
+import '../widgets/skin_page_header.dart';
+import 'skin_progress_page.dart';
+import 'skin_scan_page.dart';
 
-class SkinResultPage extends StatelessWidget {
+/// Hasil satu foto. Dalam prototipe hasil berasal dari fixture demo yang
+/// SAMA dengan catatan Skin Journey setelah pengguna menekan Simpan.
+class SkinResultPage extends StatefulWidget {
   final Uint8List? selfieBytes;
   final SkinAnalysis? analysis;
   final bool archived;
+  /// Dipakai untuk sesi foto di dalam check-in; tidak menyimpan baseline baru.
+  final bool sessionPreview;
+  const SkinResultPage({super.key, this.selfieBytes, this.analysis,
+    this.archived = false, this.sessionPreview = false});
+  @override
+  State<SkinResultPage> createState() => _SkinResultPageState();
+}
 
-  const SkinResultPage({
-    super.key,
-    this.selfieBytes,
-    this.analysis,
-    this.archived = false,
-  });
+class _SkinResultPageState extends State<SkinResultPage> {
+  late final SkinAnalysis? _data;
+  bool _saving = false;
+  bool _saved = false;
+  static const _navy = Color(0xFF16363C);
+  static const _teal = Color(0xFF087D73);
+  static const _light = Color(0xFFEAF6F2);
+  static const _background = Color(0xFFFFFBF4);
+  static const _orange = Color(0xFFF4AD58);
 
-  static const _teal = Color(0xFF168A78);
-  static const _deepTeal = Color(0xFF087467);
-  static const _navy = Color(0xFF13263A);
-  static const _cream = Color(0xFFFFF8EB);
-  static const _coral = Color(0xFFFF6674);
-  static const _orange = Color(0xFFFFAB26);
+  static const _education = <String, (String, String)>{
+    'Acne': (
+      'Bersihkan wajah dengan lembut. Benzoyl peroxide, retinoid dan azelaic acid merupakan contoh bahan yang punya dasar bukti, tetapi pilihan bergantung pada toleransi dan kondisi kulit.',
+      'Efek sebagian terapi mulai dinilai setelah 6–8 minggu; evaluasi sekitar 12 minggu.'),
+    'PIH': (
+      'Prioritaskan perlindungan UV dan pencegahan peradangan baru. Azelaic acid termasuk bahan yang diteliti untuk hiperpigmentasi.',
+      'Pemudaran noda dapat memerlukan berbulan-bulan; bukan prediksi waktu sembuh.'),
+    'Dark Circle': (
+      'Lingkar gelap bisa berkaitan dengan pigmen, pembuluh darah atau struktur wajah. Jangan mencoba bahan aktif dekat mata tanpa mempertimbangkan risikonya.',
+      'Tidak ada estimasi durasi pemulihan yang universal.'),
+    'Redness': (
+      'Gunakan perawatan lembut, perhatikan pemicu iritasi dan gunakan perlindungan matahari yang sesuai.',
+      'Kemerahan pada foto tidak otomatis berarti rosacea.'),
+    'Wrinkle': (
+      'Perlindungan UV penting. Retinoid mempunyai penelitian pendukung, tetapi perlu memperhatikan iritasi serta batas keamanannya.',
+      'Sebagian penelitian menilai perubahan setelah 3–6 bulan atau lebih.'),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _data = widget.analysis ?? (widget.selfieBytes == null
+      ? null : SkinDemoData.forPhoto(widget.selfieBytes!));
+  }
+
+  String _pct(double v) => '${(v * 100).toStringAsFixed(0)}%';
+  String _date(DateTime d) => '${d.day} ${const [
+    'Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'
+  ][d.month - 1]} ${d.year}';
+
+  Future<void> _save() async {
+    final a = _data;
+    final bytes = a?.selfieBytes ?? widget.selfieBytes;
+    if (_saved || _saving || bytes == null || a == null) return;
+    if (SkinJourneyStore.instance.consent != true) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Izinkan pemrosesan foto di kuesioner terlebih dahulu.')));
+      return;
+    }
+    setState(() => _saving = true);
+    await SkinHistoryRepository.instance.saveLatest(
+      bytes, findings: a.visualFindings, skinType: a.skinType,
+      modelConnected: a.modelConnected, isDemo: a.isDemo,
+      detectionCounts: a.detectionCounts,
+      segmentationAreas: a.segmentationAreas,
+      classConfidences: a.classConfidences,
+      skinTypeConfidence: a.skinTypeConfidence,
+      modelVersion: a.modelVersion,
+      quality: a.isDemo ? 'pass' : 'unchecked',
+    );
+    if (!mounted) return;
+    setState(() { _saved = true; _saving = false; });
+    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
+      builder: (_) => const SkinProgressPage()));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final a = _data;
+    final photo = a?.selfieBytes ?? widget.selfieBytes;
+    final hasData = a != null && (a.modelConnected || a.isDemo);
+    final found = a == null || !hasData ? const <String>[] : a.visualFindings;
+    final other = SkinJourneyStore.visualClasses.where((c) => !found.contains(c)).toList();
+    final type = hasData ? a!.skinType : 'Belum diketahui';
+    final typeDesc = switch (type) {
+      'Dry' => 'Cenderung membutuhkan perhatian pada kelembapan dan toleransi bahan aktif.',
+      'Oily' => 'Formulasi ringan dapat membantu kenyamanan, tanpa mengabaikan pelembap.',
+      'Normal' => 'Fokuskan perawatan pada keluhan dan respons kulit.',
+      'Combination' => 'Area T-zone dan pipi bisa memiliki kebutuhan yang berbeda.',
+      _ => 'Estimasi jenis kulit belum tersedia.',
+    };
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F2F2),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 350;
-                return DecoratedBox(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0xFFDDF5FF), _cream, Color(0xFFFFFBF3)],
-                      stops: [0, .23, 1],
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      const Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            painter: _ResultBackgroundPainter(),
-                          ),
-                        ),
-                      ),
-                      CustomScrollView(
-                        physics: const ClampingScrollPhysics(),
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: _ResultHeader(
-                              compact: compact,
-                              onBack: () => Navigator.of(context).pop(),
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: EdgeInsets.fromLTRB(
-                              compact ? 12 : 18,
-                              6,
-                              compact ? 12 : 18,
-                              26,
-                            ),
-                            sliver: SliverList.list(
-                              children: [
-                                _SelfieCard(
-                                  selfieBytes:
-                                      analysis?.selfieBytes ?? selfieBytes,
-                                  compact: compact,
-                                  archived: archived,
-                                ),
-                                const SizedBox(height: 14),
-                                _ScoreCard(
-                                  compact: compact,
-                                  score: analysis?.score ?? 82,
-                                  title:
-                                      analysis?.title ?? 'Kombinasi (T-Zone)',
-                                ),
-                                const SizedBox(height: 14),
-                                _IssuesCard(
-                                  compact: compact,
-                                  oil: analysis?.oil ?? 68,
-                                  pores: analysis?.pores ?? 52,
-                                  acne: analysis?.acne ?? 46,
-                                  redness: analysis?.redness ?? 34,
-                                ),
-                                const SizedBox(height: 14),
-                                _SkinTypeCard(
-                                  compact: compact,
-                                  skinType: analysis?.skinType ??
-                                      'Kombinasi (T-Zone)',
-                                ),
-                                const SizedBox(height: 14),
-                                _ActivesCard(compact: compact),
-                                const SizedBox(height: 14),
-                                _LifestyleCard(compact: compact),
-                                if (!archived) ...[
-                                  const SizedBox(height: 18),
-                                  _SaveButton(
-                                    onTap: () async {
-                                      await SkinHistoryRepository.instance
-                                          .saveLatest(selfieBytes);
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'Hasil diagnosis berhasil disimpan ke riwayat.',
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+      backgroundColor: _background,
+      body: SafeArea(child: Center(child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: ListView(padding: const EdgeInsets.fromLTRB(19, 0, 19, 24), children: [
+          SkinPageHeader(title: widget.sessionPreview ? 'Hasil Sesi Foto' : 'Hasil Analisis', backKey: const Key('result-back')),
+          const SizedBox(height: 9),
+          ClipRRect(borderRadius: BorderRadius.circular(24), child: SizedBox(
+            height: 218, child: Stack(fit: StackFit.expand, children: [
+              if (photo != null) Image.memory(photo, fit: BoxFit.cover)
+              else const ColoredBox(color: _light,
+                child: Icon(Icons.face_retouching_natural, size: 62, color: _teal)),
+              const DecoratedBox(decoration: BoxDecoration(gradient: LinearGradient(
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0xAA102D34)],
+                stops: [.43, 1],
+              ))),
+              Positioned(left: 16, bottom: 15, right: 16,
+                child: Row(children: [
+                  const Icon(Icons.check_circle, color: Colors.white, size: 19),
+                  const SizedBox(width: 7),
+                  Expanded(child: Text(a != null ? _date(a.analyzedAt) : 'Foto terbaru',
+                    style: const TextStyle(color: Colors.white,
+                      fontWeight: FontWeight.w700, fontSize: 14))),
 
-class _ResultHeader extends StatelessWidget {
-  final bool compact;
-  final VoidCallback onBack;
-
-  const _ResultHeader({required this.compact, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding:
-          EdgeInsets.fromLTRB(compact ? 14 : 18, 16, compact ? 14 : 18, 10),
-      child: Row(
-        children: [
-          Material(
-            color: Colors.white.withValues(alpha: .88),
-            shape: const CircleBorder(),
-            child: InkWell(
-              key: const Key('result-back'),
-              onTap: onBack,
-              customBorder: const CircleBorder(),
-              child: SizedBox(
-                width: compact ? 44 : 50,
-                height: compact ? 44 : 50,
-                child: const Icon(
-                  Icons.chevron_left_rounded,
-                  color: SkinResultPage._deepTeal,
-                  size: 33,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              'Hasil Diagnosis',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: SkinResultPage._navy,
-                fontSize: compact ? 23 : 27,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          SizedBox(width: compact ? 44 : 50),
-        ],
-      ),
-    );
-  }
-}
-
-class _SelfieCard extends StatelessWidget {
-  final Uint8List? selfieBytes;
-  final bool compact;
-  final bool archived;
-
-  const _SelfieCard({
-    required this.selfieBytes,
-    required this.compact,
-    required this.archived,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: compact ? 230 : 275,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(compact ? 28 : 34),
-        border: Border.all(color: Colors.white, width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: SkinResultPage._deepTeal.withValues(alpha: .12),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(compact ? 24 : 30),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (selfieBytes != null)
-              Image.memory(
-                selfieBytes!,
-                key: const Key('captured-selfie'),
-                fit: BoxFit.cover,
-                gaplessPlayback: true,
-              )
-            else
-              const ColoredBox(
-                color: Color(0xFFE9F7F4),
-                child: Center(
-                  child: Icon(
-                    Icons.face_retouching_natural_rounded,
-                    size: 76,
-                    color: SkinResultPage._teal,
-                  ),
-                ),
-              ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xA6002630)],
-                  stops: [.52, 1],
-                ),
-              ),
-            ),
-            Positioned(
-              left: 18,
-              right: 18,
-              bottom: 15,
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: SkinResultPage._teal,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          archived
-                              ? 'Hasil scan tersimpan'
-                              : 'Selfie berhasil dianalisis',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const Text(
-                          'Pencahayaan dan posisi wajah sudah sesuai',
-                          style: TextStyle(
-                            color: Color(0xFFD8ECEE),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ScoreCard extends StatelessWidget {
-  final bool compact;
-  final int score;
-  final String title;
-
-  const _ScoreCard({
-    required this.compact,
-    required this.score,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _ResultCard(
-      padding: EdgeInsets.all(compact ? 16 : 20),
-      child: Row(
-        children: [
+                ])),
+            ]),
+          )),
+          const SizedBox(height: 23),
+          const Text('Kenali kondisi kulitmu', style: TextStyle(
+            fontSize: 25, fontWeight: FontWeight.w900, color: _navy,
+            letterSpacing: -.7)),
+          const SizedBox(height: 5),
+          Text(hasData ? '${found.length} jenis temuan visual dalam sesi ini' :
+            'Hasil analisis belum tersedia', style: SkinTokens.caption),
+          const SizedBox(height: 16),
           Container(
-            width: compact ? 96 : 112,
-            padding: const EdgeInsets.symmetric(vertical: 15),
+            padding: const EdgeInsets.all(19),
             decoration: BoxDecoration(
-              color: const Color(0xFFE5F7F2),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'Skor Kulit',
-                  style: TextStyle(
-                    color: SkinResultPage._deepTeal,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  '$score',
-                  style: const TextStyle(
-                    height: 1.05,
-                    color: SkinResultPage._deepTeal,
-                    fontSize: 45,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const Text(
-                  '/100',
-                  style: TextStyle(color: Color(0xFF559B92)),
-                ),
-              ],
-            ),
+              gradient: const LinearGradient(colors: [Color(0xFFDAF3EA), Color(0xFFEFF8F2)]),
+              borderRadius: BorderRadius.circular(23)),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+              Container(height: 53, width: 53,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                child: const Icon(Icons.water_drop_outlined, color: _teal, size: 26)),
+              const SizedBox(width: 13),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('ESTIMASI JENIS KULIT', style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w900, color: _teal,
+                  letterSpacing: 1.1)),
+                const SizedBox(height: 3),
+                Text(type, style: const TextStyle(fontSize: 25,
+                  fontWeight: FontWeight.w900, color: _navy)),
+              ])),
+              if (hasData && a?.skinTypeConfidence != null)
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Text(_pct(a!.skinTypeConfidence!), style: const TextStyle(
+                    color: _teal, fontSize: 20, fontWeight: FontWeight.w900)),
+                  const Text('Confidence', style: TextStyle(
+                    color: SkinTokens.muted, fontSize: 11)),
+                ]),
+            ]),
           ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDFBEA),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    score >= 80
-                        ? '✨ Kondisi Kulit Baik'
-                        : score >= 70
-                            ? '✨ Kondisi Cukup Baik'
-                            : '✨ Perlu Perhatian',
-                    style: const TextStyle(
-                      color: SkinResultPage._deepTeal,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '$title. Tetap jaga rutinitas perawatan dan pola hidup agar kondisi kulit makin stabil.',
-                  style: TextStyle(
-                    color: SkinResultPage._navy.withValues(alpha: .80),
-                    fontSize: compact ? 13 : 14,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IssuesCard extends StatelessWidget {
-  final bool compact;
-  final int oil;
-  final int pores;
-  final int acne;
-  final int redness;
-
-  const _IssuesCard({
-    required this.compact,
-    required this.oil,
-    required this.pores,
-    required this.acne,
-    required this.redness,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return _ResultCard(
-      padding: EdgeInsets.all(compact ? 16 : 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionTitle('Masalah Ditemukan'),
-          const SizedBox(height: 15),
-          _IssueBar(
-            label: 'Berminyak (Sebum)',
-            value: oil,
-            status: _statusFor(oil),
-            color: SkinResultPage._teal,
-          ),
-          const _IssueDivider(),
-          _IssueBar(
-            label: 'Pori-Pori Besar',
-            value: pores,
-            status: _statusFor(pores),
-            color: SkinResultPage._orange,
-          ),
-          const _IssueDivider(),
-          _IssueBar(
-            label: 'Jerawat Aktif',
-            value: acne,
-            status: _statusFor(acne),
-            color: Color(0xFFD79825),
-          ),
-          const _IssueDivider(),
-          _IssueBar(
-            label: 'Kemerahan',
-            value: redness,
-            status: _statusFor(redness),
-            color: SkinResultPage._coral,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IssueBar extends StatelessWidget {
-  final String label;
-  final int value;
-  final String status;
-  final Color color;
-
-  const _IssueBar({
-    required this.label,
-    required this.value,
-    required this.status,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  color: SkinResultPage._navy,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(
-                  minHeight: 10,
-                  value: value / 100,
-                  color: color,
-                  backgroundColor: const Color(0xFFECEFF0),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 14),
-        SizedBox(
-          width: 58,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '$value%',
-                style: const TextStyle(
-                  color: SkinResultPage._navy,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(status, style: const TextStyle(color: Color(0xFF718392))),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _IssueDivider extends StatelessWidget {
-  const _IssueDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Divider(height: 25, color: Color(0xFFE3E8E9));
-  }
-}
-
-class _SkinTypeCard extends StatelessWidget {
-  final bool compact;
-  final String skinType;
-
-  const _SkinTypeCard({required this.compact, required this.skinType});
-
-  @override
-  Widget build(BuildContext context) {
-    return _ResultCard(
-      padding: EdgeInsets.all(compact ? 16 : 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _SectionTitle('Jenis Kulit'),
+          Padding(padding: const EdgeInsets.fromLTRB(5, 9, 5, 8),
+            child: Text(typeDesc, style: SkinTokens.caption)),
+          const SizedBox(height: 17),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('Temuan visual', style: SkinTokens.section),
+          ]),
+          const SizedBox(height: 5),
+          const Text('Ringkasan temuan per kelas · jumlah deteksi, luas mask, dan confidence.',
+            style: SkinTokens.caption),
           const SizedBox(height: 13),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _Pill(skinType, highlighted: true),
-              if (skinType != 'Cenderung Berminyak')
-                const _Pill('Cenderung Berminyak'),
-              if (skinType != 'Sensitif Ringan') const _Pill('Sensitif Ringan'),
-              if (skinType != 'Rentan Berjerawat')
-                const _Pill('Rentan Berjerawat'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActivesCard extends StatelessWidget {
-  final bool compact;
-
-  const _ActivesCard({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    return _ResultCard(
-      padding: EdgeInsets.all(compact ? 16 : 20),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle('Panduan Zat Aktif'),
-          SizedBox(height: 13),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _Pill('Niacinamide 5%', highlighted: true),
-              _Pill('Salicylic Acid 1%', highlighted: true),
-              _Pill('Hyaluronic Acid', outlined: true),
-              _Pill('Centella Asiatica', outlined: true),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LifestyleCard extends StatelessWidget {
-  final bool compact;
-
-  const _LifestyleCard({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    return _ResultCard(
-      padding: EdgeInsets.all(compact ? 16 : 20),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionTitle('Saran Gaya Hidup'),
-          SizedBox(height: 12),
-          _AdviceTile(
-            title: 'Perawatan Lembut',
-            subtitle: 'Cleanser pH 5.5, hindari scrub kasar.',
-          ),
-          SizedBox(height: 8),
-          _AdviceTile(
-            title: 'Hidrasi 2L / hari',
-            subtitle: 'Air cukup membantu menekan produksi minyak.',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AdviceTile extends StatelessWidget {
-  final String title;
-  final String subtitle;
-
-  const _AdviceTile({required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F7F7),
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: SkinResultPage._navy,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Color(0xFF6D8190)),
-                ),
+          if (hasData) Container(
+            key: const Key('result-compact-findings-v10'),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(color: Colors.white,
+              borderRadius: BorderRadius.circular(19),
+              border: Border.all(color: const Color(0xFFE8EDE7))),
+            child: Column(children: [
+              for (final c in found) ...[
+                if (c != found.first) const Divider(height: 1,
+                  color: Color(0xFFE9EEEB)),
+                _findingRow(c, a!),
               ],
-            ),
-          ),
-          const Icon(Icons.chevron_right_rounded, color: SkinResultPage._navy),
-        ],
+            ]),
+          ) else Container(padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(color: Colors.white,
+              borderRadius: BorderRadius.circular(19)),
+            child: const Text('Belum ada hasil yang tersimpan.',
+              style: SkinTokens.caption)),
+          if (other.isNotEmpty && hasData) ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              const Icon(Icons.remove_circle_outline, color: SkinTokens.muted, size: 18),
+              const SizedBox(width: 7),
+              Expanded(child: Text('Tidak terdeteksi pada sesi ini: ${other.join(', ')}',
+                style: SkinTokens.caption)),
+            ]),
+          ],
+          const SizedBox(height: 24),
+          const Text('Edukasi perawatan', style: SkinTokens.section),
+          const SizedBox(height: 7),
+          // Satu ringkasan, bukan deretan accordion yang menduplikasi kartu temuan.
+          Container(padding: const EdgeInsets.all(17),
+            decoration: BoxDecoration(color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFE4EBE5))),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final c in found.where(_education.containsKey)) ...[
+                  if (c != found.first) const Divider(height: 22),
+                  Text(c, style: const TextStyle(fontWeight: FontWeight.w800,
+                    color: _teal, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  Text(_education[c]!.$1, style: const TextStyle(
+                    color: _navy, fontSize: 13, height: 1.46)),
+                ],
+              ])),
+          if (SkinJourneyStore.instance.answers['M03'] == 'Sedang-berat' ||
+              SkinJourneyStore.instance.answers['M06'] == 'Ya') ...[
+            const SizedBox(height: 12),
+            const Text('Jika sedang dalam perawatan dokter atau mengalami keluhan berat, utamakan arahan tenaga kesehatan.',
+              style: TextStyle(color: SkinTokens.coral, fontSize: 13)),
+          ],
+          const SizedBox(height: 14),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Icon(Icons.info_outline, color: SkinTokens.muted, size: 15),
+            const SizedBox(width: 7),
+            Expanded(child: Text('Hasil visual bukan diagnosis atau persentase kesembuhan.',
+              style: const TextStyle(color: SkinTokens.muted, fontSize: 12, height: 1.4))),
+          ]),
+        ]),
+      ))),
+      bottomNavigationBar: widget.archived ? null : widget.sessionPreview
+        ? SafeArea(minimum: const EdgeInsets.fromLTRB(18, 9, 18, 14),
+            child: Center(heightFactor: 1, child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: SizedBox(width: double.infinity,
+                child: FilledButton.icon(
+                  key: const Key('session-preview-done'),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.check_circle_outline),
+                  label: const Text('Sesi masuk draft • Kembali'))))))
+        : SafeArea(
+        minimum: const EdgeInsets.fromLTRB(18, 9, 18, 14),
+        child: Center(heightFactor: 1, child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Row(children: [
+            Expanded(child: OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).pushReplacement(
+                MaterialPageRoute<void>(builder: (_) => const SkinScanPage())),
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+              label: const Text('Ulangi'))),
+            const SizedBox(width: 10),
+            Expanded(flex: 2, child: FilledButton.icon(
+              key: const Key('save-result'), onPressed: _saving || _saved ? null : _save,
+              icon: const Icon(Icons.bookmark_add_outlined, size: 20),
+              label: Text(_saving ? 'Menyimpan...' : 'Simpan ke Journey'))),
+          ]),
+        )),
       ),
     );
   }
-}
 
-class _Pill extends StatelessWidget {
-  final String text;
-  final bool highlighted;
-  final bool outlined;
-
-  const _Pill(this.text, {this.highlighted = false, this.outlined = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      decoration: BoxDecoration(
-        color: highlighted
-            ? const Color(0xFFDDF5EF)
-            : outlined
-                ? Colors.white
-                : const Color(0xFFF1F3F3),
-        borderRadius: BorderRadius.circular(22),
-        border: outlined ? Border.all(color: const Color(0xFFD8E0E1)) : null,
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: highlighted
-              ? SkinResultPage._deepTeal
-              : SkinResultPage._navy.withValues(alpha: .70),
-          fontWeight: highlighted ? FontWeight.w800 : FontWeight.w500,
-        ),
-      ),
+  // Satu panel ringkas; setiap kelas satu BARIS, bukan kartu tinggi 156 px.
+  Widget _findingRow(String name, SkinAnalysis a) {
+    final detection = SkinJourneyStore.detectionClasses.contains(name);
+    final amount = detection
+      ? '${a.detectionCounts[name] ?? 0}'
+      : '${((a.segmentationAreas[name] ?? 0) * 100).toStringAsFixed(0)}%';
+    final unit = detection ? 'area' : 'mask';
+    final confidence = a.classConfidences[name];
+    final icon = switch (name) {
+      'Acne' => Icons.grain_rounded,
+      'PIH' => Icons.blur_on_rounded,
+      'Dark Circle' => Icons.remove_red_eye_outlined,
+      'Redness' => Icons.brightness_5_outlined,
+      _ => Icons.spa_outlined,
+    };
+    final color = switch (name) {
+      'Acne' => const Color(0xFFE67D83),
+      'PIH' => const Color(0xFFE2A64B),
+      'Dark Circle' => const Color(0xFF8A9ED9),
+      'Redness' => const Color(0xFFCF798C),
+      _ => const Color(0xFF63AFA1),
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(children: [
+        Container(width: 35, height: 35,
+          decoration: BoxDecoration(color: color.withValues(alpha: .12),
+            borderRadius: BorderRadius.circular(11)),
+          child: Icon(icon, color: color, size: 20)),
+        const SizedBox(width: 11),
+        Expanded(child: Text(name, style: const TextStyle(
+          color: _navy, fontWeight: FontWeight.w800, fontSize: 14))),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic, children: [
+              Text(amount, style: const TextStyle(fontSize: 20,
+                fontWeight: FontWeight.w900, color: _navy)),
+              const SizedBox(width: 4),
+              Text(unit, style: const TextStyle(
+                fontSize: 11, color: SkinTokens.muted)),
+            ]),
+          if (confidence != null) Text('Keyakinan AI ${_pct(confidence)}',
+            style: const TextStyle(color: SkinTokens.muted, fontSize: 10)),
+        ]),
+      ]),
     );
   }
-}
 
-class _SectionTitle extends StatelessWidget {
-  final String text;
-
-  const _SectionTitle(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: SkinResultPage._navy,
-        fontSize: 23,
-        fontWeight: FontWeight.w900,
-      ),
-    );
-  }
-}
-
-class _ResultCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry padding;
-
-  const _ResultCard({required this.child, required this.padding});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .94),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: SkinResultPage._teal.withValues(alpha: .06)),
-        boxShadow: [
-          BoxShadow(
-            color: SkinResultPage._navy.withValues(alpha: .07),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-}
-
-class _SaveButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _SaveButton({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: const Key('save-result'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(25),
-        child: Ink(
-          height: 60,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [SkinResultPage._teal, SkinResultPage._deepTeal],
-            ),
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: const Center(
-            child: Text(
-              'Simpan',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResultBackgroundPainter extends CustomPainter {
-  const _ResultBackgroundPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bubblePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = Colors.white.withValues(alpha: .65);
-    canvas.drawCircle(Offset(size.width * .12, 105), 24, bubblePaint);
-    canvas.drawCircle(Offset(size.width * .82, 72), 15, bubblePaint);
-    canvas.drawCircle(Offset(size.width * .25, 155), 11, bubblePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-String _statusFor(int value) {
-  if (value >= 65) return 'Tinggi';
-  if (value >= 40) return 'Sedang';
-  return 'Rendah';
 }

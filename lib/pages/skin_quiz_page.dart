@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-
+import '../data/skin_journey_store.dart';
+import '../theme/skin_theme.dart';
+import '../widgets/skin_page_header.dart';
 import 'skin_scan_page.dart';
 
+/// Kuesioner pra-scan M01–M07. Semua pertanyaan berada dalam satu halaman.
 class SkinQuizPage extends StatefulWidget {
   final bool enableCamera;
-
   const SkinQuizPage({super.key, this.enableCamera = true});
 
   @override
@@ -12,621 +14,263 @@ class SkinQuizPage extends StatefulWidget {
 }
 
 class _SkinQuizPageState extends State<SkinQuizPage> {
-  static const _teal = Color(0xFF168A78);
-  static const _deepTeal = Color(0xFF087467);
-  static const _navy = Color(0xFF13263A);
-  static const _cream = Color(0xFFFFF8EB);
-  static const _assetBase = 'lib/assets/images';
-
-  static const _questions = <_QuizQuestion>[
-    _QuizQuestion(
-      title: 'Bagaimana rasa kulit wajahmu saat bangun pagi?',
-      subtitle: 'Pilih satu yang paling menggambarkan.',
-      answers: [
-        _QuizAnswer(
-            'Berminyak di T-Zone', 'Dahi dan hidung mengilap, pipi normal.'),
-        _QuizAnswer(
-            'Mengilap di seluruh wajah', 'Terasa licin dari dahi sampai pipi.'),
-        _QuizAnswer(
-            'Kering dan ketarik', 'Kusam, bersisik, atau terasa perih.'),
-        _QuizAnswer('Lembap pas', 'Tidak berminyak dan tidak terasa kencang.'),
-      ],
-    ),
-    _QuizQuestion(
-      title: 'Seberapa sering kulitmu terasa sensitif?',
-      subtitle: 'Pilih kondisi yang paling sering kamu alami.',
-      answers: [
-        _QuizAnswer(
-            'Hampir tidak pernah', 'Kulit terasa nyaman sepanjang hari.'),
-        _QuizAnswer('Kadang-kadang', 'Biasanya setelah mencoba produk baru.'),
-        _QuizAnswer('Cukup sering', 'Mudah merah, gatal, atau terasa panas.'),
-        _QuizAnswer('Sangat sering', 'Kulit bereaksi meski tanpa produk baru.'),
-      ],
-    ),
-    _QuizQuestion(
-      title: 'Bagaimana kondisi pori-porimu?',
-      subtitle: 'Perhatikan area hidung, dahi, dan pipi.',
-      answers: [
-        _QuizAnswer(
-            'Hampir tidak terlihat', 'Pori tampak kecil dan cukup merata.'),
-        _QuizAnswer(
-            'Terlihat di hidung', 'Lebih jelas di sekitar hidung saja.'),
-        _QuizAnswer('Terlihat di T-Zone', 'Tampak pada hidung dan dahi.'),
-        _QuizAnswer(
-            'Terlihat di banyak area', 'Pori terlihat sampai area pipi.'),
-      ],
-    ),
-    _QuizQuestion(
-      title: 'Masalah kulit apa yang paling mengganggumu?',
-      subtitle: 'Pilih satu prioritas perawatanmu saat ini.',
-      answers: [
-        _QuizAnswer('Jerawat dan komedo', 'Muncul aktif atau berulang.'),
-        _QuizAnswer(
-            'Kusam dan tidak merata', 'Wajah tampak lelah atau belang.'),
-        _QuizAnswer('Kering dan dehidrasi', 'Butuh kelembapan lebih lama.'),
-        _QuizAnswer('Garis halus', 'Tekstur mulai tampak kurang kenyal.'),
-      ],
-    ),
-    _QuizQuestion(
-      title: 'Berapa lama kamu berada di luar ruangan?',
-      subtitle: 'Perkirakan aktivitas harianmu di bawah matahari.',
-      answers: [
-        _QuizAnswer('Kurang dari 30 menit',
-            'Sebagian besar aktivitas di dalam ruangan.'),
-        _QuizAnswer('30 menit–1 jam', 'Keluar untuk perjalanan singkat.'),
-        _QuizAnswer('1–3 jam', 'Cukup sering beraktivitas di luar.'),
-        _QuizAnswer(
-            'Lebih dari 3 jam', 'Banyak aktivitas langsung di luar ruangan.'),
-      ],
-    ),
+  static const questions = <(String, String, List<String>)>[
+    ('M01', 'Sedang menggunakan bahan aktif atau obat perawatan wajah?',
+      ['Ya', 'Tidak', 'Tidak tahu']),
+    ('M02', 'Seberapa rutin kamu memakai perawatan dalam 7 hari terakhir?',
+      ['Rutin', 'Kadang', 'Tidak', 'Tidak memakai', 'Tidak tahu']),
+    ('M03', 'Apakah wajah sedang perih, gatal, panas, ruam, atau mengelupas?',
+      ['Tidak', 'Ringan', 'Sedang-berat', 'Tidak yakin']),
+    ('M04', 'Pernah ada produk atau bahan yang menimbulkan reaksi buruk?',
+      ['Tidak', 'Ya', 'Tidak tahu']),
+    ('M05', 'Seberapa sering memakai sunscreen saat terpapar matahari?',
+      ['Rutin', 'Kadang', 'Tidak', 'Tidak tahu']),
+    ('M06', 'Sedang dalam perawatan dokter untuk masalah kulit ini?',
+      ['Ya', 'Tidak', 'Tidak yakin']),
+    ('M07', 'Masalah mana yang ingin kamu perhatikan? (Boleh lebih dari satu)',
+      ['Acne', 'PIH', 'Dark Circle', 'Redness', 'Wrinkle', 'Belum yakin']),
   ];
 
-  int _currentQuestion = 0;
-  final List<int?> _answers = [0, null, null, null, null];
+  final Map<String, String> _answers = {...SkinJourneyStore.instance.answers};
+  final TextEditingController _regimenName = TextEditingController();
+  final Set<String> _concerns = {};
+  final List<GlobalKey> _questionKeys = List.generate(7, (_) => GlobalKey());
+  String? _regimenClass;
+  DateTime? _regimenStart;
+  bool _consent = false;
 
-  void _selectAnswer(int index) {
-    setState(() => _answers[_currentQuestion] = index);
+  @override
+  void initState() {
+    super.initState();
+    _regimenName.text = _answers['regimen_name'] ?? '';
+    _regimenClass = _answers['regimen_class'];
+    _regimenStart = DateTime.tryParse(_answers['regimen_start'] ?? '');
+    _concerns.addAll(
+      (_answers['M07'] ?? '').split('|').where((answer) => answer.isNotEmpty),
+    );
+    _consent = SkinJourneyStore.instance.consent == true;
   }
 
-  void _continue() {
-    if (_answers[_currentQuestion] == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Pilih salah satu jawaban terlebih dahulu.')),
+  @override
+  void dispose() {
+    _regimenName.dispose();
+    super.dispose();
+  }
+
+  void _choose(String id, String answer) {
+    setState(() {
+      if (id != 'M07') {
+        _answers[id] = answer;
+        return;
+      }
+      if (answer == 'Belum yakin') {
+        _concerns
+          ..clear()
+          ..add(answer);
+      } else {
+        _concerns.remove('Belum yakin');
+        if (!_concerns.add(answer)) _concerns.remove(answer);
+      }
+    });
+  }
+
+  void _showMissing(int index) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Jawab pertanyaan ${index + 1} terlebih dahulu.')),
+    );
+    final target = _questionKeys[index].currentContext;
+    if (target != null) {
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        alignment: 0.1,
       );
-      return;
     }
-
-    if (_currentQuestion < _questions.length - 1) {
-      setState(() {
-        _currentQuestion += 1;
-        _answers[_currentQuestion] ??= 0;
-      });
-      return;
-    }
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(
-        builder: (_) => SkinScanPage(enableCamera: widget.enableCamera),
-      ),
-    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final question = _questions[_currentQuestion];
+  void _submit() {
+    for (var i = 0; i < questions.length; i++) {
+      final id = questions[i].$1;
+      if (id == 'M07' ? _concerns.isEmpty :
+          (_answers[id] == null || _answers[id]!.isEmpty)) {
+        _showMissing(i);
+        return;
+      }
+    }
+    if (!_consent) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Setujui pemrosesan foto untuk melanjutkan scan.'),
+      ));
+      return;
+    }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F2F2),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 350;
+    _answers['M07'] = _concerns.join('|');
+    if (_answers['M01'] == 'Ya') {
+      _answers['regimen_name'] = _regimenName.text.trim();
+      if (_regimenClass != null) {
+        _answers['regimen_class'] = _regimenClass!;
+      } else {
+        _answers.remove('regimen_class');
+      }
+      if (_regimenStart != null) {
+        _answers['regimen_start'] = _regimenStart!.toIso8601String();
+      } else {
+        _answers.remove('regimen_start');
+      }
+    } else {
+      // Jangan gunakan perawatan lama bila pengguna sekarang menjawab tidak.
+      _answers.remove('regimen_name');
+      _answers.remove('regimen_class');
+      _answers.remove('regimen_start');
+    }
 
-                return DecoratedBox(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF1FC1ED),
-                        Color(0xFF8DE2F3),
-                        _cream,
-                      ],
-                      stops: [0, .48, 1],
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      const Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(painter: _QuizBackgroundPainter()),
-                        ),
-                      ),
-                      Column(
-                        children: [
-                          _QuizHeader(
-                            current: _currentQuestion + 1,
-                            total: _questions.length,
-                            compact: compact,
-                            onBack: () => Navigator.of(context).pop(),
-                          ),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              physics: const ClampingScrollPhysics(),
-                              padding: EdgeInsets.fromLTRB(
-                                compact ? 12 : 18,
-                                8,
-                                compact ? 12 : 18,
-                                24,
-                              ),
-                              child: Column(
-                                children: [
-                                  Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      Positioned(
-                                        right: compact ? -6 : 0,
-                                        top: 0,
-                                        width: compact ? 122 : 150,
-                                        height: compact ? 150 : 178,
-                                        child: Image.asset(
-                                          '$_assetBase/skin_girl.png',
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(
-                                          top: compact ? 104 : 122,
-                                        ),
-                                        child: _QuestionCard(
-                                          questionNumber: _currentQuestion + 1,
-                                          question: question,
-                                          selectedIndex:
-                                              _answers[_currentQuestion],
-                                          compact: compact,
-                                          onSelected: _selectAnswer,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 18),
-                                  Align(
-                                    alignment: Alignment.centerRight,
-                                    child: _ContinueButton(
-                                      compact: compact,
-                                      isLast: _currentQuestion ==
-                                          _questions.length - 1,
-                                      onTap: _continue,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+    SkinJourneyStore.instance.saveQuestionnaire(_answers, photoConsent: _consent);
+    if (_answers['M03'] == 'Sedang-berat') {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Jika iritasi cukup berat, periksakan ke tenaga kesehatan sebelum mencoba bahan aktif baru.'),
+      ));
+    }
+    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
+      builder: (_) => SkinScanPage(enableCamera: widget.enableCamera),
+    ));
+  }
+
+  Widget _option(String id, String answer) {
+    final selected = id == 'M07'
+        ? _concerns.contains(answer)
+        : _answers[id] == answer;
+    return OutlinedButton(
+      onPressed: () => _choose(id, answer),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: selected ? SkinTokens.primaryDark : SkinTokens.muted,
+        backgroundColor: selected ? SkinTokens.mint : SkinTokens.surface,
+        side: BorderSide(
+          color: selected ? SkinTokens.primary : SkinTokens.border,
+          width: selected ? 1.5 : 1,
         ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        minimumSize: const Size(64, 43),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
       ),
+      child: Text(answer),
     );
   }
-}
 
-class _QuizHeader extends StatelessWidget {
-  final int current;
-  final int total;
-  final bool compact;
-  final VoidCallback onBack;
-
-  const _QuizHeader({
-    required this.current,
-    required this.total,
-    required this.compact,
-    required this.onBack,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(compact ? 14 : 18, 16, compact ? 14 : 18, 8),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Material(
-                color: Colors.white.withValues(alpha: .94),
-                shape: const CircleBorder(),
-                child: InkWell(
-                  key: const Key('quiz-back'),
-                  onTap: onBack,
-                  customBorder: const CircleBorder(),
-                  child: SizedBox(
-                    width: compact ? 46 : 52,
-                    height: compact ? 46 : 52,
-                    child: const Icon(
-                      Icons.chevron_left_rounded,
-                      color: _SkinQuizPageState._deepTeal,
-                      size: 34,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Kuis Kondisi Kulit',
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: _SkinQuizPageState._navy,
-                    fontSize: compact ? 21 : 25,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: compact ? 54 : 62,
-                child: Text(
-                  '$current / $total',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    color: _SkinQuizPageState._navy,
-                    fontSize: compact ? 17 : 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              minHeight: compact ? 10 : 12,
-              value: current / total,
-              color: _SkinQuizPageState._teal,
-              backgroundColor: Colors.white.withValues(alpha: .68),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuestionCard extends StatelessWidget {
-  final int questionNumber;
-  final _QuizQuestion question;
-  final int? selectedIndex;
-  final bool compact;
-  final ValueChanged<int> onSelected;
-
-  const _QuestionCard({
-    required this.questionNumber,
-    required this.question,
-    required this.selectedIndex,
-    required this.compact,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _question(int index) {
+    final q = questions[index];
     return Container(
-      padding: EdgeInsets.all(compact ? 16 : 22),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .98),
-        borderRadius: BorderRadius.circular(compact ? 28 : 34),
-        border: Border.all(
-          color: _SkinQuizPageState._deepTeal.withValues(alpha: .08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _SkinQuizPageState._deepTeal.withValues(alpha: .11),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+      key: _questionKeys[index],
+      margin: const EdgeInsets.only(bottom: 26),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE5F7F2),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Text(
-              'Pertanyaan $questionNumber',
-              style: TextStyle(
-                fontSize: compact ? 14 : 16,
-                color: _SkinQuizPageState._teal,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          SizedBox(height: compact ? 17 : 22),
-          Text(
-            question.title,
-            style: TextStyle(
-              fontSize: compact ? 23 : 28,
-              height: 1.17,
-              color: _SkinQuizPageState._navy,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
+          Text(q.$2, style: SkinTokens.section.copyWith(fontSize: 17)),
           const SizedBox(height: 10),
-          Text(
-            question.subtitle,
-            style: TextStyle(
-              fontSize: compact ? 14 : 16,
-              color: const Color(0xFF65798C),
-            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: q.$3.map((answer) => _option(q.$1, answer)).toList(),
           ),
-          SizedBox(height: compact ? 18 : 22),
-          ...List.generate(question.answers.length, (index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _AnswerTile(
-                answer: question.answers[index],
-                selected: selectedIndex == index,
-                compact: compact,
-                onTap: () => onSelected(index),
+          if (q.$1 == 'M01' && _answers['M01'] == 'Ya') ...[
+            const SizedBox(height: 16),
+            TextField(
+              controller: _regimenName,
+              decoration: const InputDecoration(
+                labelText: 'Nama perawatan (opsional)',
+                hintText: 'Produk atau bahan yang sedang dipakai',
               ),
-            );
-          }),
+            ),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              value: _regimenClass,
+              decoration: const InputDecoration(
+                labelText: 'Perawatan ini untuk kondisi apa? (opsional)',
+              ),
+              items: SkinJourneyStore.visualClasses.map((name) =>
+                DropdownMenuItem(value: name, child: Text(name)),
+              ).toList(),
+              onChanged: (value) => setState(() => _regimenClass = value),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  firstDate: DateTime(2010),
+                  lastDate: DateTime.now(),
+                  initialDate: _regimenStart ?? DateTime.now(),
+                );
+                if (picked != null) setState(() => _regimenStart = picked);
+              },
+              icon: const Icon(Icons.calendar_today_outlined, size: 18),
+              label: Text(_regimenStart == null
+                  ? 'Sejak kapan digunakan? (opsional)'
+                  : '${_regimenStart!.day}/${_regimenStart!.month}/${_regimenStart!.year}'),
+            ),
+          ],
         ],
       ),
     );
   }
-}
-
-class _AnswerTile extends StatelessWidget {
-  final _QuizAnswer answer;
-  final bool selected;
-  final bool compact;
-  final VoidCallback onTap;
-
-  const _AnswerTile({
-    required this.answer,
-    required this.selected,
-    required this.compact,
-    required this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 13 : 16,
-            vertical: compact ? 12 : 14,
-          ),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFFF0FBF8) : Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color:
-                  selected ? _SkinQuizPageState._teal : const Color(0xFFDCE4E9),
-              width: selected ? 2 : 1.4,
-            ),
-          ),
-          child: Row(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: compact ? 34 : 40,
-                height: compact ? 34 : 40,
-                decoration: BoxDecoration(
-                  color: selected ? _SkinQuizPageState._teal : Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: selected
-                        ? _SkinQuizPageState._teal
-                        : const Color(0xFF9AAAB6),
-                    width: 2,
-                  ),
+    return Scaffold(
+      backgroundColor: SkinTokens.background,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+            child: Column(
+              children: [
+                SkinPageHeader(
+                  title: 'Kuesioner Awal',
+                  backKey: const Key('quiz-back'),
                 ),
-                child: selected
-                    ? Center(
-                        child: Container(
-                          width: 11,
-                          height: 11,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Jawab tujuh pertanyaan berikut sesuai kondisimu.',
+                          style: SkinTokens.caption,
+                        ),
+                        const SizedBox(height: 24),
+                        ...List.generate(questions.length, _question),
+                        CheckboxListTile(
+                          value: _consent,
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          onChanged: (value) =>
+                            setState(() => _consent = value ?? false),
+                          title: const Text(
+                            'Saya mengizinkan foto diproses untuk analisis dan pemantauan.',
+                            style: TextStyle(fontSize: 14, color: SkinTokens.ink),
                           ),
                         ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      answer.title,
-                      style: TextStyle(
-                        fontSize: compact ? 15 : 17,
-                        color: _SkinQuizPageState._navy,
-                        fontWeight: FontWeight.w900,
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      answer.description,
-                      style: TextStyle(
-                        fontSize: compact ? 12 : 14,
-                        height: 1.25,
-                        color: const Color(0xFF65798C),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ContinueButton extends StatelessWidget {
-  final bool compact;
-  final bool isLast;
-  final VoidCallback onTap;
-
-  const _ContinueButton({
-    required this.compact,
-    required this.isLast,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: const Key('quiz-continue'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(36),
-        child: Ink(
-          width: compact ? double.infinity : 248,
-          height: compact ? 62 : 68,
-          padding: const EdgeInsets.fromLTRB(24, 7, 8, 7),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_SkinQuizPageState._teal, _SkinQuizPageState._deepTeal],
-            ),
-            borderRadius: BorderRadius.circular(36),
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: _SkinQuizPageState._deepTeal.withValues(alpha: .20),
-                blurRadius: 16,
-                offset: const Offset(0, 7),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  isLast ? 'Selesai' : 'Lanjut',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: compact ? 20 : 22,
-                    fontWeight: FontWeight.w900,
                   ),
                 ),
-              ),
-              Container(
-                width: compact ? 46 : 52,
-                height: compact ? 46 : 52,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _submit,
+                      child: const Text('Lanjut ke Scan'),
+                    ),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: _SkinQuizPageState._deepTeal,
-                  size: 29,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-class _QuizBackgroundPainter extends CustomPainter {
-  const _QuizBackgroundPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bubblePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..color = Colors.white.withValues(alpha: .34);
-    canvas.drawCircle(
-        Offset(size.width * .08, size.height * .24), 38, bubblePaint);
-    canvas.drawCircle(
-        Offset(size.width * .88, size.height * .16), 18, bubblePaint);
-    canvas.drawCircle(
-        Offset(size.width * .34, size.height * .20), 27, bubblePaint);
-
-    final moleculePaint = Paint()
-      ..color = Colors.white.withValues(alpha: .28)
-      ..strokeWidth = 1.4;
-    final a = Offset(size.width * .10, size.height * .15);
-    final b = Offset(size.width * .16, size.height * .11);
-    final c = Offset(size.width * .23, size.height * .15);
-    canvas.drawLine(a, b, moleculePaint);
-    canvas.drawLine(b, c, moleculePaint);
-    for (final point in [a, b, c]) {
-      canvas.drawCircle(point, 5, moleculePaint);
-    }
-
-    final skinPaint = Paint()
-      ..color = const Color(0xFFFFB43B).withValues(alpha: .10)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 18
-      ..strokeCap = StrokeCap.round;
-    final path = Path()
-      ..moveTo(-20, size.height * .93)
-      ..quadraticBezierTo(
-        size.width * .35,
-        size.height * .84,
-        size.width * .65,
-        size.height * .94,
-      )
-      ..quadraticBezierTo(
-        size.width * .83,
-        size.height,
-        size.width + 20,
-        size.height * .91,
-      );
-    canvas.drawPath(path, skinPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _QuizQuestion {
-  final String title;
-  final String subtitle;
-  final List<_QuizAnswer> answers;
-
-  const _QuizQuestion({
-    required this.title,
-    required this.subtitle,
-    required this.answers,
-  });
-}
-
-class _QuizAnswer {
-  final String title;
-  final String description;
-
-  const _QuizAnswer(this.title, this.description);
 }

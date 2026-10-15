@@ -18,6 +18,10 @@ void main() {
       await tester.pumpWidget(const SkinSightApp());
       await tester.pumpAndSettle();
       await enterHome(tester);
+
+      expect(find.byKey(const Key('home-default-avatar')), findsOneWidget);
+      expect(find.byKey(const Key('home-skin-girl')), findsOneWidget);
+      expect(find.byKey(const Key('home-journey-cat')), findsOneWidget);
       await tester.tap(find.byKey(const Key('open-profile')));
       await tester.pumpAndSettle();
 

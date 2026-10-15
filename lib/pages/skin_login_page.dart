@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/skin_theme.dart';
+
 class SkinLoginPage extends StatefulWidget {
   const SkinLoginPage({super.key});
 
@@ -8,10 +10,10 @@ class SkinLoginPage extends StatefulWidget {
 }
 
 class _SkinLoginPageState extends State<SkinLoginPage> {
-  static const _deepTeal = Color(0xFF064E48);
-  static const _teal = Color(0xFF168F7C);
-  static const _navy = Color(0xFF142D35);
-  static const _muted = Color(0xFF73898B);
+  static const _deepTeal = SkinTokens.primaryDark;
+  static const _teal = SkinTokens.primary;
+  static const _navy = SkinTokens.ink;
+  static const _muted = SkinTokens.muted;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -58,18 +60,14 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FBF7),
+      backgroundColor: SkinTokens.background,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.asset(
-                'lib/assets/images/start_background.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-              ),
+              const ColoredBox(color: SkinTokens.background),
               ColoredBox(color: Colors.white.withValues(alpha: .26)),
               SafeArea(
                 child: LayoutBuilder(
@@ -98,10 +96,9 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                               children: [
                                 const _LoginBrand(),
                                 SizedBox(height: compact ? 24 : 34),
-                                _LoginAvatar(compact: compact),
                                 SizedBox(height: compact ? 16 : 20),
                                 AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 180),
+                                  duration: Duration.zero,
                                   child: Column(
                                     key: ValueKey(_registerMode),
                                     children: [
@@ -114,7 +111,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                           color: _navy,
                                           fontSize: compact ? 25 : 29,
                                           height: 1.08,
-                                          fontWeight: FontWeight.w900,
+                                          fontWeight: FontWeight.w700,
                                           letterSpacing: -.7,
                                         ),
                                       ),
@@ -126,7 +123,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           color: _muted,
-                                          fontSize: compact ? 13 : 14,
+                                          fontSize: 16,
                                           height: 1.35,
                                         ),
                                       ),
@@ -209,7 +206,6 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                   const SizedBox(height: 18),
                                   _GoogleButton(onTap: _continueWithGoogle),
                                 ],
-                                const Spacer(),
                                 const SizedBox(height: 24),
                                 Wrap(
                                   alignment: WrapAlignment.center,
@@ -231,7 +227,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                         _registerMode ? 'Masuk' : 'Daftar',
                                         style: const TextStyle(
                                           color: _deepTeal,
-                                          fontWeight: FontWeight.w900,
+                                          fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                     ),
@@ -277,42 +273,9 @@ class _LoginBrand extends StatelessWidget {
               ),
             ],
           ),
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
         ),
       ],
-    );
-  }
-}
-
-class _LoginAvatar extends StatelessWidget {
-  final bool compact;
-
-  const _LoginAvatar({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    final size = compact ? 104.0 : 124.0;
-    return Center(
-      child: Container(
-        width: size,
-        height: size,
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .72),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: _SkinLoginPageState._teal.withValues(alpha: .13),
-              blurRadius: 22,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Image.asset(
-          'lib/assets/images/start_avatar.png',
-          fit: BoxFit.contain,
-        ),
-      ),
     );
   }
 }
@@ -366,15 +329,15 @@ class _AuthField extends StatelessWidget {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(SkinTokens.radius),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFDCEBE7)),
+          borderRadius: BorderRadius.circular(SkinTokens.radius),
+          borderSide: const BorderSide(color: SkinTokens.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(SkinTokens.radius),
           borderSide: const BorderSide(
             color: _SkinLoginPageState._teal,
             width: 1.7,
@@ -399,13 +362,14 @@ class _PrimaryAuthButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: _SkinLoginPageState._teal,
         foregroundColor: Colors.white,
-        minimumSize: const Size.fromHeight(57),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        minimumSize: const Size.fromHeight(52),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(SkinTokens.radius)),
         elevation: 0,
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -425,8 +389,9 @@ class _GoogleButton extends StatelessWidget {
         foregroundColor: _SkinLoginPageState._navy,
         backgroundColor: Colors.white.withValues(alpha: .92),
         minimumSize: const Size.fromHeight(55),
-        side: const BorderSide(color: Color(0xFFD8E7E3)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        side: const BorderSide(color: SkinTokens.border),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(SkinTokens.radius)),
       ),
       child: const FittedBox(
         fit: BoxFit.scaleDown,
@@ -438,7 +403,7 @@ class _GoogleButton extends StatelessWidget {
             SizedBox(width: 11),
             Text(
               'Masuk dengan Google',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -457,7 +422,7 @@ class _GoogleMark extends StatelessWidget {
       style: TextStyle(
         color: Color(0xFF4285F4),
         fontSize: 20,
-        fontWeight: FontWeight.w900,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -470,13 +435,13 @@ class _OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Row(
       children: [
-        Expanded(child: Divider(color: Color(0xFFD7E4E1))),
+        Expanded(child: Divider(color: SkinTokens.border)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 13),
           child:
               Text('atau', style: TextStyle(color: _SkinLoginPageState._muted)),
         ),
-        Expanded(child: Divider(color: Color(0xFFD7E4E1))),
+        Expanded(child: Divider(color: SkinTokens.border)),
       ],
     );
   }

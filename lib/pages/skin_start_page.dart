@@ -2,21 +2,23 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../theme/skin_theme.dart';
+
 class SkinStartPage extends StatelessWidget {
   const SkinStartPage({super.key});
 
-  static const _deepTeal = Color(0xFF064E48);
-  static const _teal = Color(0xFF168F7C);
-  static const _muted = Color(0xFF8BA7A2);
+  static const _deepTeal = SkinTokens.primaryDark;
+  static const _teal = SkinTokens.primary;
+  static const _muted = SkinTokens.muted;
   static const _assetBase = 'lib/assets/images';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FBF7),
+      backgroundColor: SkinTokens.background,
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -25,6 +27,7 @@ class SkinStartPage extends StatelessWidget {
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
               ),
+              ColoredBox(color: Colors.white.withValues(alpha: .45)),
               SafeArea(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -32,7 +35,7 @@ class SkinStartPage extends StatelessWidget {
                     final compact = width < 350;
                     final contentHeight = math.max(
                       constraints.maxHeight,
-                      compact ? 700.0 : 780.0,
+                      compact ? 600.0 : 680.0,
                     );
 
                     return SingleChildScrollView(
@@ -53,9 +56,8 @@ class SkinStartPage extends StatelessWidget {
                               _JourneyTitle(compact: compact),
                               const SizedBox(height: 14),
                               Text(
-                                'Jika kamu ingin kulitmu bersinar sepertiku,\n'
-                                'kamu harus merawat kulitmu\n'
-                                '-anjazz.',
+                                'Kenali kondisi kulitmu, catat perubahan,\n'
+                                'dan pahami perawatan dasarnya.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: _muted,
@@ -70,7 +72,7 @@ class SkinStartPage extends StatelessWidget {
                               ),
                               SizedBox(height: contentHeight * .018),
                               _StartButton(compact: compact),
-                              SizedBox(height: contentHeight * .110),
+                              SizedBox(height: contentHeight * .055),
                             ],
                           ),
                         ),
@@ -117,7 +119,7 @@ class _Brand extends StatelessWidget {
           style: const TextStyle(
             fontSize: 25,
             letterSpacing: -.8,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -127,187 +129,25 @@ class _Brand extends StatelessWidget {
 
 class _JourneyTitle extends StatelessWidget {
   final bool compact;
-
   const _JourneyTitle({required this.compact});
-
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        Text.rich(
-          TextSpan(
-            children: [
-              const TextSpan(
-                text: 'Start your\n',
-                style: TextStyle(color: SkinStartPage._deepTeal),
-              ),
-              TextSpan(
-                text: 'skin journey',
-                style: TextStyle(
-                  foreground: Paint()
-                    ..shader = const LinearGradient(
-                      colors: [Color(0xFF1BA18E), Color(0xFF087B6B)],
-                    ).createShader(const Rect.fromLTWH(0, 0, 280, 50)),
-                ),
-              ),
-            ],
-          ),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: compact ? 44 : 50,
-            height: .98,
-            letterSpacing: -1.8,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        Positioned(
-          right: compact ? 2 : 7,
-          bottom: compact ? 8 : 10,
-          child: const _AccentBurst(),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Text('Start your\nskin journey',
+      textAlign: TextAlign.center,
+      style: TextStyle(
+          fontSize: compact ? 38 : 44,
+          height: 1.08,
+          letterSpacing: -1.2,
+          fontWeight: FontWeight.w700,
+          color: SkinTokens.primaryDark));
 }
 
 class _JourneyScene extends StatelessWidget {
   final bool compact;
-
   const _JourneyScene({required this.compact});
-
   @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final sceneWidth = constraints.maxWidth;
-        final sceneHeight = constraints.maxHeight;
-        final avatarSize = math.min(
-          compact ? 230.0 : 285.0,
-          math.min(sceneWidth * .82, sceneHeight * .80),
-        );
-        final tileSize = compact ? 68.0 : 78.0;
-
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: CustomPaint(painter: _ConnectorPainter()),
-            ),
-            Align(
-              alignment: const Alignment(0, -.02),
-              child: Image.asset(
-                '${SkinStartPage._assetBase}/start_avatar.png',
-                width: avatarSize,
-                height: avatarSize,
-                fit: BoxFit.contain,
-              ),
-            ),
-            Positioned(
-              left: sceneWidth * .02,
-              top: sceneHeight * .10,
-              child: _FloatingTile(
-                size: tileSize,
-                angle: -.10,
-                child: const CustomPaint(painter: _SkinLayerPainter()),
-              ),
-            ),
-            Positioned(
-              right: sceneWidth * .02,
-              top: sceneHeight * .12,
-              child: _FloatingTile(
-                size: tileSize,
-                angle: .10,
-                child: const Icon(
-                  Icons.water_drop_rounded,
-                  color: Color(0xFF67BEEA),
-                  size: 39,
-                ),
-              ),
-            ),
-            Positioned(
-              left: sceneWidth * .03,
-              bottom: sceneHeight * .08,
-              child: _FloatingTile(
-                size: tileSize,
-                angle: -.09,
-                child: const Icon(
-                  Icons.bar_chart_rounded,
-                  color: Color(0xFF7AD5B7),
-                  size: 42,
-                ),
-              ),
-            ),
-            Positioned(
-              right: sceneWidth * .03,
-              bottom: sceneHeight * .07,
-              child: _FloatingTile(
-                size: tileSize,
-                angle: .10,
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Color(0xFF79D7B6),
-                  size: 46,
-                ),
-              ),
-            ),
-            Positioned(
-              left: sceneWidth * .23,
-              top: sceneHeight * .30,
-              child: const _MiniBurst(),
-            ),
-            Positioned(
-              right: sceneWidth * .21,
-              bottom: sceneHeight * .28,
-              child: const Icon(
-                Icons.auto_awesome_rounded,
-                color: Color(0xFF47C2AC),
-                size: 22,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _FloatingTile extends StatelessWidget {
-  final double size;
-  final double angle;
-  final Widget child;
-
-  const _FloatingTile({
-    required this.size,
-    required this.angle,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: angle,
-      child: Container(
-        width: size,
-        height: size,
-        padding: EdgeInsets.all(size * .18),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .84),
-          borderRadius: BorderRadius.circular(size * .26),
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: SkinStartPage._teal.withValues(alpha: .10),
-              blurRadius: 16,
-              offset: const Offset(0, 7),
-            ),
-          ],
-        ),
-        child: child,
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+      child: Image.asset('${SkinStartPage._assetBase}/start_avatar.png',
+          width: compact ? 220 : 260, fit: BoxFit.contain));
 }
 
 class _StartButton extends StatelessWidget {
@@ -322,21 +162,13 @@ class _StartButton extends StatelessWidget {
       child: InkWell(
         key: const Key('start-button'),
         onTap: () => Navigator.of(context).pushReplacementNamed('/login'),
-        borderRadius: BorderRadius.circular(34),
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
         child: Ink(
-          height: compact ? 56 : 62,
+          height: 52,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF169481), Color(0xFF087B6D)],
-            ),
-            borderRadius: BorderRadius.circular(34),
-            boxShadow: [
-              BoxShadow(
-                color: SkinStartPage._deepTeal.withValues(alpha: .12),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            color: SkinTokens.primary,
+            borderRadius: BorderRadius.circular(SkinTokens.radius),
+            boxShadow: SkinTokens.shadows,
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -348,8 +180,8 @@ class _StartButton extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -392,126 +224,4 @@ class _SkinMarkPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _SkinLayerPainter extends CustomPainter {
-  const _SkinLayerPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(1, size.height * .18, size.width - 2, size.height * .62),
-      const Radius.circular(8),
-    );
-    canvas.drawRRect(rect, Paint()..color = const Color(0xFFFFD9C5));
-    final wave = Path()
-      ..moveTo(1, size.height * .45)
-      ..cubicTo(
-        size.width * .22,
-        size.height * .30,
-        size.width * .34,
-        size.height * .58,
-        size.width * .54,
-        size.height * .43,
-      )
-      ..cubicTo(
-        size.width * .72,
-        size.height * .29,
-        size.width * .83,
-        size.height * .51,
-        size.width - 1,
-        size.height * .35,
-      )
-      ..lineTo(size.width - 1, size.height * .18)
-      ..lineTo(1, size.height * .18)
-      ..close();
-    canvas.drawPath(wave, Paint()..color = const Color(0xFFFFB69F));
-    final dot = Paint()..color = const Color(0xFFF4A98E);
-    canvas.drawCircle(Offset(size.width * .24, size.height * .62), 2.5, dot);
-    canvas.drawCircle(Offset(size.width * .72, size.height * .61), 2.5, dot);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ConnectorPainter extends CustomPainter {
-  const _ConnectorPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = const Color(0xFF5FC7AE).withValues(alpha: .36);
-    final center = Offset(size.width / 2, size.height * .55);
-    canvas.drawLine(Offset(size.width * .16, size.height * .23), center, paint);
-    canvas.drawLine(Offset(size.width * .84, size.height * .25), center, paint);
-    canvas.drawLine(Offset(size.width * .17, size.height * .78), center, paint);
-    canvas.drawLine(Offset(size.width * .83, size.height * .80), center, paint);
-    canvas.drawCircle(center, math.min(size.width, size.height) * .30, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _AccentBurst extends StatelessWidget {
-  const _AccentBurst();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 35,
-      height: 48,
-      child: Stack(
-        children: [
-          Positioned(left: 1, top: 2, child: _Ray(angle: .58)),
-          Positioned(right: 0, top: 18, child: _Ray(angle: 0)),
-          Positioned(left: 4, bottom: 0, child: _Ray(angle: -.55)),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniBurst extends StatelessWidget {
-  const _MiniBurst();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 42,
-      height: 42,
-      child: Stack(
-        children: [
-          Positioned(left: 0, top: 5, child: _Ray(angle: .70, length: 21)),
-          Positioned(right: 3, top: 0, child: _Ray(angle: .15, length: 22)),
-          Positioned(right: 0, bottom: 2, child: _Ray(angle: -.65, length: 20)),
-        ],
-      ),
-    );
-  }
-}
-
-class _Ray extends StatelessWidget {
-  final double angle;
-  final double length;
-
-  const _Ray({required this.angle, this.length = 19});
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: angle,
-      child: Container(
-        width: length,
-        height: 7,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFC64D),
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-  }
 }

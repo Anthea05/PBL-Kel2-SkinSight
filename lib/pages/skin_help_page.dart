@@ -1,66 +1,90 @@
 import 'package:flutter/material.dart';
+
+import '../theme/skin_theme.dart';
 import 'package:flutter/services.dart';
 
-import 'skin_quiz_page.dart';
+import '../widgets/skin_bottom_nav.dart';
 
 class SkinHelpPage extends StatelessWidget {
-  const SkinHelpPage({super.key});
+  final bool embedded;
 
-  static const _teal = Color(0xFF168A78);
-  static const _deepTeal = Color(0xFF087467);
-  static const _navy = Color(0xFF13263A);
-  static const _cream = Color(0xFFFFF8EB);
-  static const _sky = Color(0xFF2FC1ED);
-  static const _coral = Color(0xFFFF6B70);
+  const SkinHelpPage({super.key, this.embedded = false});
+
+  static const _teal = SkinTokens.primary;
+  static const _deepTeal = SkinTokens.primaryDark;
+  static const _navy = SkinTokens.ink;
+  static const _coral = SkinTokens.coral;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _sky,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF2FC1ED), Color(0xFFE9F8F3), _cream],
-                  stops: [0, .30, 1],
-                ),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 350;
-                  return Column(
-                    children: [
-                      _HelpHeader(compact: compact),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          key: const Key('help-scroll'),
-                          physics: const ClampingScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(
-                            compact ? 12 : 18,
-                            4,
-                            compact ? 12 : 18,
-                            26,
-                          ),
-                          child: Column(
-                            children: [
-                              _WelcomeCard(compact: compact),
-                              const SizedBox(height: 8),
-                              const _HelpTopicsPanel(),
-                            ],
-                          ),
-                        ),
+    final content = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(color: SkinTokens.background),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 350;
+              return Column(
+                children: [
+                  if (embedded)
+                    _EmbeddedHelpHeader(compact: compact)
+                  else
+                    _HelpHeader(compact: compact),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      key: const Key('help-scroll'),
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        compact ? 12 : 18,
+                        4,
+                        compact ? 12 : 18,
+                        26,
                       ),
-                      _HelpBottomNav(compact: compact),
-                    ],
-                  );
-                },
-              ),
-            ),
+                      child: Column(
+                        children: [
+                          _WelcomeCard(compact: compact),
+                          const SizedBox(height: 8),
+                          const _HelpTopicsPanel(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (embedded) return content;
+
+    return Scaffold(
+      backgroundColor: SkinTokens.background,
+      body: SafeArea(bottom: false, child: content),
+      bottomNavigationBar: const SkinBottomNav(currentIndex: 2),
+    );
+  }
+}
+
+class _EmbeddedHelpHeader extends StatelessWidget {
+  final bool compact;
+
+  const _EmbeddedHelpHeader({required this.compact});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(compact ? 18 : 22, 18, 18, 8),
+      child: const Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'Pusat Bantuan',
+          style: TextStyle(
+            color: SkinHelpPage._navy,
+            fontSize: 27,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -104,7 +128,7 @@ class _HelpHeader extends StatelessWidget {
               style: TextStyle(
                 color: SkinHelpPage._navy,
                 fontSize: compact ? 23 : 27,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -117,62 +141,16 @@ class _HelpHeader extends StatelessWidget {
 
 class _WelcomeCard extends StatelessWidget {
   final bool compact;
-
   const _WelcomeCard({required this.compact});
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        compact ? 6 : 10,
-        compact ? 8 : 12,
-        compact ? 6 : 10,
-        6,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: compact ? 56 : 64,
-            height: compact ? 56 : 64,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .82),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.volunteer_activism_rounded,
-              color: SkinHelpPage._teal,
-              size: 34,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Ada yang bisa kami bantu?',
-                  style: TextStyle(
-                    color: SkinHelpPage._navy,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  'Pilih topik di bawah untuk menemukan informasi yang kamu butuhkan.',
-                  style: TextStyle(
-                    color: SkinHelpPage._navy.withValues(alpha: .66),
-                    fontSize: compact ? 12 : 13,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.fromLTRB(4, 4, 4, 20),
+        child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+                'Panduan penggunaan, privasi, dan jawaban untuk pertanyaanmu.',
+                style: SkinTokens.body)),
+      );
 }
 
 class _HelpTopicsPanel extends StatelessWidget {
@@ -182,23 +160,15 @@ class _HelpTopicsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: SkinHelpPage._deepTeal.withValues(alpha: .09),
-            blurRadius: 22,
-            offset: const Offset(0, 9),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
+        boxShadow: SkinTokens.shadows,
       ),
       child: Material(
-        color: Colors.white.withValues(alpha: .96),
+        color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
-          side: BorderSide(
-            color: SkinHelpPage._deepTeal.withValues(alpha: .08),
-          ),
+          borderRadius: BorderRadius.circular(SkinTokens.radius),
+          side: BorderSide.none,
         ),
         child: const Column(
           children: [
@@ -214,7 +184,7 @@ class _HelpTopicsPanel extends StatelessWidget {
             _HelpTopic(
               key: Key('help-faq'),
               icon: Icons.question_answer_outlined,
-              color: Color(0xFF36A7E8),
+              color: SkinTokens.blue,
               title: 'FAQ',
               subtitle: 'Jawaban untuk pertanyaan yang sering muncul.',
               child: _FaqContent(),
@@ -232,7 +202,7 @@ class _HelpTopicsPanel extends StatelessWidget {
             _HelpTopic(
               key: Key('help-privacy'),
               icon: Icons.privacy_tip_outlined,
-              color: Color(0xFF9B75D6),
+              color: SkinTokens.primary,
               title: 'Kebijakan privasi',
               subtitle: 'Cara kami memperlakukan foto dan datamu.',
               child: _PrivacyContent(),
@@ -241,7 +211,7 @@ class _HelpTopicsPanel extends StatelessWidget {
             _HelpTopic(
               key: Key('help-about'),
               icon: Icons.info_outline_rounded,
-              color: Color(0xFFFFA629),
+              color: SkinTokens.amber,
               title: 'Tentang SkinSight',
               subtitle: 'Kenali tujuan dan batasan aplikasi.',
               child: _AboutContent(),
@@ -260,9 +230,9 @@ class _TopicDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Divider(
       height: 1,
-      indent: 76,
+      indent: 52,
       endIndent: 16,
-      color: Color(0xFFE8ECEC),
+      color: SkinTokens.border,
     );
   }
 }
@@ -288,23 +258,15 @@ class _HelpTopic extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
         childrenPadding: const EdgeInsets.fromLTRB(17, 0, 17, 18),
-        leading: Container(
-          width: 45,
-          height: 45,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: .13),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Icon(icon, color: color, size: 25),
-        ),
+        leading: Icon(icon, color: SkinTokens.primary, size: 23),
         title: Text(
           title,
           style: const TextStyle(
             color: SkinHelpPage._navy,
             fontSize: 16,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
           ),
         ),
         subtitle: Padding(
@@ -312,15 +274,15 @@ class _HelpTopic extends StatelessWidget {
           child: Text(
             subtitle,
             style: const TextStyle(
-              color: Color(0xFF718392),
-              fontSize: 12,
+              color: SkinTokens.muted,
+              fontSize: 14,
             ),
           ),
         ),
         iconColor: SkinHelpPage._deepTeal,
-        collapsedIconColor: const Color(0xFF718392),
+        collapsedIconColor: SkinTokens.muted,
         children: [
-          const Divider(color: Color(0xFFE8ECEC)),
+          const Divider(color: SkinTokens.border),
           const SizedBox(height: 10),
           child,
         ],
@@ -373,7 +335,7 @@ class _StepRow extends StatelessWidget {
               '$number',
               style: const TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -386,14 +348,14 @@ class _StepRow extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: SkinHelpPage._navy,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   body,
                   style: const TextStyle(
-                    color: Color(0xFF6C7F8D),
+                    color: SkinTokens.muted,
                     height: 1.35,
                   ),
                 ),
@@ -424,7 +386,7 @@ class _FaqContent extends StatelessWidget {
         ),
         _FaqItem(
           'Apakah saya bisa mengulang scan?',
-          'Bisa. Kembali ke Home lalu tekan tombol scan di bagian tengah navigasi.',
+          'Bisa. Kembali ke Home lalu pilih Scan Instan atau Scan Pemantauan.',
         ),
       ],
     );
@@ -448,14 +410,14 @@ class _FaqItem extends StatelessWidget {
             question,
             style: const TextStyle(
               color: SkinHelpPage._navy,
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             answer,
             style: const TextStyle(
-              color: Color(0xFF6C7F8D),
+              color: SkinTokens.muted,
               height: 1.4,
             ),
           ),
@@ -475,7 +437,7 @@ class _ContactContent extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF2F2),
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
       ),
       child: Row(
         children: [
@@ -487,11 +449,11 @@ class _ContactContent extends StatelessWidget {
                   'Email dukungan',
                   style: TextStyle(
                     color: SkinHelpPage._navy,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 SizedBox(height: 3),
-                Text(email, style: TextStyle(color: Color(0xFF6C7F8D))),
+                Text(email, style: TextStyle(color: SkinTokens.muted)),
               ],
             ),
           ),
@@ -521,7 +483,7 @@ class _PrivacyContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Text(
       'Foto digunakan untuk menampilkan hasil analisis pada perangkatmu. Hasil hanya disimpan ketika kamu memilih tombol Simpan. Jangan membagikan hasil yang memuat informasi pribadi kepada pihak yang tidak dipercaya.',
-      style: TextStyle(color: Color(0xFF6C7F8D), height: 1.45),
+      style: TextStyle(color: SkinTokens.muted, height: 1.45),
     );
   }
 }
@@ -536,160 +498,17 @@ class _AboutContent extends StatelessWidget {
       children: [
         Text(
           'SkinSight membantu pengguna mengenali kondisi kulit melalui kuis dan foto wajah dengan pengalaman yang ringan dan mudah dipahami.',
-          style: TextStyle(color: Color(0xFF6C7F8D), height: 1.45),
+          style: TextStyle(color: SkinTokens.muted, height: 1.45),
         ),
         SizedBox(height: 10),
         Text(
           'Versi 1.1.0',
           style: TextStyle(
             color: SkinHelpPage._deepTeal,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
-    );
-  }
-}
-
-class _HelpBottomNav extends StatelessWidget {
-  final bool compact;
-
-  const _HelpBottomNav({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    final centerSize = compact ? 68.0 : 76.0;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 22, 16, 12),
-      child: SizedBox(
-        height: compact ? 72 : 78,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: compact ? 24 : 34),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .98),
-            borderRadius: BorderRadius.circular(34),
-            boxShadow: [
-              BoxShadow(
-                color: SkinHelpPage._deepTeal.withValues(alpha: .12),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _HelpNavItem(
-                    icon: Icons.home_outlined,
-                    label: 'Home',
-                    onTap: () => Navigator.of(context).pop(),
-                  ),
-                  const _HelpNavItem(
-                    icon: Icons.help_rounded,
-                    label: 'Bantuan',
-                    selected: true,
-                  ),
-                ],
-              ),
-              Positioned(
-                top: compact ? -18 : -22,
-                child: GestureDetector(
-                  key: const Key('help-open-quiz'),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const SkinQuizPage(),
-                    ),
-                  ),
-                  child: Container(
-                    width: centerSize,
-                    height: centerSize,
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: SkinHelpPage._teal.withValues(alpha: .22),
-                          blurRadius: 20,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: const DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: SkinHelpPage._teal,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.center_focus_strong_rounded,
-                        color: Colors.white,
-                        size: 34,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HelpNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  const _HelpNavItem({
-    required this.icon,
-    required this.label,
-    this.selected = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? SkinHelpPage._deepTeal : const Color(0xFF78878A);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: SizedBox(
-        width: 70,
-        height: double.infinity,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w900 : FontWeight.w500,
-              ),
-            ),
-            if (selected) ...[
-              const SizedBox(height: 3),
-              Container(
-                width: 5,
-                height: 5,
-                decoration: const BoxDecoration(
-                  color: SkinHelpPage._teal,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
     );
   }
 }

@@ -1,12 +1,24 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../widgets/shimmer_skeleton.dart';
+import '../data/skin_journey_store.dart';
+import '../data/skin_notification_center.dart';
+import 'skin_progress_page.dart';
 import 'package:provider/provider.dart';
 
 import '../models/profile_data.dart';
+import '../widgets/skin_bottom_nav.dart';
+import 'skin_about_page.dart';
+import 'skin_education_page.dart';
 import 'skin_help_page.dart';
+import 'skin_notifications_page.dart';
 import 'skin_quiz_page.dart';
+import 'skin_scan_page.dart';
 
-class SkinHomePage extends StatelessWidget {
-  const SkinHomePage({super.key});
+class SkinHomePage extends StatefulWidget {
+  final int initialIndex;
+
+  const SkinHomePage({super.key, this.initialIndex = 0});
 
   static const String assetBase = 'lib/assets/images';
   static const Color green = Color(0xFF168A78);
@@ -18,222 +30,225 @@ class SkinHomePage extends StatelessWidget {
   static const Color sky = Color(0xFF35A9EE);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F2F2),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: const SizedBox.expand(child: _ResponsiveHome()),
-          ),
-        ),
-      ),
-    );
-  }
+  State<SkinHomePage> createState() => _SkinHomePageState();
 }
 
-class _ResponsiveHome extends StatelessWidget {
-  const _ResponsiveHome();
+/// Menjaga tampilan Home lama dan footer empat tab dari versi baru.
+/// Tab memakai IndexedStack agar tidak dihancurkan setiap berpindah menu.
+class _SkinHomePageState extends State<SkinHomePage> {
+  late int _currentIndex;
+  // Cache first-open skeleton status across Home route instances.
+  static final Set<int> _loaded = <int>{};
+  Timer? _firstLoad;
 
   @override
-  Widget build(BuildContext context) {
-    return ClipRect(
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [SkinHomePage.cream, Color(0xFFF8F9EE)],
-          ),
-        ),
-        child: Column(
-          children: [
-            const Expanded(child: _HomeScrollView()),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-              child: _BottomNav(
-                compact: MediaQuery.sizeOf(context).width < 350,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex.clamp(0, 3);
+    _startFirstLoad();
   }
+
+  void _startFirstLoad() {
+    if (_loaded.contains(_currentIndex)) return;
+    _firstLoad?.cancel();
+    // First opening of each tab only. The four tabs remain alive afterward.
+    _firstLoad = Timer(const Duration(milliseconds: 260), () {
+      if (mounted) setState(() => _loaded.add(_currentIndex));
+    });
+  }
+
+  @override
+  void dispose() {
+    _firstLoad?.cancel();
+    super.dispose();
+  }
+
+  void _selectTab(int i) {
+    if (i == _currentIndex) return;
+    setState(() => _currentIndex = i);
+    _startFirstLoad();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: SkinHomePage.cream,
+        body: SafeArea(
+            bottom: false,
+            child: Center(
+                child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: SizedBox.expand(
+                  child: Stack(children: [
+                IndexedStack(index: _currentIndex, children: const [
+                  _HomeScrollView(key: PageStorageKey('home-tab')),
+                  SkinEducationPage(
+                    embedded: true,
+                    key: PageStorageKey('education-tab'),
+                  ),
+                  SkinHelpPage(embedded: true, key: PageStorageKey('help-tab')),
+                  SkinAboutPage(
+                      embedded: true, key: PageStorageKey('about-tab')),
+                ]),
+                if (!_loaded.contains(_currentIndex))
+                  Positioned.fill(
+                    child: ColoredBox(
+                      color: SkinHomePage.cream,
+                      child: ShimmerLoading(
+                          child: ListView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(20),
+                        children: const [
+                          SkeletonBox(height: 135),
+                          SizedBox(height: 20),
+                          SkeletonBox(width: 170, height: 24),
+                          SizedBox(height: 18),
+                          SkeletonBox(height: 115),
+                          SizedBox(height: 12),
+                          SkeletonBox(height: 115)
+                        ],
+                      )),
+                    ),
+                  ),
+              ])),
+            ))),
+        bottomNavigationBar: SkinBottomNav(
+          currentIndex: _currentIndex,
+          onSelected: _selectTab,
+        ),
+      );
 }
 
 class _HomeScrollView extends StatelessWidget {
-  const _HomeScrollView();
-
+  const _HomeScrollView({super.key});
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 350;
-        final horizontal = compact ? 14.0 : 20.0;
-        final heroHeight = 430 * constraints.maxWidth / 390;
-        final lowerMinHeight = (constraints.maxHeight - heroHeight + 22).clamp(
-          0.0,
-          double.infinity,
-        );
-
-        return CustomScrollView(
-          physics: const ClampingScrollPhysics(),
-          slivers: [
-            const SliverToBoxAdapter(child: _Hero()),
-            SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: const Offset(0, -22),
-                child: Container(
-                  constraints: BoxConstraints(minHeight: lowerMinHeight),
-                  padding: EdgeInsets.fromLTRB(horizontal, 28, horizontal, 0),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        SkinHomePage.cream,
-                        Color(0xFFFFFAF0),
-                        Color(0xFFF4F8EC),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.elliptical(220, 34),
-                    ),
-                  ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Positioned.fill(
-                        child: IgnorePointer(child: _LowerDecorations()),
-                      ),
-                      Column(
-                        children: [
-                          _ActivityHeader(compact: compact),
-                          const SizedBox(height: 16),
-                          _ScanCard(compact: compact),
-                          const SizedBox(height: 16),
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              key: const Key('open-history'),
-                              onTap: () =>
-                                  Navigator.of(context).pushNamed('/history'),
-                              borderRadius: BorderRadius.circular(
-                                compact ? 24 : 28,
-                              ),
-                              child: _HistoryCard(compact: compact),
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      final compact = constraints.maxWidth < 350;
+      final h = (constraints.maxWidth / 390).clamp(.84, 1.18);
+      final horizontal = compact ? 15.0 : 20.0;
+      return CustomScrollView(physics: const ClampingScrollPhysics(), slivers: [
+        SliverToBoxAdapter(child: _Hero(scale: h)),
+        SliverToBoxAdapter(
+            child: Transform.translate(
+          offset: const Offset(0, -12),
+          child: Container(
+            padding: EdgeInsets.fromLTRB(horizontal, 27, horizontal, 28),
+            decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      SkinHomePage.cream,
+                      Color(0xFFFFFAF0),
+                      Color(0xFFF4F8EC),
+                    ]),
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.elliptical(220, 28))),
+            child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SkinJourneyCard(),
+                  SizedBox(height: 26),
+                  _RecentActivitySection(),
+                  SizedBox(height: 22),
+                ]),
+          ),
+        )),
+      ]);
+    });
   }
 }
 
 class _Hero extends StatelessWidget {
-  const _Hero();
-
+  final double scale;
+  const _Hero({required this.scale});
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final scale = width / 390;
-        final fontScale = scale.clamp(.90, 1.18);
-
-        return SizedBox(
-          height: 430 * scale,
-          child: Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              const Positioned.fill(
-                child: DecoratedBox(
+    final h = 334 * scale;
+    return SizedBox(
+        height: h,
+        child: Stack(clipBehavior: Clip.hardEdge, children: [
+          const Positioned.fill(
+              child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF14BDF0),
-                        Color(0xFF5ED6F3),
-                        Color(0xFFE7F7EE),
-                      ],
-                      stops: [0, .67, 1],
-                    ),
-                  ),
-                ),
-              ),
-              const Positioned.fill(child: _HeroDecorations()),
-              const Positioned(
-                left: 0,
-                right: 0,
-                bottom: -1,
-                height: 54,
-                child: _SkinLayerTransition(),
-              ),
-              Positioned(
-                left: 20 * scale,
-                right: 20 * scale,
-                top: 18 * scale,
-                child: _Header(scale: fontScale),
-              ),
-              Positioned(
-                left: 18 * scale,
-                top: 108 * scale,
-                width: 166 * scale,
-                child: Image.asset(
+                      gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                Color(0xFF14BDF0),
+                Color(0xFF5ED6F3),
+                Color(0xFFE7F7EE),
+              ],
+                          stops: [
+                0,
+                .67,
+                1
+              ])))),
+          const Positioned.fill(child: _HeroDecorations()),
+          const Positioned(
+              left: 0,
+              right: 0,
+              bottom: -1,
+              height: 54,
+              child: _SkinLayerTransition()),
+          Positioned(
+              left: 20 * scale,
+              right: 20 * scale,
+              top: 15 * scale,
+              child: _Header(scale: scale)),
+          Positioned(
+              left: 16 * scale,
+              top: 96 * scale,
+              width: 176 * scale,
+              height: 132 * scale,
+              child: Image.asset(
                   '${SkinHomePage.assetBase}/skin_analyze_title.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-              Positioned(
-                right: 8 * scale,
-                top: 66 * scale,
-                width: 187 * scale,
-                height: 250 * scale,
-                child: Image.asset(
-                  '${SkinHomePage.assetBase}/skin_girl.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-              Positioned(
-                right: -3 * scale,
-                top: 188 * scale,
-                width: 190 * scale,
-                height: 143 * scale,
-                child: Image.asset(
-                  '${SkinHomePage.assetBase}/skin_magnifier.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-              Positioned(
-                left: 17 * scale,
-                top: 235 * scale,
-                width: 188 * scale,
-                child: _DescriptionCard(scale: fontScale),
-              ),
-              Positioned(
-                left: 16 * scale,
-                top: 318 * scale,
-                width: 218 * scale,
-                child: _TryNow(scale: scale),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+                  fit: BoxFit.contain)),
+          Positioned(
+              key: const Key('home-skin-girl'),
+              top: 70 * scale,
+              right: 4 * scale,
+              width: 158 * scale,
+              height: 218 * scale,
+              child: Image.asset('${SkinHomePage.assetBase}/skin_girl.png',
+                  fit: BoxFit.contain)),
+          Positioned(
+              bottom: 55 * scale,
+              left: 22 * scale,
+              width: 218 * scale,
+              child: _JourneyButton(scale: scale)),
+        ]));
   }
+}
+
+class _JourneyButton extends StatelessWidget {
+  final double scale;
+  const _JourneyButton({required this.scale});
+  @override
+  Widget build(BuildContext context) => Material(
+        color: SkinHomePage.green,
+        borderRadius: BorderRadius.circular(35),
+        child: InkWell(
+          key: const Key('open-skin-journey'),
+          borderRadius: BorderRadius.circular(35),
+          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => SkinJourneyStore.instance.questionnaireDone
+                  ? const SkinScanPage()
+                  : const SkinQuizPage())),
+          child: Padding(
+              padding: EdgeInsets.symmetric(
+                  horizontal: 19 * scale, vertical: 12 * scale),
+              child: Row(children: [
+                const Expanded(
+                    child: Text('Mulai Scan',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white))),
+                const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+              ])),
+        ),
+      );
 }
 
 class _HeroDecorations extends StatelessWidget {
@@ -503,53 +518,6 @@ class _SkinLayerMotifPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _LowerDecorations extends StatelessWidget {
-  const _LowerDecorations();
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Stack(
-          children: [
-            Positioned(
-              left: -22,
-              top: 110,
-              width: 62,
-              height: 62,
-              child: Opacity(opacity: .14, child: const _Bubble()),
-            ),
-            Positioned(
-              right: -14,
-              top: 285,
-              width: 72,
-              height: 56,
-              child: Opacity(opacity: .14, child: const _MoleculeCluster()),
-            ),
-            Positioned(
-              left: -8,
-              bottom: 100,
-              width: 78,
-              height: 66,
-              child: Opacity(opacity: .13, child: const _SkinLayerMotif()),
-            ),
-            Positioned(
-              right: 18,
-              bottom: 38,
-              width: 20,
-              height: 20,
-              child: Opacity(
-                opacity: .22,
-                child: const _DropletAccent(color: SkinHomePage.sky),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
 class _SkinLayerTransition extends StatelessWidget {
   const _SkinLayerTransition();
 
@@ -645,19 +613,22 @@ class _Header extends StatelessWidget {
                           border: Border.all(color: Colors.white, width: 4),
                         ),
                         child: profile.photoBytes == null
-                            ? Text(
-                                _profileInitials(profile.name),
-                                style: TextStyle(
-                                  color: SkinHomePage.deepGreen,
-                                  fontSize: 13 * scale,
-                                  fontWeight: FontWeight.w900,
+                            ? Padding(
+                                padding: EdgeInsets.all(2 * scale),
+                                child: Image.asset(
+                                  '${SkinHomePage.assetBase}/start_avatar.png',
+                                  key: const Key('home-default-avatar'),
+                                  fit: BoxFit.contain,
+                                  filterQuality: FilterQuality.high,
                                 ),
                               )
                             : Image.memory(
                                 profile.photoBytes!,
+                                key: const Key('home-profile-photo'),
                                 width: avatarSize,
                                 height: avatarSize,
                                 fit: BoxFit.cover,
+                                gaplessPlayback: true,
                               ),
                       ),
                       SizedBox(width: 10 * scale),
@@ -695,331 +666,333 @@ class _Header extends StatelessWidget {
           ),
         ),
         SizedBox(width: 8 * scale),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: avatarSize,
-              height: avatarSize,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.notifications_none_rounded,
-                size: 25 * scale,
-                color: SkinHomePage.deepGreen,
-              ),
-            ),
-            Positioned(
-              top: 4,
-              right: 5,
-              child: Container(
-                width: 9 * scale,
-                height: 9 * scale,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF5C63),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-String _profileInitials(String name) {
-  final parts = name.trim().split(RegExp(r'\s+'));
-  if (parts.isEmpty || parts.first.isEmpty) return 'AK';
-  if (parts.length == 1) return parts.first[0].toUpperCase();
-  return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-}
-
-class _TryNow extends StatelessWidget {
-  final double scale;
-
-  const _TryNow({required this.scale});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: const Key('open-quiz-try'),
-        onTap: () => _openQuiz(context),
-        borderRadius: BorderRadius.circular(40 * scale),
-        child: Container(
-          height: 68 * scale,
-          padding: EdgeInsets.fromLTRB(
-            22 * scale,
-            6 * scale,
-            7 * scale,
-            6 * scale,
-          ),
-          decoration: BoxDecoration(
-            color: SkinHomePage.green,
-            borderRadius: BorderRadius.circular(40 * scale),
-            border: Border.all(color: Colors.white, width: 5 * scale),
-            boxShadow: [
-              BoxShadow(
-                color: SkinHomePage.deepGreen.withValues(alpha: .20),
-                blurRadius: 13 * scale,
-                offset: Offset(0, 6 * scale),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Try Now',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
+        AnimatedBuilder(
+          animation: Listenable.merge([
+            SkinJourneyStore.instance,
+            SkinNotificationCenter.instance,
+          ]),
+          builder: (context, _) {
+            final notifications =
+                SkinNotificationFeed.build(SkinJourneyStore.instance);
+            final hasUnread = notifications.any(
+              (item) => !SkinNotificationCenter.instance.isRead(item.id),
+            );
+            return Semantics(
+              button: true,
+              label: hasUnread
+                  ? 'Buka notifikasi, ada yang belum dibaca'
+                  : 'Buka notifikasi',
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Material(
                     color: Colors.white,
-                    fontSize: (22 * scale).clamp(18, 26),
-                    fontWeight: FontWeight.w900,
-                    shadows: const [
-                      Shadow(color: Color(0x33000000), offset: Offset(0, 2)),
-                    ],
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      key: const Key('open-notifications'),
+                      customBorder: const CircleBorder(),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const SkinNotificationsPage(),
+                        ),
+                      ),
+                      child: SizedBox(
+                        width: avatarSize,
+                        height: avatarSize,
+                        child: Icon(
+                          Icons.notifications_none_rounded,
+                          size: 25 * scale,
+                          color: SkinHomePage.deepGreen,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  if (hasUnread)
+                    Positioned(
+                      top: 4,
+                      right: 5,
+                      child: Container(
+                        key: const Key('home-notification-unread-dot'),
+                        width: 9 * scale,
+                        height: 9 * scale,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6B70),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-              Container(
-                width: 48 * scale,
-                height: 48 * scale,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: SkinHomePage.deepGreen,
-                  size: 28 * scale,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DescriptionCard extends StatelessWidget {
-  final double scale;
-
-  const _DescriptionCard({required this.scale});
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: -.035,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: 13 * scale,
-          vertical: 10 * scale,
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFEFC6),
-          borderRadius: BorderRadius.circular(20 * scale),
-          border: Border.all(color: Colors.white, width: 3 * scale),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF9A6A35).withValues(alpha: .12),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Text(
-          'Kulit yang sehat adalah\ncerminan dari kesehatan secara keseluruhan.\n— Dr. Murad',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12.5 * scale,
-            height: 1.25,
-            color: const Color(0xFF533B2B),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivityHeader extends StatelessWidget {
-  final bool compact;
-
-  const _ActivityHeader({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'Aktivitas Kulit',
-            maxLines: 1,
-            style: TextStyle(
-              fontSize: compact ? 21 : 24,
-              fontWeight: FontWeight.w900,
-              color: SkinHomePage.navy,
-            ),
-          ),
-        ),
-        Text(
-          'Lihat Semua',
-          style: TextStyle(
-            fontSize: compact ? 11 : 13,
-            color: SkinHomePage.deepGreen,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(width: 2),
-        const Icon(
-          Icons.chevron_right_rounded,
-          color: SkinHomePage.deepGreen,
-          size: 22,
+            );
+          },
         ),
       ],
     );
   }
 }
 
-class _ScanCard extends StatelessWidget {
-  final bool compact;
+/// Satu akses pemantauan di Home. Tidak ada kartu check-in / aktivitas ganda.
+class _SkinJourneyCard extends StatelessWidget {
+  const _SkinJourneyCard();
 
-  const _ScanCard({required this.compact});
+  @override
+  Widget build(BuildContext context) {
+    final store = SkinJourneyStore.instance;
+    return AnimatedBuilder(
+        animation: store,
+        builder: (context, _) {
+          final due = store.hasCheckinDue;
+          final hasBaseline = store.hasBaseline;
+          final next = store.nextCheckin;
+          final nextLabel =
+              next == null ? '' : '${next.day}/${next.month}/${next.year}';
+          return Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            child: InkWell(
+              key: const Key('home-open-skin-journey'),
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => const SkinProgressPage())),
+              child: Container(
+                padding: const EdgeInsets.all(19),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFD9E9E2)),
+                ),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 68,
+                              height: 68,
+                              child: Image.asset(
+                                '${SkinHomePage.assetBase}/cat_happy.png',
+                                key: const Key('home-journey-cat'),
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.high,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                  const Text('Skin Journey',
+                                      style: TextStyle(
+                                          fontSize: 21,
+                                          fontWeight: FontWeight.w900,
+                                          color: SkinHomePage.navy)),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                      hasBaseline
+                                          ? 'Lihat perjalanan dan riwayat kulitmu'
+                                          : 'Mulai catat perjalanan kulitmu',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          height: 1.3,
+                                          color: Color(0xFF667B7D))),
+                                ])),
+                            const Icon(Icons.chevron_right_rounded,
+                                color: SkinHomePage.deepGreen, size: 26),
+                          ]),
+                      const SizedBox(height: 18),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 13),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFFF0F8F5),
+                            borderRadius: BorderRadius.circular(14)),
+                        child: Row(children: [
+                          Icon(
+                              due
+                                  ? Icons.notifications_active_outlined
+                                  : Icons.calendar_month_outlined,
+                              color: SkinHomePage.deepGreen,
+                              size: 21),
+                          const SizedBox(width: 10),
+                          Expanded(
+                              child: Text(
+                                  !hasBaseline
+                                      ? 'Scan awal untuk membuka grafik dan timeline'
+                                      : due
+                                          ? 'Check-in minggu ini sudah tersedia'
+                                          : 'Check-in berikutnya: $nextLabel',
+                                  style: const TextStyle(
+                                      color: SkinHomePage.navy,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600))),
+                          if (due)
+                            const Text('Mulai →',
+                                style: TextStyle(
+                                    color: SkinHomePage.deepGreen,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800)),
+                        ]),
+                      ),
+                      if (hasBaseline) ...[
+                        const SizedBox(height: 13),
+                        Text(
+                            '${store.photos.length} foto tersimpan  ·  '
+                            '${store.checkins.length} check-in',
+                            style: const TextStyle(
+                                fontSize: 12, color: Color(0xFF667B7D))),
+                      ],
+                    ]),
+              ),
+            ),
+          );
+        });
+  }
+}
+
+class _RecentActivitySection extends StatelessWidget {
+  const _RecentActivitySection();
+
+  @override
+  Widget build(BuildContext context) {
+    final store = SkinJourneyStore.instance;
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        final activities = _latestActivities(store);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Aktivitas Terbaru',
+              style: TextStyle(
+                color: SkinHomePage.navy,
+                fontSize: 19,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (activities.isEmpty)
+              const _EmptyActivity()
+            else
+              SizedBox(
+                height: 142,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cardWidth =
+                        (constraints.maxWidth * .79).clamp(224.0, 300.0);
+                    return ListView.separated(
+                      key: const Key('recent-activity-list'),
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      itemCount: activities.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) => KeyedSubtree(
+                        key:
+                            ValueKey('recent-activity-${activities[index].id}'),
+                        child: SizedBox(
+                          width: cardWidth,
+                          child: _ActivityCard(activity: activities[index]),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  List<_RecentActivity> _latestActivities(SkinJourneyStore store) {
+    final activities = <_RecentActivity>[];
+    final photosInCheckins =
+        store.checkins.expand((checkin) => checkin.photoIds).toSet();
+
+    for (final checkin in store.checkins) {
+      final conditions = checkin.perClass.keys.toList();
+      final conditionLabel = conditions.isEmpty
+          ? 'Laporan rutin kulitmu berhasil disimpan.'
+          : '${conditions.take(2).join(' & ')}${conditions.length > 2 ? ' +${conditions.length - 2}' : ''} diperbarui.';
+      activities.add(_RecentActivity(
+        id: 'checkin-${checkin.date.microsecondsSinceEpoch}',
+        date: checkin.date,
+        title: 'Check-in selesai',
+        description: conditionLabel,
+        icon: Icons.task_alt_rounded,
+        accent: SkinHomePage.deepGreen,
+        iconBackground: const Color(0xFFE2F3EC),
+      ));
+    }
+
+    JourneyPhoto? oldestPhoto;
+    for (final photo in store.photos) {
+      if (oldestPhoto == null || photo.date.isBefore(oldestPhoto.date)) {
+        oldestPhoto = photo;
+      }
+    }
+
+    for (final photo in store.photos) {
+      if (photosInCheckins.contains(photo.id)) continue;
+      final isFirstScan = oldestPhoto?.id == photo.id &&
+          store.baselineDate != null &&
+          SkinJourneyStore.sameDay(photo.date, store.baselineDate!);
+      final findings = photo.visualFindings;
+      final description = findings.isNotEmpty
+          ? '${findings.take(2).join(' & ')}${findings.length > 2 ? ' +${findings.length - 2}' : ''} tercatat dari hasil analisismu.'
+          : photo.skinType != null
+              ? 'Tipe kulit ${photo.skinType} tercatat di perjalananmu.'
+              : 'Hasil analisis kulit tersimpan di perjalananmu.';
+      activities.add(_RecentActivity(
+        id: photo.id,
+        date: photo.date,
+        title: isFirstScan ? 'Scan awal tersimpan' : 'Hasil scan tersimpan',
+        description: description,
+        icon: Icons.center_focus_strong_rounded,
+        accent: const Color(0xFFB66446),
+        iconBackground: const Color(0xFFFFEBDD),
+      ));
+    }
+
+    activities.sort((a, b) => b.date.compareTo(a.date));
+    return activities.take(3).toList(growable: false);
+  }
+}
+
+class _EmptyActivity extends StatelessWidget {
+  const _EmptyActivity();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(
-        compact ? 12 : 16,
-        compact ? 14 : 18,
-        compact ? 12 : 16,
-        compact ? 14 : 18,
+      key: const Key('recent-activity-empty'),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .7),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDDE9E2)),
       ),
-      decoration: _card(compact ? 24 : 28),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: const Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: compact ? 48 : 54,
-                height: compact ? 48 : 54,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE4F4F0),
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: SkinHomePage.deepGreen.withValues(alpha: .12),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.center_focus_strong_rounded,
-                  color: SkinHomePage.deepGreen,
-                  size: compact ? 26 : 29,
-                ),
+          Icon(Icons.history_rounded, color: Color(0xFF7B918B), size: 23),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Hasil scan dan check-in terbarumu akan muncul di sini.',
+              style: TextStyle(
+                color: Color(0xFF667B7D),
+                fontSize: 12.5,
+                height: 1.35,
               ),
-              SizedBox(width: compact ? 10 : 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Scan Terakhir',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: compact ? 15 : 17,
-                        fontWeight: FontWeight.w900,
-                        color: SkinHomePage.navy,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Kemarin, 20:15',
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontSize: compact ? 10 : 12,
-                        color: const Color(0xFF829194),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 6),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '82',
-                          style: TextStyle(
-                            fontSize: compact ? 28 : 32,
-                            height: .9,
-                            color: SkinHomePage.deepGreen,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        TextSpan(
-                          text: '/100',
-                          style: TextStyle(
-                            fontSize: compact ? 11 : 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  _HealthBadge(compact: compact),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: compact ? 14 : 18),
-          const Divider(height: 1, color: Color(0xFFE4E8E7)),
-          SizedBox(height: compact ? 13 : 16),
-          const Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  'Kemerahan',
-                  34,
-                  Color(0xFFFF6470),
-                  Icons.blur_on_rounded,
-                ),
-              ),
-              _Rule(),
-              Expanded(
-                child: _Metric(
-                  'Minyak',
-                  68,
-                  Color(0xFFFFB131),
-                  Icons.water_drop_outlined,
-                ),
-              ),
-              _Rule(),
-              Expanded(
-                child: _Metric(
-                  'Hidrasi',
-                  78,
-                  Color(0xFF2DA6F2),
-                  Icons.water_drop_outlined,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1027,546 +1000,122 @@ class _ScanCard extends StatelessWidget {
   }
 }
 
-class _HealthBadge extends StatelessWidget {
-  final bool compact;
+class _ActivityCard extends StatelessWidget {
+  const _ActivityCard({required this.activity});
 
-  const _HealthBadge({required this.compact});
+  final _RecentActivity activity;
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: .018,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? 7 : 9,
-          vertical: 4,
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFFDDF6E7),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: SkinHomePage.deepGreen.withValues(alpha: .10),
-              blurRadius: 7,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.auto_awesome_rounded,
-              size: compact ? 9 : 10,
-              color: SkinHomePage.orange,
-            ),
-            const SizedBox(width: 3),
-            Text(
-              'Kondisi Kulit Baik',
-              style: TextStyle(
-                fontSize: compact ? 8 : 9,
-                color: SkinHomePage.deepGreen,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      key: const Key('recent-activity-card'),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFDDE9E2)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D18372F),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  final String label;
-  final int value;
-  final Color color;
-  final IconData icon;
-
-  const _Metric(this.label, this.value, this.color, this.icon);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 7),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Transform.rotate(
-                angle: value.isEven ? -.045 : .045,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: .17),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: .16),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Icon(icon, color: color, size: 21),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: activity.iconBackground,
+                  borderRadius: BorderRadius.circular(11),
                 ),
+                child: Icon(activity.icon, color: activity.accent, size: 20),
               ),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF263238),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '$value%',
-                      style: const TextStyle(
-                        fontSize: 19,
-                        height: 1.05,
-                        fontWeight: FontWeight.w900,
-                        color: SkinHomePage.navy,
-                      ),
-                    ),
-                  ],
+              const Spacer(),
+              Text(
+                _activityDate(activity.date, SkinJourneyStore.instance.today),
+                style: const TextStyle(
+                  color: Color(0xFF81918D),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(100),
-            child: LinearProgressIndicator(
-              minHeight: 7,
-              value: value / 100,
-              backgroundColor: color.withValues(alpha: .16),
-              valueColor: AlwaysStoppedAnimation(color),
+          Text(
+            activity.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: SkinHomePage.navy,
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            activity.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF667B7D),
+              fontSize: 11,
+              height: 1.35,
             ),
           ),
         ],
       ),
     );
   }
-}
 
-class _Rule extends StatelessWidget {
-  const _Rule();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 1, height: 48, color: const Color(0xFFE0E7E5));
+  String _activityDate(DateTime date, DateTime today) {
+    final eventDay = DateTime(date.year, date.month, date.day);
+    final currentDay = DateTime(today.year, today.month, today.day);
+    final difference = currentDay.difference(eventDay).inDays;
+    final time =
+        '${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')}';
+    if (difference == 0) return 'Hari ini · $time';
+    if (difference == 1) return 'Kemarin · $time';
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }
 
-class _HistoryCard extends StatelessWidget {
-  final bool compact;
-
-  const _HistoryCard({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: compact ? 186 : 202,
-      padding: EdgeInsets.fromLTRB(compact ? 14 : 18, 16, 12, 0),
-      decoration: _card(compact ? 24 : 28),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final catWidth = compact ? 126.0 : 148.0;
-
-          return Stack(
-            clipBehavior: Clip.hardEdge,
-            children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                width: constraints.maxWidth * .63,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: compact ? 34 : 38,
-                      height: compact ? 34 : 38,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE4F4F0),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                SkinHomePage.deepGreen.withValues(alpha: .12),
-                            blurRadius: 7,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.trending_up_rounded,
-                        size: compact ? 21 : 23,
-                        color: SkinHomePage.deepGreen,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Riwayat Perubahan',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: compact ? 14 : 16,
-                              fontWeight: FontWeight.w900,
-                              color: SkinHomePage.navy,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: '7 scan bulan ini  ',
-                                  style: TextStyle(
-                                    fontSize: compact ? 10 : 11,
-                                    color: const Color(0xFF819093),
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: '+6 poin',
-                                  style: TextStyle(
-                                    fontSize: compact ? 10 : 11,
-                                    color: SkinHomePage.deepGreen,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Positioned(
-                left: 8,
-                bottom: 0,
-                child: _Bars(compact: compact),
-              ),
-              Positioned(
-                right: 0,
-                bottom: -10,
-                width: catWidth,
-                height: catWidth,
-                child: Image.asset(
-                  '${SkinHomePage.assetBase}/cat_happy.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-              Positioned(
-                right: compact ? 16 : 22,
-                top: compact ? 43 : 48,
-                child: _HistoryBadge(compact: compact),
-              ),
-              Positioned(
-                right: compact ? 102 : 122,
-                bottom: compact ? 18 : 22,
-                width: compact ? 18 : 22,
-                height: compact ? 18 : 22,
-                child: Opacity(opacity: .36, child: const _Bubble()),
-              ),
-              Positioned(
-                right: compact ? 88 : 105,
-                bottom: compact ? 45 : 52,
-                width: compact ? 14 : 17,
-                height: compact ? 14 : 17,
-                child: const _DropletAccent(color: Color(0x6635A9EE)),
-              ),
-              const Positioned(
-                right: 0,
-                top: 5,
-                child: Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF6D7C86),
-                  size: 26,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _HistoryBadge extends StatelessWidget {
-  final bool compact;
-
-  const _HistoryBadge({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: -.035,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? 8 : 10,
-          vertical: compact ? 6 : 7,
-        ),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF55C69E), SkinHomePage.green],
-          ),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: SkinHomePage.deepGreen.withValues(alpha: .15),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.auto_awesome_rounded,
-              color: const Color(0xFFFFD05A),
-              size: compact ? 11 : 13,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              'KULITMU\nMAKIN SEHAT!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: compact ? 9 : 10,
-                height: 1.04,
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Bars extends StatelessWidget {
-  final bool compact;
-
-  const _Bars({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    const values = [35.0, 47.0, 59.0, 50.0, 57.0, 68.0, 82.0];
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: List.generate(values.length, (i) {
-        return Container(
-          width: compact ? 10 : 12,
-          height: values[i] * (compact ? .86 : 1),
-          margin: EdgeInsets.only(right: compact ? 5 : 7),
-          decoration: BoxDecoration(
-            color: SkinHomePage.green.withValues(alpha: .18 + i * .09),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _BottomNav extends StatelessWidget {
-  final bool compact;
-
-  const _BottomNav({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    final centerSize = compact ? 68.0 : 76.0;
-
-    return SizedBox(
-      height: compact ? 72 : 78,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 24 : 34),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .98),
-          borderRadius: BorderRadius.circular(34),
-          boxShadow: [
-            BoxShadow(
-              color: SkinHomePage.deepGreen.withValues(alpha: .11),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const _NavItem(Icons.home_rounded, 'Home', true),
-                _NavItem(
-                  Icons.help_outline_rounded,
-                  'Bantuan',
-                  false,
-                  key: const Key('open-help'),
-                  onTap: () => _openHelp(context),
-                ),
-              ],
-            ),
-            Positioned(
-              top: compact ? -18 : -22,
-              child: Semantics(
-                button: true,
-                label: 'Buka kuis kondisi kulit',
-                child: GestureDetector(
-                  key: const Key('open-quiz-scan'),
-                  onTap: () => _openQuiz(context),
-                  child: Container(
-                    width: centerSize,
-                    height: centerSize,
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: SkinHomePage.green.withValues(alpha: .22),
-                          blurRadius: 20,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: const DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: SkinHomePage.green,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.center_focus_strong_rounded,
-                        color: Colors.white,
-                        size: 34,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  const _NavItem(
-    this.icon,
-    this.label,
-    this.selected, {
-    super.key,
-    this.onTap,
+class _RecentActivity {
+  const _RecentActivity({
+    required this.id,
+    required this.date,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.accent,
+    required this.iconBackground,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? SkinHomePage.deepGreen : const Color(0xFF78878A);
-
-    return Semantics(
-      button: onTap != null,
-      selected: selected,
-      label: label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: SizedBox(
-          width: 70,
-          height: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: selected ? FontWeight.w900 : FontWeight.w500,
-                ),
-              ),
-              if (selected) ...[
-                const SizedBox(height: 3),
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: const BoxDecoration(
-                    color: SkinHomePage.green,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-void _openQuiz(BuildContext context) {
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(builder: (_) => const SkinQuizPage()),
-  );
-}
-
-void _openHelp(BuildContext context) {
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(builder: (_) => const SkinHelpPage()),
-  );
-}
-
-BoxDecoration _card(double radius) {
-  return BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(radius),
-    border: Border.all(
-      color: SkinHomePage.deepGreen.withValues(alpha: .10),
-      width: 1.2,
-    ),
-    boxShadow: [
-      BoxShadow(
-        color: SkinHomePage.deepGreen.withValues(alpha: .09),
-        blurRadius: 22,
-        offset: const Offset(0, 9),
-      ),
-      BoxShadow(
-        color: SkinHomePage.coral.withValues(alpha: .035),
-        blurRadius: 8,
-        offset: const Offset(0, 2),
-      ),
-    ],
-  );
+  final String id;
+  final DateTime date;
+  final String title;
+  final String description;
+  final IconData icon;
+  final Color accent;
+  final Color iconBackground;
 }

@@ -1,36 +1,32 @@
 import 'package:flutter/material.dart';
+
+import '../theme/skin_theme.dart';
+import '../widgets/skin_page_header.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/profile_data.dart';
+import '../widgets/skin_bottom_nav.dart';
 
 class SkinProfilePage extends StatelessWidget {
   const SkinProfilePage({super.key});
 
-  static const _teal = Color(0xFF168A78);
-  static const _deepTeal = Color(0xFF087467);
-  static const _navy = Color(0xFF13263A);
-  static const _cream = Color(0xFFFFF8EB);
-  static const _sky = Color(0xFF2FC1ED);
-  static const _coral = Color(0xFFE6535F);
+  static const _teal = SkinTokens.primary;
+  static const _deepTeal = SkinTokens.primaryDark;
+  static const _navy = SkinTokens.ink;
+  static const _cream = SkinTokens.background;
+  static const _coral = SkinTokens.coral;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _sky,
+      backgroundColor: SkinTokens.background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
+            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
             child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [_sky, Color(0xFFE6F7F3), _cream],
-                  stops: [0, .28, 1],
-                ),
-              ),
+              decoration: const BoxDecoration(color: SkinTokens.background),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final compact = constraints.maxWidth < 350;
@@ -66,6 +62,7 @@ class SkinProfilePage extends StatelessWidget {
           ),
         ),
       ),
+      bottomNavigationBar: const SkinBottomNav(currentIndex: -1),
     );
   }
 }
@@ -74,47 +71,11 @@ class _ProfileHeader extends StatelessWidget {
   final bool compact;
 
   const _ProfileHeader({required this.compact});
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(compact ? 14 : 18, 16, compact ? 14 : 18, 8),
-      child: Row(
-        children: [
-          Material(
-            color: Colors.white.withValues(alpha: .94),
-            shape: const CircleBorder(),
-            child: InkWell(
-              key: const Key('profile-back'),
-              onTap: () => Navigator.of(context).pop(),
-              customBorder: const CircleBorder(),
-              child: SizedBox(
-                width: compact ? 46 : 52,
-                height: compact ? 46 : 52,
-                child: const Icon(
-                  Icons.chevron_left_rounded,
-                  color: SkinProfilePage._deepTeal,
-                  size: 34,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              'Profil Saya',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: SkinProfilePage._navy,
-                fontSize: compact ? 23 : 27,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          SizedBox(width: compact ? 46 : 52),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SkinPageHeader(
+        title: 'Profil Saya',
+        backKey: const Key('profile-back'),
+      );
 }
 
 class _IdentitySection extends StatelessWidget {
@@ -151,7 +112,7 @@ class _IdentitySection extends StatelessWidget {
                 style: TextStyle(
                   color: SkinProfilePage._navy,
                   fontSize: 20,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 14),
@@ -191,19 +152,13 @@ class _IdentitySection extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             Container(
-              width: compact ? 108 : 124,
-              height: compact ? 108 : 124,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
-                color: const Color(0xFFE2F4EF),
+                color: SkinTokens.mint,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 5),
-                boxShadow: [
-                  BoxShadow(
-                    color: SkinProfilePage._deepTeal.withValues(alpha: .16),
-                    blurRadius: 18,
-                    offset: const Offset(0, 7),
-                  ),
-                ],
+                boxShadow: SkinTokens.shadows,
               ),
               child: ClipOval(
                 child: profile.photoBytes == null
@@ -213,7 +168,7 @@ class _IdentitySection extends StatelessWidget {
                           style: TextStyle(
                             color: SkinProfilePage._deepTeal,
                             fontSize: compact ? 31 : 36,
-                            fontWeight: FontWeight.w900,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       )
@@ -237,8 +192,8 @@ class _IdentitySection extends StatelessWidget {
                   onTap: () => _showPhotoSource(context),
                   customBorder: const CircleBorder(),
                   child: const SizedBox(
-                    width: 39,
-                    height: 39,
+                    width: 44,
+                    height: 44,
                     child: Icon(
                       Icons.edit_rounded,
                       color: Colors.white,
@@ -258,13 +213,13 @@ class _IdentitySection extends StatelessWidget {
           style: TextStyle(
             color: SkinProfilePage._navy,
             fontSize: compact ? 23 : 26,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 3),
         const Text(
           'Akun SkinSight',
-          style: TextStyle(color: Color(0xFF5B737C), fontSize: 13),
+          style: TextStyle(color: SkinTokens.muted, fontSize: 13),
         ),
       ],
     );
@@ -279,11 +234,8 @@ class _ProfileFields extends StatelessWidget {
     final profile = context.watch<ProfileData>();
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .96),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: SkinProfilePage._deepTeal.withValues(alpha: .08),
-        ),
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
       ),
       child: Column(
         children: [
@@ -547,8 +499,8 @@ class _ProfileField extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    color: Color(0xFF6D808A),
-                    fontSize: 12,
+                    color: SkinTokens.muted,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -559,8 +511,8 @@ class _ProfileField extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: SkinProfilePage._navy,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -588,7 +540,7 @@ class _FieldDivider extends StatelessWidget {
       height: 1,
       indent: 52,
       endIndent: 14,
-      color: Color(0xFFE5EBEA),
+      color: SkinTokens.border,
     );
   }
 }
@@ -641,13 +593,13 @@ class _LogoutButton extends StatelessWidget {
           side: const BorderSide(color: Color(0xFFE7A5AA)),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(17),
+            borderRadius: BorderRadius.circular(SkinTokens.radius),
           ),
         ),
         icon: const Icon(Icons.logout_rounded),
         label: const Text(
           'Keluar akun',
-          style: TextStyle(fontWeight: FontWeight.w900),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
     );

@@ -3,14 +3,21 @@ import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import '../data/skin_demo_data.dart';
+import '../data/skin_journey_store.dart';
+
+import '../theme/skin_theme.dart';
+import '../widgets/skin_page_header.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'skin_result_page.dart';
 
 class SkinScanPage extends StatefulWidget {
   final bool enableCamera;
+  /// Mengembalikan bytes ke halaman sesi foto tanpa membuka Hasil Analisis.
+  final bool returnPhoto;
 
-  const SkinScanPage({super.key, this.enableCamera = true});
+  const SkinScanPage({super.key, this.enableCamera = true, this.returnPhoto = false});
 
   @override
   State<SkinScanPage> createState() => _SkinScanPageState();
@@ -18,10 +25,9 @@ class SkinScanPage extends StatefulWidget {
 
 class _SkinScanPageState extends State<SkinScanPage>
     with WidgetsBindingObserver {
-  static const _teal = Color(0xFF168A78);
-  static const _deepTeal = Color(0xFF087467);
-  static const _navy = Color(0xFF13263A);
-  static const _cream = Color(0xFFFFFBF2);
+  static const _teal = SkinTokens.primary;
+  static const _deepTeal = SkinTokens.primaryDark;
+  static const _navy = SkinTokens.ink;
 
   CameraController? _controller;
   List<CameraDescription> _cameras = const [];
@@ -167,9 +173,15 @@ class _SkinScanPageState extends State<SkinScanPage>
   }
 
   Future<void> _openResult(Uint8List bytes) async {
+    if (widget.returnPhoto) {
+      Navigator.of(context).pop(bytes);
+      return;
+    }
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => SkinResultPage(selfieBytes: bytes),
+        builder: (_) => SkinResultPage(selfieBytes: bytes,
+          analysis: SkinDemoData.forPhoto(bytes,
+            sessionIndex: SkinJourneyStore.instance.photos.length)),
       ),
     );
   }
@@ -184,29 +196,18 @@ class _SkinScanPageState extends State<SkinScanPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F2F2),
+      backgroundColor: SkinTokens.background,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
+            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxWidth < 350;
                 return DecoratedBox(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.white, _cream, Color(0xFFE8FBF7)],
-                    ),
-                  ),
+                  decoration: const BoxDecoration(color: SkinTokens.background),
                   child: Stack(
                     children: [
-                      const Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(painter: _ScanBackgroundPainter()),
-                        ),
-                      ),
                       Column(
                         children: [
                           _ScanHeader(
@@ -232,6 +233,15 @@ class _SkinScanPageState extends State<SkinScanPage>
                                     onRetry: _initializeCamera,
                                   ),
                                   const SizedBox(height: 14),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 8),
+                                    child: Text(
+                                      'Ambil foto wajah tanpa filter, dengan pencahayaan merata dan posisi serupa tiap check-in. Foto tidak menentukan diagnosis.',
+                                      textAlign: TextAlign.center,
+                                      style: SkinTokens.caption,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
                                   _ModeSwitch(
                                     automatic: _automaticMode,
                                     compact: compact,
@@ -281,49 +291,12 @@ class _SkinScanPageState extends State<SkinScanPage>
 class _ScanHeader extends StatelessWidget {
   final bool compact;
   final VoidCallback onBack;
-
   const _ScanHeader({required this.compact, required this.onBack});
-
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(compact ? 14 : 18, 16, compact ? 14 : 18, 8),
-      child: Row(
-        children: [
-          Material(
-            color: const Color(0xFFE9F7F4),
-            shape: const CircleBorder(),
-            child: InkWell(
-              key: const Key('scan-back'),
-              onTap: onBack,
-              customBorder: const CircleBorder(),
-              child: SizedBox(
-                width: compact ? 46 : 52,
-                height: compact ? 46 : 52,
-                child: const Icon(
-                  Icons.chevron_left_rounded,
-                  color: _SkinScanPageState._deepTeal,
-                  size: 34,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              'Scan Wajah',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: _SkinScanPageState._navy,
-                fontSize: compact ? 23 : 27,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          SizedBox(width: compact ? 46 : 52),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SkinPageHeader(
+        title: 'Scan Wajah',
+        backKey: const Key('scan-back'),
+      );
 }
 
 class _CameraFrame extends StatelessWidget {
@@ -343,50 +316,47 @@ class _CameraFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = compact ? 414.0 : 486.0;
+    final height =
+        (MediaQuery.sizeOf(context).height * .52).clamp(300.0, 450.0);
     return Container(
       height: height,
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(compact ? 30 : 38),
-        boxShadow: [
-          BoxShadow(
-            color: _SkinScanPageState._deepTeal.withValues(alpha: .10),
-            blurRadius: 25,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
+        boxShadow: SkinTokens.shadows,
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(compact ? 26 : 34),
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
         child: Stack(
           fit: StackFit.expand,
           children: [
             _buildPreview(),
-            const CustomPaint(painter: _FaceGuidePainter()),
-            Align(
-              alignment: const Alignment(0, .84),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 26),
-                padding: EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: compact ? 10 : 12,
-                ),
-                decoration: BoxDecoration(
-                  color: _SkinScanPageState._navy.withValues(alpha: .88),
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: const Text(
-                  'Posisikan wajah di dalam frame',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
+            if (!loading && errorMessage == null)
+              const CustomPaint(painter: _FaceGuidePainter()),
+            if (!loading && errorMessage == null)
+              Align(
+                alignment: const Alignment(0, .84),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 26),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: compact ? 10 : 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _SkinScanPageState._navy.withValues(alpha: .88),
+                    borderRadius: BorderRadius.circular(SkinTokens.radius),
+                  ),
+                  child: const Text(
+                    'Posisikan wajah di dalam frame',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -476,11 +446,11 @@ class _ModeSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: compact ? 58 : 64,
+      height: 54,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: .78),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
         border: Border.all(color: const Color(0xFFD9E6E3)),
       ),
       child: Row(
@@ -519,19 +489,19 @@ class _ModeButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(SkinTokens.radius),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             alignment: Alignment.center,
             decoration: BoxDecoration(
               color: selected ? _SkinScanPageState._teal : Colors.transparent,
-              borderRadius: BorderRadius.circular(26),
+              borderRadius: BorderRadius.circular(SkinTokens.radius),
             ),
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.white : const Color(0xFF718184),
-                fontWeight: FontWeight.w900,
+                color: selected ? Colors.white : SkinTokens.muted,
+                fontWeight: FontWeight.w700,
                 fontSize: 15,
               ),
             ),
@@ -579,8 +549,8 @@ class _CaptureControls extends StatelessWidget {
               onTap: isCapturing ? null : onCapture,
               customBorder: const CircleBorder(),
               child: Container(
-                width: compact ? 82 : 94,
-                height: compact ? 82 : 94,
+                width: 76,
+                height: 76,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -589,13 +559,7 @@ class _CaptureControls extends StatelessWidget {
                     color: _SkinScanPageState._deepTeal,
                     width: 4,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          _SkinScanPageState._deepTeal.withValues(alpha: .18),
-                      blurRadius: 18,
-                    ),
-                  ],
+                  boxShadow: SkinTokens.shadows,
                 ),
                 child: DecoratedBox(
                   decoration: const BoxDecoration(
@@ -636,12 +600,12 @@ class _SquareAction extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      elevation: 2,
+      borderRadius: BorderRadius.circular(SkinTokens.radius),
+      elevation: 0,
       shadowColor: _SkinScanPageState._deepTeal.withValues(alpha: .16),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
         child: SizedBox(
           width: 66,
           height: 66,
@@ -717,58 +681,6 @@ class _FaceGuidePainter extends CustomPainter {
         Offset(right - corner, bottom), Offset(right, bottom), cornerPaint);
     canvas.drawLine(
         Offset(right, bottom), Offset(right, bottom - corner), cornerPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ScanBackgroundPainter extends CustomPainter {
-  const _ScanBackgroundPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final blue = Paint()
-      ..color = const Color(0xFF47BDE8).withValues(alpha: .10);
-    final mint = Paint()
-      ..color = const Color(0xFF6EDBCB).withValues(alpha: .12);
-    final topPath = Path()
-      ..moveTo(0, size.height * .13)
-      ..quadraticBezierTo(
-        size.width * .35,
-        size.height * .07,
-        size.width * .62,
-        size.height * .15,
-      )
-      ..quadraticBezierTo(
-        size.width * .84,
-        size.height * .20,
-        size.width,
-        size.height * .10,
-      )
-      ..lineTo(size.width, 0)
-      ..lineTo(0, 0)
-      ..close();
-    canvas.drawPath(topPath, blue);
-
-    final bottomPath = Path()
-      ..moveTo(0, size.height * .92)
-      ..quadraticBezierTo(
-        size.width * .33,
-        size.height,
-        size.width * .61,
-        size.height * .94,
-      )
-      ..quadraticBezierTo(
-        size.width * .83,
-        size.height * .90,
-        size.width,
-        size.height * .97,
-      )
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(bottomPath, mint);
   }
 
   @override
