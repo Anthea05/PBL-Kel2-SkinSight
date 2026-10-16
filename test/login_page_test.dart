@@ -60,22 +60,17 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Google login is disabled with Segera hadir (FR-03)', (
-    tester,
-  ) async {
+  testWidgets('Google login opens home', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
 
     await _openLogin(tester);
+    await tester.tap(find.byKey(const Key('login-google')));
+    await tester.pumpAndSettle();
 
-    final button = tester.widget<OutlinedButton>(
-      find.byKey(const Key('login-google')),
-    );
-    expect(button.onPressed, isNull);
-    expect(find.text('Segera hadir'), findsOneWidget);
-    expect(find.text('Masuk dengan Google'), findsOneWidget);
+    expect(find.text('Aktivitas Kulit'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

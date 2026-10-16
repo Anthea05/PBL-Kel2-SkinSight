@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Masuk ke Beranda via form demo (FR-02/FR-03: tombol Google nonaktif
-/// "Segera hadir", jadi alur uji memakai submit dengan akun prefill).
+/// Masuk ke Beranda via form login (tanpa env Supabase, app memakai
+/// [FakeAuthService] sehingga submit dengan akun prefill langsung masuk).
 Future<void> enterHome(WidgetTester tester) async {
   final startButton = find.byKey(const Key('start-button'));
   await tester.ensureVisible(startButton);

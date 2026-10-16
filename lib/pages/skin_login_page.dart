@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../data/auth_service.dart';
 
 class SkinLoginPage extends StatefulWidget {
   const SkinLoginPage({super.key});
@@ -21,6 +24,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
 
   bool _obscurePassword = true;
   bool _registerMode = false;
+  bool _busy = false;
 
   @override
   void dispose() {
@@ -31,9 +35,51 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
     super.dispose();
   }
 
-  void _continueToHome() {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final auth = context.read<AuthService>();
+      if (_registerMode) {
+        await auth.signUp(
+          name: _nameController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      } else {
+        await auth.signIn(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _continueWithGoogle() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthService>().signInWithGoogle();
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
 
@@ -117,24 +163,6 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE3F4F0),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: const Text(
-                                          'Demo',
-                                          style: TextStyle(
-                                            color: Color(0xFF087467),
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
                                       Text(
                                         _registerMode
                                             ? 'Mulai kenali kondisi kulitmu dengan akun baru.'
@@ -190,7 +218,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                   icon: Icons.lock_outline_rounded,
                                   obscureText: _obscurePassword,
                                   textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _continueToHome(),
+                                  onSubmitted: (_) => _submit(),
                                   suffix: IconButton(
                                     key: const Key('login-password-visibility'),
                                     onPressed: () => setState(
@@ -217,23 +245,13 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                 SizedBox(height: compact ? 18 : 22),
                                 _PrimaryAuthButton(
                                   label: _registerMode ? 'Daftar' : 'Masuk',
-                                  onTap: _continueToHome,
+                                  onTap: _submit,
                                 ),
                                 if (!_registerMode) ...[
                                   const SizedBox(height: 18),
                                   const _OrDivider(),
                                   const SizedBox(height: 18),
-                                  const _GoogleButton(),
-                                  const SizedBox(height: 6),
-                                  const Center(
-                                    child: Text(
-                                      'Segera hadir',
-                                      style: TextStyle(
-                                        color: _SkinLoginPageState._muted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
+                                  _GoogleButton(onTap: _continueWithGoogle),
                                 ],
                                 const Spacer(),
                                 const SizedBox(height: 24),
@@ -437,16 +455,17 @@ class _PrimaryAuthButton extends StatelessWidget {
   }
 }
 
-/// FR-03: tombol Google nonaktif berlabel "Segera hadir".
-/// Key dipertahankan agar tidak ada fitur palsu tanpa label.
+/// Tombol Google aktif via Supabase Auth.
 class _GoogleButton extends StatelessWidget {
-  const _GoogleButton();
+  final VoidCallback onTap;
+
+  const _GoogleButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
       key: const Key('login-google'),
-      onPressed: null,
+      onPressed: onTap,
       style: OutlinedButton.styleFrom(
         foregroundColor: _SkinLoginPageState._navy,
         backgroundColor: Colors.white.withValues(alpha: .92),
