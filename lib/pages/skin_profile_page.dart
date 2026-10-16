@@ -5,6 +5,7 @@ import '../widgets/skin_page_header.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../data/auth_service.dart';
 import '../models/profile_data.dart';
 import '../widgets/skin_bottom_nav.dart';
 
@@ -574,8 +575,16 @@ class _LogoutButton extends StatelessWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      ScaffoldMessenger.of(context).showSnackBar(
+      try {
+        await context.read<AuthService>().signOut();
+      } catch (_) {
+        // Best effort: tetap keluar dari UI walau sesi server gagal.
+      }
+      if (!context.mounted) return;
+      // Tangkap messenger SEBELUM navigasi: context rute ini mati setelah pop.
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+      messenger.showSnackBar(
         const SnackBar(content: Text('Kamu telah keluar dari akun.')),
       );
     }
