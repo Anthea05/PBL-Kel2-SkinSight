@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../data/auth_service.dart';
 import '../theme/skin_theme.dart';
 
 class SkinLoginPage extends StatefulWidget {
@@ -23,6 +25,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
 
   bool _obscurePassword = true;
   bool _registerMode = false;
+  bool _busy = false;
 
   @override
   void dispose() {
@@ -33,13 +36,51 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
     super.dispose();
   }
 
-  void _continueToHome() {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final auth = context.read<AuthService>();
+      if (_registerMode) {
+        await auth.signUp(
+          name: _nameController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      } else {
+        await auth.signIn(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
-  void _continueWithGoogle() {
-    Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+  Future<void> _continueWithGoogle() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthService>().signInWithGoogle();
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   void _toggleMode() {
@@ -171,7 +212,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                   icon: Icons.lock_outline_rounded,
                                   obscureText: _obscurePassword,
                                   textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _continueToHome(),
+                                  onSubmitted: (_) => _submit(),
                                   suffix: IconButton(
                                     key: const Key('login-password-visibility'),
                                     onPressed: () => setState(
@@ -198,7 +239,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                 SizedBox(height: compact ? 18 : 22),
                                 _PrimaryAuthButton(
                                   label: _registerMode ? 'Daftar' : 'Masuk',
-                                  onTap: _continueToHome,
+                                  onTap: _submit,
                                 ),
                                 if (!_registerMode) ...[
                                   const SizedBox(height: 18),
