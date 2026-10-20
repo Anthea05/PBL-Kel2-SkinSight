@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/skin_theme.dart';
 import '../widgets/skin_bottom_nav.dart';
+import '../widgets/skin_page_background.dart';
 
 class SkinEducationPage extends StatefulWidget {
   final bool embedded;
@@ -177,12 +178,14 @@ class _SkinEducationPageState extends State<SkinEducationPage> {
     );
 
     if (widget.embedded) {
-      return ColoredBox(color: _background, child: content);
+      return SkinPageBackground(child: content);
     }
 
     return Scaffold(
       backgroundColor: _background,
-      body: SafeArea(bottom: false, child: content),
+      body: SkinPageBackground(
+        child: SafeArea(bottom: false, child: content),
+      ),
       bottomNavigationBar: const SkinBottomNav(currentIndex: 1),
     );
   }

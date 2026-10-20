@@ -19,6 +19,7 @@ void main() {
       expect(find.textContaining('Start your'), findsOneWidget);
       expect(find.textContaining('Kenali kondisi kulitmu'), findsOneWidget);
       expect(find.byKey(const Key('start-button')), findsOneWidget);
+      expect(find.byKey(const Key('start-login-link')), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.ensureVisible(find.byKey(const Key('start-button')));
@@ -27,7 +28,7 @@ void main() {
     });
   }
 
-  testWidgets('Mulai opens the login page', (tester) async {
+  testWidgets('Mulai opens the auth choice page', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -38,9 +39,9 @@ void main() {
     await tester.tap(find.byKey(const Key('start-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Selamat datang kembali'), findsOneWidget);
-    expect(find.text('Masuk dengan Google'), findsOneWidget);
-    expect(find.byKey(const Key('login-submit')), findsOneWidget);
+    expect(find.text('Mulai bersama SkinSight'), findsOneWidget);
+    expect(find.byKey(const Key('auth-google')), findsOneWidget);
+    expect(find.byKey(const Key('auth-email')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

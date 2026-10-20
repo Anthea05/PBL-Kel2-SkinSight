@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'models/profile_data.dart';
+import 'models/font_settings.dart';
+import 'models/auth_session.dart';
 import 'theme/skin_theme.dart';
 import 'pages/skin_history_page.dart';
 import 'pages/skin_home_page.dart';
@@ -10,44 +12,117 @@ import 'pages/skin_notifications_page.dart';
 import 'pages/skin_profile_page.dart';
 import 'pages/skin_result_page.dart';
 import 'pages/skin_start_page.dart';
+import 'pages/skin_settings_page.dart';
+import 'pages/skin_legal_pages.dart';
+import 'pages/skin_auth_choice_page.dart';
+import 'pages/skin_onboarding_page.dart';
 
-void main() => runApp(const SkinSightApp());
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const _SkinSightBootstrap());
+}
+
+class _SkinSightBootstrap extends StatefulWidget {
+  const _SkinSightBootstrap();
+
+  @override
+  State<_SkinSightBootstrap> createState() => _SkinSightBootstrapState();
+}
+
+class _SkinSightBootstrapState extends State<_SkinSightBootstrap> {
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    try {
+      await Future.wait([
+        SkinFontSettings.instance.load(),
+        AuthSession.instance.load(),
+      ]).timeout(const Duration(seconds: 2));
+    } catch (error, stackTrace) {
+      debugPrint('Startup preferences could not be loaded: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    } finally {
+      if (mounted) setState(() => _ready = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_ready) {
+      return const SkinSightApp(respectPersistedSession: true);
+    }
+
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: SkinTokens.theme(),
+      home: const Scaffold(
+        backgroundColor: SkinTokens.background,
+        body: Center(
+          child: CircularProgressIndicator(color: SkinTokens.primary),
+        ),
+      ),
+    );
+  }
+}
 
 class SkinSightApp extends StatelessWidget {
-  const SkinSightApp({super.key});
+  const SkinSightApp({super.key, this.respectPersistedSession = false});
+
+  final bool respectPersistedSession;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ProfileData(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: SkinTokens.theme().copyWith(
-          pageTransitionsTheme: const PageTransitionsTheme(
-            builders: {
-              TargetPlatform.android: _NoPageTransitionsBuilder(),
-              TargetPlatform.iOS: _NoPageTransitionsBuilder(),
-              TargetPlatform.macOS: _NoPageTransitionsBuilder(),
-              TargetPlatform.windows: _NoPageTransitionsBuilder(),
-              TargetPlatform.linux: _NoPageTransitionsBuilder(),
-              TargetPlatform.fuchsia: _NoPageTransitionsBuilder(),
-            },
+      child: AnimatedBuilder(
+        animation: SkinFontSettings.instance,
+        builder: (context, _) => MaterialApp(
+          debugShowCheckedModeBanner: false,
+          initialRoute:
+              respectPersistedSession && AuthSession.instance.isSignedIn
+                  ? '/home'
+                  : '/',
+          theme: SkinTokens.theme(
+            fontFamily: SkinFontSettings.instance.fontFamily,
+          ).copyWith(
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: _NoPageTransitionsBuilder(),
+                TargetPlatform.iOS: _NoPageTransitionsBuilder(),
+                TargetPlatform.macOS: _NoPageTransitionsBuilder(),
+                TargetPlatform.windows: _NoPageTransitionsBuilder(),
+                TargetPlatform.linux: _NoPageTransitionsBuilder(),
+                TargetPlatform.fuchsia: _NoPageTransitionsBuilder(),
+              },
+            ),
           ),
+          routes: {
+            '/': (_) => const SkinStartPage(),
+            '/home': (_) => const SkinHomePage(),
+            '/education': (_) => const SkinHomePage(initialIndex: 1),
+            // Kept as an alias so old deep links remain valid.
+            '/catalog': (_) => const SkinHomePage(initialIndex: 1),
+            '/about': (_) => const SkinHomePage(initialIndex: 3),
+            '/login': (_) => const SkinLoginPage(),
+            '/register': (_) => const SkinLoginPage(initialRegisterMode: true),
+            '/auth': (_) => const SkinAuthChoicePage(),
+            '/onboarding': (_) => const SkinOnboardingPage(),
+            '/help': (_) => const SkinHomePage(initialIndex: 2),
+            '/history': (_) => const SkinHistoryPage(),
+            '/notifications': (_) => const SkinNotificationsPage(),
+            '/profile': (_) => const SkinProfilePage(),
+            '/settings': (_) => const SkinSettingsPage(),
+            '/privacy': (_) => const SkinPrivacyPage(),
+            '/terms': (_) => const SkinTermsPage(),
+            '/result': (_) => const SkinResultPage(),
+          },
         ),
-        routes: {
-          '/': (_) => const SkinStartPage(),
-          '/home': (_) => const SkinHomePage(),
-          '/education': (_) => const SkinHomePage(initialIndex: 1),
-          // Kept as an alias so old deep links remain valid.
-          '/catalog': (_) => const SkinHomePage(initialIndex: 1),
-          '/about': (_) => const SkinHomePage(initialIndex: 3),
-          '/login': (_) => const SkinLoginPage(),
-          '/help': (_) => const SkinHomePage(initialIndex: 2),
-          '/history': (_) => const SkinHistoryPage(),
-          '/notifications': (_) => const SkinNotificationsPage(),
-          '/profile': (_) => const SkinProfilePage(),
-          '/result': (_) => const SkinResultPage(),
-        },
       ),
     );
   }

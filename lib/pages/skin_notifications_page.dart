@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/skin_journey_store.dart';
 import '../data/skin_notification_center.dart';
 import '../theme/skin_theme.dart';
+import '../widgets/skin_page_background.dart';
 import 'skin_progress_page.dart';
 import 'skin_scan_page.dart';
 
@@ -15,7 +16,8 @@ class SkinNotificationsPage extends StatelessWidget {
     final center = SkinNotificationCenter.instance;
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBF3),
-      body: SafeArea(
+      body: SkinPageBackground(
+          child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
@@ -76,7 +78,7 @@ class SkinNotificationsPage extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

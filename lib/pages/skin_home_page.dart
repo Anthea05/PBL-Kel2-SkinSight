@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import '../widgets/shimmer_skeleton.dart';
 import '../data/skin_journey_store.dart';
 import '../data/skin_notification_center.dart';
-import 'skin_progress_page.dart';
+import 'skin_journeys_page.dart';
 import 'package:provider/provider.dart';
 
 import '../models/profile_data.dart';
 import '../widgets/skin_bottom_nav.dart';
+import '../widgets/skin_checkin_shortcut.dart';
+import '../widgets/skin_page_background.dart';
 import 'skin_about_page.dart';
+import 'skin_checkin_page.dart';
 import 'skin_education_page.dart';
 import 'skin_help_page.dart';
 import 'skin_notifications_page.dart';
@@ -72,45 +75,47 @@ class _SkinHomePageState extends State<SkinHomePage> {
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: SkinHomePage.cream,
-        body: SafeArea(
-            bottom: false,
-            child: Center(
-                child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: SizedBox.expand(
-                  child: Stack(children: [
-                IndexedStack(index: _currentIndex, children: const [
-                  _HomeScrollView(key: PageStorageKey('home-tab')),
-                  SkinEducationPage(
-                    embedded: true,
-                    key: PageStorageKey('education-tab'),
-                  ),
-                  SkinHelpPage(embedded: true, key: PageStorageKey('help-tab')),
-                  SkinAboutPage(
-                      embedded: true, key: PageStorageKey('about-tab')),
-                ]),
-                if (!_loaded.contains(_currentIndex))
-                  Positioned.fill(
-                    child: ColoredBox(
-                      color: SkinHomePage.cream,
-                      child: ShimmerLoading(
-                          child: ListView(
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(20),
-                        children: const [
-                          SkeletonBox(height: 135),
-                          SizedBox(height: 20),
-                          SkeletonBox(width: 170, height: 24),
-                          SizedBox(height: 18),
-                          SkeletonBox(height: 115),
-                          SizedBox(height: 12),
-                          SkeletonBox(height: 115)
-                        ],
-                      )),
-                    ),
-                  ),
-              ])),
-            ))),
+        body: SkinPageBackground(
+            child: SafeArea(
+                bottom: false,
+                child: Center(
+                    child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: SizedBox.expand(
+                      child: Stack(children: [
+                    IndexedStack(index: _currentIndex, children: const [
+                      _HomeScrollView(key: PageStorageKey('home-tab')),
+                      SkinEducationPage(
+                        embedded: true,
+                        key: PageStorageKey('education-tab'),
+                      ),
+                      SkinHelpPage(
+                          embedded: true, key: PageStorageKey('help-tab')),
+                      SkinAboutPage(
+                          embedded: true, key: PageStorageKey('about-tab')),
+                    ]),
+                    if (!_loaded.contains(_currentIndex))
+                      Positioned.fill(
+                        child: ColoredBox(
+                          color: SkinHomePage.cream,
+                          child: ShimmerLoading(
+                              child: ListView(
+                            physics: const NeverScrollableScrollPhysics(),
+                            padding: const EdgeInsets.all(20),
+                            children: const [
+                              SkeletonBox(height: 135),
+                              SizedBox(height: 20),
+                              SkeletonBox(width: 170, height: 24),
+                              SizedBox(height: 18),
+                              SkeletonBox(height: 115),
+                              SizedBox(height: 12),
+                              SkeletonBox(height: 115)
+                            ],
+                          )),
+                        ),
+                      ),
+                  ])),
+                )))),
         bottomNavigationBar: SkinBottomNav(
           currentIndex: _currentIndex,
           onSelected: _selectTab,
@@ -147,6 +152,7 @@ class _HomeScrollView extends StatelessWidget {
             child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _HomeCheckinShortcut(),
                   _SkinJourneyCard(),
                   SizedBox(height: 26),
                   _RecentActivitySection(),
@@ -210,7 +216,7 @@ class _Hero extends StatelessWidget {
               right: 4 * scale,
               width: 158 * scale,
               height: 218 * scale,
-              child: Image.asset('${SkinHomePage.assetBase}/skin_girl.png',
+              child: Image.asset('${SkinHomePage.assetBase}/start_avatar.png',
                   fit: BoxFit.contain)),
           Positioned(
               bottom: 55 * scale,
@@ -583,7 +589,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avatarSize = 46 * scale;
+    final avatarSize = 38 * scale;
     final profile = context.watch<ProfileData>();
 
     return Row(
@@ -640,7 +646,7 @@ class _Header extends StatelessWidget {
                               'Good Morning,',
                               maxLines: 1,
                               style: TextStyle(
-                                fontSize: 12 * scale,
+                                fontSize: 11 * scale,
                                 color: const Color(0xFF29363A),
                               ),
                             ),
@@ -649,7 +655,7 @@ class _Header extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 19 * scale,
+                                fontSize: 17 * scale,
                                 height: 1.05,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF11191B),
@@ -701,7 +707,7 @@ class _Header extends StatelessWidget {
                         height: avatarSize,
                         child: Icon(
                           Icons.notifications_none_rounded,
-                          size: 25 * scale,
+                          size: 21 * scale,
                           color: SkinHomePage.deepGreen,
                         ),
                       ),
@@ -727,12 +733,65 @@ class _Header extends StatelessWidget {
             );
           },
         ),
+        SizedBox(width: 6 * scale),
+        Material(
+          color: Colors.white,
+          shape: const CircleBorder(),
+          child: InkWell(
+            key: const Key('open-settings'),
+            customBorder: const CircleBorder(),
+            onTap: () => Navigator.of(context).pushNamed('/settings'),
+            child: SizedBox(
+              width: avatarSize,
+              height: avatarSize,
+              child: Icon(
+                Icons.settings_outlined,
+                size: 20 * scale,
+                color: SkinHomePage.deepGreen,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 }
 
 /// Satu akses pemantauan di Home. Tidak ada kartu check-in / aktivitas ganda.
+class _HomeCheckinShortcut extends StatelessWidget {
+  const _HomeCheckinShortcut();
+
+  @override
+  Widget build(BuildContext context) {
+    final store = SkinJourneyStore.instance;
+    return AnimatedBuilder(
+      animation: store,
+      builder: (context, _) {
+        final dueDate = store.activeDueDate;
+        final status = store.checkinPromptStatus;
+        if (dueDate == null || status == null) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 18),
+          child: SkinCheckinShortcut(
+            key: const Key('home-checkin-shortcut'),
+            buttonKey: const Key('home-start-checkin'),
+            week: store.currentWeek,
+            dueDate: dueDate,
+            status: status,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const SkinCheckinPage(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _SkinJourneyCard extends StatelessWidget {
   const _SkinJourneyCard();
 
@@ -754,7 +813,7 @@ class _SkinJourneyCard extends StatelessWidget {
               key: const Key('home-open-skin-journey'),
               borderRadius: BorderRadius.circular(24),
               onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                  builder: (_) => const SkinProgressPage())),
+                  builder: (_) => const SkinJourneysPage())),
               child: Container(
                 padding: const EdgeInsets.all(19),
                 decoration: BoxDecoration(

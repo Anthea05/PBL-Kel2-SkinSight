@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/skin_theme.dart';
 import '../widgets/skin_bottom_nav.dart';
+import '../widgets/skin_page_background.dart';
 
 class SkinAboutPage extends StatelessWidget {
   const SkinAboutPage({super.key, this.embedded = false});
@@ -23,6 +24,8 @@ class SkinAboutPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _AboutBrandBar(),
+              SizedBox(height: 14),
+              _AboutLegalNav(),
               SizedBox(height: 18),
               _AboutHero(),
               SizedBox(height: 28),
@@ -38,7 +41,7 @@ class SkinAboutPage extends StatelessWidget {
               ),
               SizedBox(height: 9),
               Text(
-                'Lebih dekat dengan kulitmu.',
+                'Membantu mencatat, bukan mendiagnosis.',
                 style: TextStyle(
                   color: SkinTokens.ink,
                   fontSize: 30,
@@ -49,7 +52,7 @@ class SkinAboutPage extends StatelessWidget {
               ),
               SizedBox(height: 13),
               Text(
-                'SkinSight hadir untuk membantu kamu memahami perubahan kulit secara lebih tenang—melalui catatan visual, edukasi yang mudah dibaca, dan check-in yang konsisten.',
+                'SkinSight adalah aplikasi pemantauan mandiri yang menggabungkan foto, jawaban kuis, check-in, dan materi edukasi. Informasi yang ditampilkan membantu pengguna meninjau catatan dari waktu ke waktu, bukan memastikan kondisi medis.',
                 style: TextStyle(
                   color: SkinTokens.muted,
                   fontSize: 15,
@@ -65,7 +68,7 @@ class SkinAboutPage extends StatelessWidget {
               SizedBox(height: 20),
               Center(
                 child: Text(
-                  'SkinSight · Versi 1.1.0',
+                  'SkinSight · Prototipe versi 1.1.0',
                   style: TextStyle(
                     color: SkinTokens.primary,
                     fontSize: 11.5,
@@ -80,13 +83,83 @@ class SkinAboutPage extends StatelessWidget {
     );
 
     if (embedded) {
-      return ColoredBox(color: const Color(0xFFFFFBF3), child: content);
+      return SkinPageBackground(child: content);
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBF3),
-      body: SafeArea(bottom: false, child: content),
+      body: SkinPageBackground(
+        child: SafeArea(bottom: false, child: content),
+      ),
       bottomNavigationBar: const SkinBottomNav(currentIndex: 3),
+    );
+  }
+}
+
+class _AboutLegalNav extends StatelessWidget {
+  const _AboutLegalNav();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        const _AboutBubble(
+          label: 'Profil Kami',
+          selected: true,
+        ),
+        _AboutBubble(
+          key: const Key('about-open-privacy'),
+          label: 'Kebijakan Privasi',
+          onTap: () => Navigator.of(context).pushNamed('/privacy'),
+        ),
+        _AboutBubble(
+          key: const Key('about-open-terms'),
+          label: 'Syarat & Ketentuan',
+          onTap: () => Navigator.of(context).pushNamed('/terms'),
+        ),
+      ],
+    );
+  }
+}
+
+class _AboutBubble extends StatelessWidget {
+  const _AboutBubble({
+    super.key,
+    required this.label,
+    this.selected = false,
+    this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? SkinTokens.primary : Colors.white.withValues(alpha: .7),
+      shape: StadiumBorder(
+        side: BorderSide(
+          color: selected ? SkinTokens.primary : SkinTokens.border,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : SkinTokens.primaryDark,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -117,7 +190,7 @@ class _AboutBrandBar extends StatelessWidget {
           if (constraints.maxWidth >= 350) ...[
             const SizedBox(width: 12),
             const Text(
-              'Cerita kami',
+              'Tentang produk',
               style: TextStyle(
                 color: SkinTokens.muted,
                 fontSize: 12,
@@ -218,7 +291,7 @@ class _AboutHero extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Kenali. Catat.\nRawat dengan sadar.',
+                      'Amati. Catat.\nPahami perubahannya.',
                       style: TextStyle(
                         color: SkinTokens.ink,
                         fontSize: 21,
@@ -277,7 +350,7 @@ class _PurposeSection extends StatelessWidget {
         ),
         SizedBox(height: 10),
         Text(
-          'Tujuan kami',
+          'Tujuan pengembangan',
           style: TextStyle(
             color: SkinTokens.ink,
             fontSize: 22,
@@ -286,7 +359,7 @@ class _PurposeSection extends StatelessWidget {
         ),
         SizedBox(height: 9),
         Text(
-          'Membuat pemantauan kulit terasa sederhana, relevan, dan tidak mengintimidasi. Bukan sekadar sekali scan, tetapi kebiasaan kecil untuk mengenali pola dari waktu ke waktu.',
+          'Menyediakan satu tempat untuk menyimpan catatan kondisi kulit secara berkala. Foto dan check-in dapat membantu pengguna membandingkan catatannya sendiri, tetapi hasilnya tetap dipengaruhi pencahayaan, posisi kamera, dan kualitas gambar.',
           style: TextStyle(
             color: SkinTokens.muted,
             fontSize: 14.5,
@@ -306,21 +379,31 @@ class _Principles extends StatelessWidget {
     return const Column(
       children: [
         _Principle(
-          icon: Icons.visibility_outlined,
-          title: 'Jelas, bukan menakutkan',
-          body: 'Informasi disampaikan dengan bahasa yang mudah dipahami.',
+          icon: Icons.fact_check_outlined,
+          title: 'Berdasarkan data yang diberikan',
+          body:
+              'Ringkasan dibuat dari foto dan jawaban yang dimasukkan pengguna, sehingga hasil dapat berbeda ketika kondisi pengambilan data berubah.',
         ),
         Divider(height: 26),
         _Principle(
           icon: Icons.timeline_rounded,
-          title: 'Konsisten dari waktu ke waktu',
-          body: 'Scan dan check-in disusun menjadi perjalanan yang utuh.',
+          title: 'Berfokus pada pencatatan berkala',
+          body:
+              'Journey mengelompokkan baseline, foto, kuis, dan check-in agar setiap perjalanan dapat ditinjau secara terpisah.',
+        ),
+        Divider(height: 26),
+        _Principle(
+          icon: Icons.menu_book_outlined,
+          title: 'Edukasi dengan rujukan',
+          body:
+              'Materi edukasi menyertakan sumber yang dapat diperiksa dan disajikan sebagai informasi umum, bukan rekomendasi terapi pribadi.',
         ),
         Divider(height: 26),
         _Principle(
           icon: Icons.health_and_safety_outlined,
-          title: 'Aman dalam batasnya',
-          body: 'Observasi awal tetap dibedakan dari diagnosis medis.',
+          title: 'Batas penggunaan yang jelas',
+          body:
+              'Hasil visual merupakan observasi awal dan tidak digunakan untuk menetapkan diagnosis atau menggantikan pemeriksaan tenaga kesehatan.',
         ),
       ],
     );
@@ -401,7 +484,7 @@ class _MedicalNote extends StatelessWidget {
           SizedBox(width: 11),
           Expanded(
             child: Text(
-              'SkinSight bukan alat diagnosis, resep, atau pengganti konsultasi dengan dokter kulit.',
+              'Fitur analisis SkinSight masih berupa prototipe dan belum divalidasi sebagai alat medis. Keluhan yang menetap, memburuk, nyeri, atau mengkhawatirkan perlu diperiksa oleh tenaga kesehatan.',
               style: TextStyle(
                 color: SkinTokens.ink,
                 fontSize: 12.5,

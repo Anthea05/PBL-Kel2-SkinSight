@@ -14,74 +14,77 @@ class SkinStartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SkinTokens.background,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                '$_assetBase/start_background.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-              ),
-              ColoredBox(color: Colors.white.withValues(alpha: .45)),
-              SafeArea(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final width = constraints.maxWidth;
-                    final compact = width < 350;
-                    final contentHeight = math.max(
-                      constraints.maxHeight,
-                      compact ? 600.0 : 680.0,
-                    );
+    return Theme(
+      data: SkinTokens.theme(fontFamily: 'Kalam'),
+      child: Scaffold(
+        backgroundColor: SkinTokens.background,
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  '$_assetBase/start_background.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                ),
+                ColoredBox(color: Colors.white.withValues(alpha: .45)),
+                SafeArea(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      final compact = width < 350;
+                      final contentHeight = math.max(
+                        constraints.maxHeight,
+                        compact ? 600.0 : 680.0,
+                      );
 
-                    return SingleChildScrollView(
-                      key: const Key('start-scroll'),
-                      physics: const ClampingScrollPhysics(),
-                      child: SizedBox(
-                        width: width,
-                        height: contentHeight,
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: compact ? 18 : 20,
-                          ),
-                          child: Column(
-                            children: [
-                              SizedBox(height: contentHeight * .080),
-                              const _Brand(),
-                              SizedBox(height: contentHeight * .065),
-                              _JourneyTitle(compact: compact),
-                              const SizedBox(height: 14),
-                              Text(
-                                'Kenali kondisi kulitmu, catat perubahan,\n'
-                                'dan pahami perawatan dasarnya.',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: _muted,
-                                  fontSize: compact ? 15 : 17,
-                                  height: 1.38,
-                                  fontWeight: FontWeight.w600,
+                      return SingleChildScrollView(
+                        key: const Key('start-scroll'),
+                        physics: const ClampingScrollPhysics(),
+                        child: SizedBox(
+                          width: width,
+                          height: contentHeight,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: compact ? 18 : 20,
+                            ),
+                            child: Column(
+                              children: [
+                                SizedBox(height: contentHeight * .080),
+                                const _Brand(),
+                                SizedBox(height: contentHeight * .065),
+                                _JourneyTitle(compact: compact),
+                                const SizedBox(height: 14),
+                                Text(
+                                  'Kenali kondisi kulitmu, catat perubahan,\n'
+                                  'dan pahami perawatan dasarnya.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: _muted,
+                                    fontSize: compact ? 15 : 17,
+                                    height: 1.38,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: contentHeight * .018),
-                              Expanded(
-                                child: _JourneyScene(compact: compact),
-                              ),
-                              SizedBox(height: contentHeight * .018),
-                              _StartButton(compact: compact),
-                              SizedBox(height: contentHeight * .055),
-                            ],
+                                SizedBox(height: contentHeight * .018),
+                                Expanded(
+                                  child: _JourneyScene(compact: compact),
+                                ),
+                                SizedBox(height: contentHeight * .018),
+                                _StartButton(compact: compact),
+                                SizedBox(height: contentHeight * .04),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -161,7 +164,7 @@ class _StartButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         key: const Key('start-button'),
-        onTap: () => Navigator.of(context).pushReplacementNamed('/login'),
+        onTap: () => Navigator.of(context).pushNamed('/auth'),
         borderRadius: BorderRadius.circular(SkinTokens.radius),
         child: Ink(
           height: 52,

@@ -5,7 +5,7 @@ import 'package:skinsight/main.dart';
 Future<void> _openLogin(WidgetTester tester) async {
   await tester.pumpWidget(const SkinSightApp());
   await tester.pumpAndSettle();
-  final startButton = find.byKey(const Key('start-button'));
+  final startButton = find.byKey(const Key('start-login-link'));
   await tester.ensureVisible(startButton);
   await tester.pumpAndSettle();
   await tester.tap(startButton);
@@ -56,7 +56,7 @@ void main() {
     await tester.tap(find.byKey(const Key('login-submit')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Aktivitas Kulit'), findsOneWidget);
+    expect(find.text('Aktivitas Terbaru'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -70,7 +70,7 @@ void main() {
     await tester.tap(find.byKey(const Key('login-google')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Aktivitas Kulit'), findsOneWidget);
+    expect(find.text('Aktivitas Terbaru'), findsOneWidget);
   });
 
   testWidgets('Daftar link opens the registration form', (tester) async {
@@ -80,7 +80,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     await _openLogin(tester);
-    await tester.tap(find.byKey(const Key('login-register-toggle')));
+    final registerToggle = find.byKey(const Key('login-register-toggle'));
+    await tester.ensureVisible(registerToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(registerToggle);
     await tester.pumpAndSettle();
 
     expect(find.text('Buat akun SkinSight'), findsOneWidget);

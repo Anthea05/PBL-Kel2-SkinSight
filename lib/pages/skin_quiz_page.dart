@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../data/skin_journey_store.dart';
 import '../theme/skin_theme.dart';
 import '../widgets/skin_page_header.dart';
-import 'skin_scan_page.dart';
+import '../widgets/skin_page_background.dart';
+import 'skin_initial_scan_page.dart';
+import 'skin_progress_page.dart';
 
 /// Kuesioner pra-scan M01–M07. Semua pertanyaan berada dalam satu halaman.
 class SkinQuizPage extends StatefulWidget {
@@ -15,20 +17,41 @@ class SkinQuizPage extends StatefulWidget {
 
 class _SkinQuizPageState extends State<SkinQuizPage> {
   static const questions = <(String, String, List<String>)>[
-    ('M01', 'Sedang menggunakan bahan aktif atau obat perawatan wajah?',
-      ['Ya', 'Tidak', 'Tidak tahu']),
-    ('M02', 'Seberapa rutin kamu memakai perawatan dalam 7 hari terakhir?',
-      ['Rutin', 'Kadang', 'Tidak', 'Tidak memakai', 'Tidak tahu']),
-    ('M03', 'Apakah wajah sedang perih, gatal, panas, ruam, atau mengelupas?',
-      ['Tidak', 'Ringan', 'Sedang-berat', 'Tidak yakin']),
-    ('M04', 'Pernah ada produk atau bahan yang menimbulkan reaksi buruk?',
-      ['Tidak', 'Ya', 'Tidak tahu']),
-    ('M05', 'Seberapa sering memakai sunscreen saat terpapar matahari?',
-      ['Rutin', 'Kadang', 'Tidak', 'Tidak tahu']),
-    ('M06', 'Sedang dalam perawatan dokter untuk masalah kulit ini?',
-      ['Ya', 'Tidak', 'Tidak yakin']),
-    ('M07', 'Masalah mana yang ingin kamu perhatikan? (Boleh lebih dari satu)',
-      ['Acne', 'PIH', 'Dark Circle', 'Redness', 'Wrinkle', 'Belum yakin']),
+    (
+      'M01',
+      'Sedang menggunakan bahan aktif atau obat perawatan wajah?',
+      ['Ya', 'Tidak', 'Tidak tahu']
+    ),
+    (
+      'M02',
+      'Seberapa rutin kamu memakai perawatan dalam 7 hari terakhir?',
+      ['Rutin', 'Kadang', 'Tidak', 'Tidak memakai', 'Tidak tahu']
+    ),
+    (
+      'M03',
+      'Apakah wajah sedang perih, gatal, panas, ruam, atau mengelupas?',
+      ['Tidak', 'Ringan', 'Sedang-berat', 'Tidak yakin']
+    ),
+    (
+      'M04',
+      'Pernah ada produk atau bahan yang menimbulkan reaksi buruk?',
+      ['Tidak', 'Ya', 'Tidak tahu']
+    ),
+    (
+      'M05',
+      'Seberapa sering memakai sunscreen saat terpapar matahari?',
+      ['Rutin', 'Kadang', 'Tidak', 'Tidak tahu']
+    ),
+    (
+      'M06',
+      'Sedang dalam perawatan dokter untuk masalah kulit ini?',
+      ['Ya', 'Tidak', 'Tidak yakin']
+    ),
+    (
+      'M07',
+      'Masalah mana yang ingin kamu perhatikan? (Boleh lebih dari satu)',
+      ['Acne', 'PIH', 'Dark Circle', 'Redness', 'Wrinkle', 'Belum yakin']
+    ),
   ];
 
   final Map<String, String> _answers = {...SkinJourneyStore.instance.answers};
@@ -89,11 +112,12 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
     }
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     for (var i = 0; i < questions.length; i++) {
       final id = questions[i].$1;
-      if (id == 'M07' ? _concerns.isEmpty :
-          (_answers[id] == null || _answers[id]!.isEmpty)) {
+      if (id == 'M07'
+          ? _concerns.isEmpty
+          : (_answers[id] == null || _answers[id]!.isEmpty)) {
         _showMissing(i);
         return;
       }
@@ -125,21 +149,31 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
       _answers.remove('regimen_start');
     }
 
-    SkinJourneyStore.instance.saveQuestionnaire(_answers, photoConsent: _consent);
+    SkinJourneyStore.instance
+        .saveQuestionnaire(_answers, photoConsent: _consent);
     if (_answers['M03'] == 'Sedang-berat') {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Jika iritasi cukup berat, periksakan ke tenaga kesehatan sebelum mencoba bahan aktif baru.'),
+        content: Text(
+            'Jika iritasi cukup berat, periksakan ke tenaga kesehatan sebelum mencoba bahan aktif baru.'),
       ));
     }
-    Navigator.of(context).pushReplacement(MaterialPageRoute<void>(
-      builder: (_) => SkinScanPage(enableCamera: widget.enableCamera),
-    ));
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => SkinInitialScanPage(
+          enableCamera: widget.enableCamera,
+          autoStartScan: true,
+        ),
+      ),
+    );
+    if (!mounted || saved != true) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const SkinProgressPage()),
+    );
   }
 
   Widget _option(String id, String answer) {
-    final selected = id == 'M07'
-        ? _concerns.contains(answer)
-        : _answers[id] == answer;
+    final selected =
+        id == 'M07' ? _concerns.contains(answer) : _answers[id] == answer;
     return OutlinedButton(
       onPressed: () => _choose(id, answer),
       style: OutlinedButton.styleFrom(
@@ -184,13 +218,15 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: _regimenClass,
+              initialValue: _regimenClass,
               decoration: const InputDecoration(
                 labelText: 'Perawatan ini untuk kondisi apa? (opsional)',
               ),
-              items: SkinJourneyStore.visualClasses.map((name) =>
-                DropdownMenuItem(value: name, child: Text(name)),
-              ).toList(),
+              items: SkinJourneyStore.visualClasses
+                  .map(
+                    (name) => DropdownMenuItem(value: name, child: Text(name)),
+                  )
+                  .toList(),
               onChanged: (value) => setState(() => _regimenClass = value),
             ),
             const SizedBox(height: 8),
@@ -219,7 +255,8 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SkinTokens.background,
-      body: SafeArea(
+      body: SkinPageBackground(
+          child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
@@ -246,10 +283,11 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
                           contentPadding: EdgeInsets.zero,
                           controlAffinity: ListTileControlAffinity.leading,
                           onChanged: (value) =>
-                            setState(() => _consent = value ?? false),
+                              setState(() => _consent = value ?? false),
                           title: const Text(
                             'Saya mengizinkan foto diproses untuk analisis dan pemantauan.',
-                            style: TextStyle(fontSize: 14, color: SkinTokens.ink),
+                            style:
+                                TextStyle(fontSize: 14, color: SkinTokens.ink),
                           ),
                         ),
                       ],
@@ -270,7 +308,7 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

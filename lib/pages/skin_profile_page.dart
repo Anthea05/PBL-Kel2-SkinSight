@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme/skin_theme.dart';
+import '../models/auth_session.dart';
 import '../widgets/skin_page_header.dart';
+import '../widgets/skin_page_background.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -21,12 +23,13 @@ class SkinProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SkinTokens.background,
-      body: SafeArea(
+      body: SkinPageBackground(
+          child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
             child: DecoratedBox(
-              decoration: const BoxDecoration(color: SkinTokens.background),
+              decoration: const BoxDecoration(color: Colors.transparent),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final compact = constraints.maxWidth < 350;
@@ -61,7 +64,7 @@ class SkinProfilePage extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )),
       bottomNavigationBar: const SkinBottomNav(currentIndex: -1),
     );
   }
@@ -574,10 +577,8 @@ class _LogoutButton extends StatelessWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kamu telah keluar dari akun.')),
-      );
+      AuthSession.instance.signOut();
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
     }
   }
 
