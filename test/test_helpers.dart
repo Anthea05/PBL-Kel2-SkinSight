@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:skinsight/models/auth_session.dart';
 
 Future<void> enterHome(WidgetTester tester) async {
+  AuthSession.instance.completeOnboarding();
   final startButton = find.byKey(const Key('start-button'));
   await tester.ensureVisible(startButton);
   await tester.pumpAndSettle();

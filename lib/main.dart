@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'data/auth_service.dart';
 import 'models/profile_data.dart';
 import 'models/font_settings.dart';
 import 'models/auth_session.dart';
@@ -43,6 +45,7 @@ class _SkinSightBootstrapState extends State<_SkinSightBootstrap> {
       await Future.wait([
         SkinFontSettings.instance.load(),
         AuthSession.instance.load(),
+        _initializeSupabase(),
       ]).timeout(const Duration(seconds: 2));
     } catch (error, stackTrace) {
       debugPrint('Startup preferences could not be loaded: $error');
@@ -71,15 +74,41 @@ class _SkinSightBootstrapState extends State<_SkinSightBootstrap> {
   }
 }
 
+Future<void> _initializeSupabase() async {
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) return;
+  await Supabase.initialize(
+    url: supabaseUrl,
+    publishableKey: supabaseAnonKey,
+  );
+}
+
 class SkinSightApp extends StatelessWidget {
   const SkinSightApp({super.key, this.respectPersistedSession = false});
 
   final bool respectPersistedSession;
 
+  bool _supabaseReady() {
+    try {
+      Supabase.instance.client;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ProfileData(),
+    final supabaseReady = _supabaseReady();
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProfileData()),
+        Provider<AuthService>(
+          create: (_) =>
+              supabaseReady ? SupabaseAuthService() : FakeAuthService(),
+        ),
+      ],
       child: AnimatedBuilder(
         animation: SkinFontSettings.instance,
         builder: (context, _) => MaterialApp(

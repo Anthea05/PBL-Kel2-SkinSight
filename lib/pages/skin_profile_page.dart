@@ -7,6 +7,7 @@ import '../widgets/skin_page_background.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../data/auth_service.dart';
 import '../models/profile_data.dart';
 import '../widgets/skin_bottom_nav.dart';
 
@@ -577,8 +578,18 @@ class _LogoutButton extends StatelessWidget {
     );
 
     if (confirmed == true && context.mounted) {
+      try {
+        await context.read<AuthService>().signOut();
+      } catch (_) {
+        // Best effort: sesi lokal tetap diakhiri bila server tidak tersedia.
+      }
+      if (!context.mounted) return;
       AuthSession.instance.signOut();
-      Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Kamu telah keluar dari akun.')),
+      );
     }
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../data/auth_service.dart';
 import '../models/auth_session.dart';
 import '../theme/skin_theme.dart';
 import '../widgets/skin_page_background.dart';
@@ -27,6 +29,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
 
   bool _obscurePassword = true;
   late bool _registerMode;
+  bool _busy = false;
 
   @override
   void initState() {
@@ -43,17 +46,55 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
     super.dispose();
   }
 
-  void _continueToHome() {
+  Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    AuthSession.instance.signIn();
-    final destination = _destinationAfterAuthentication;
-    Navigator.of(context).pushNamedAndRemoveUntil(destination, (_) => false);
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final auth = context.read<AuthService>();
+      if (_registerMode) {
+        await auth.signUp(
+          name: _nameController.text,
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      } else {
+        await auth.signIn(
+          email: _emailController.text,
+          password: _passwordController.text,
+        );
+      }
+      if (!mounted) return;
+      AuthSession.instance.signIn();
+      final destination = _destinationAfterAuthentication;
+      Navigator.of(context).pushNamedAndRemoveUntil(destination, (_) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
-  void _continueWithGoogle() {
-    AuthSession.instance.signIn();
-    final destination = _destinationAfterAuthentication;
-    Navigator.of(context).pushNamedAndRemoveUntil(destination, (_) => false);
+  Future<void> _continueWithGoogle() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await context.read<AuthService>().signInWithGoogle();
+      if (!mounted) return;
+      AuthSession.instance.signIn();
+      final destination = _destinationAfterAuthentication;
+      Navigator.of(context).pushNamedAndRemoveUntil(destination, (_) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   String get _destinationAfterAuthentication =>
@@ -221,7 +262,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                           icon: Icons.lock_outline_rounded,
                                           obscureText: _obscurePassword,
                                           textInputAction: TextInputAction.done,
-                                          onSubmitted: (_) => _continueToHome(),
+                                          onSubmitted: (_) => _submit(),
                                           suffix: IconButton(
                                             key: const Key(
                                               'login-password-visibility',
@@ -250,10 +291,12 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                         ),
                                         SizedBox(height: compact ? 18 : 22),
                                         _PrimaryAuthButton(
-                                          label: _registerMode
-                                              ? 'Daftar'
-                                              : 'Masuk',
-                                          onTap: _continueToHome,
+                                          label: _busy
+                                              ? 'Memproses...'
+                                              : _registerMode
+                                                  ? 'Daftar'
+                                                  : 'Masuk',
+                                          onTap: _busy ? () {} : _submit,
                                         ),
                                         const SizedBox(height: 24),
                                         Wrap(

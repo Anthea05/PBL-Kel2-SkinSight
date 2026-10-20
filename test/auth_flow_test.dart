@@ -28,6 +28,10 @@ void main() {
       find.byKey(const Key('register-name')),
       'Pengguna Baru',
     );
+    await tester.enterText(
+      find.byKey(const Key('login-email')),
+      'pengguna.baru@skinsight.id',
+    );
     await tester.ensureVisible(find.byKey(const Key('login-submit')));
     await tester.tap(find.byKey(const Key('login-submit')));
     await tester.pumpAndSettle();
@@ -41,8 +45,8 @@ void main() {
 
     await tester.tap(find.byKey(const Key('onboarding-next')));
     await tester.pumpAndSettle();
-    expect(find.text('Lakukan check-in berkala'), findsOneWidget);
-    expect(find.text('Mulai sekarang'), findsOneWidget);
+    expect(find.text('Check-in rutin lebih mudah'), findsOneWidget);
+    expect(find.text('Mulai'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('onboarding-next')));
     await tester.pumpAndSettle();
@@ -53,6 +57,7 @@ void main() {
 
   testWidgets('ordinary login goes directly to home without onboarding',
       (tester) async {
+    AuthSession.instance.completeOnboarding();
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -60,7 +65,9 @@ void main() {
 
     await tester.pumpWidget(const SkinSightApp());
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('start-login-link')));
+    await tester.tap(find.byKey(const Key('start-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('auth-login')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('login-submit')));
     await tester.tap(find.byKey(const Key('login-submit')));
@@ -91,6 +98,10 @@ void main() {
     await tester.enterText(
       find.byKey(const Key('register-name')),
       'Pengguna Baru',
+    );
+    await tester.enterText(
+      find.byKey(const Key('login-email')),
+      'compact.user@skinsight.id',
     );
     final submit = find.byKey(const Key('login-submit'));
     await tester.ensureVisible(submit);

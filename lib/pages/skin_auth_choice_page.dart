@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../data/auth_service.dart';
 import '../models/auth_session.dart';
 import '../theme/skin_theme.dart';
 
 class SkinAuthChoicePage extends StatelessWidget {
   const SkinAuthChoicePage({super.key});
 
-  void _registerWithGoogle(BuildContext context) {
-    AuthSession.instance.signIn();
-    Navigator.of(context).pushNamedAndRemoveUntil('/onboarding', (_) => false);
+  Future<void> _registerWithGoogle(BuildContext context) async {
+    try {
+      await context.read<AuthService>().signInWithGoogle();
+      if (!context.mounted) return;
+      AuthSession.instance.signIn();
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/onboarding', (_) => false);
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    }
   }
 
   @override
