@@ -261,7 +261,7 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
                   child: SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: _submit,
+                      onPressed: _consent ? _submit : null,
                       child: const Text('Lanjut ke Scan'),
                     ),
                   ),

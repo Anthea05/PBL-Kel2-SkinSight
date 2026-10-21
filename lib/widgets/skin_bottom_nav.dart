@@ -13,7 +13,7 @@ class SkinBottomNav extends StatelessWidget {
 
   static const _teal = SkinTokens.primary;
   static const _inactive = SkinTokens.muted;
-  static const _routes = ['/home', '/education', '/help', '/about'];
+  static const _routes = ['/home', '/education', '/profile'];
 
   @override
   Widget build(BuildContext context) {
@@ -56,20 +56,12 @@ class SkinBottomNav extends StatelessWidget {
                       onTap: () => _open(context, 1),
                     ),
                     _NavItem(
-                      key: const Key('open-help'),
-                      icon: Icons.help_outline_rounded,
-                      label: 'Bantuan',
+                      key: const Key('bottom-profile'),
+                      icon: Icons.person_outline_rounded,
+                      label: 'Profil',
                       selected: currentIndex == 2,
                       compact: compact,
                       onTap: () => _open(context, 2),
-                    ),
-                    _NavItem(
-                      key: const Key('open-about'),
-                      icon: Icons.info_outline_rounded,
-                      label: 'Tentang Kami',
-                      selected: currentIndex == 3,
-                      compact: compact,
-                      onTap: () => _open(context, 3),
                     ),
                   ],
                 ),

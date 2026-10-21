@@ -10,7 +10,9 @@ import '../models/profile_data.dart';
 import '../widgets/skin_bottom_nav.dart';
 
 class SkinProfilePage extends StatelessWidget {
-  const SkinProfilePage({super.key});
+  const SkinProfilePage({super.key, this.embedded = false});
+
+  final bool embedded;
 
   static const _teal = SkinTokens.primary;
   static const _deepTeal = SkinTokens.primaryDark;
@@ -20,52 +22,81 @@ class SkinProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: SkinTokens.background,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
-            child: DecoratedBox(
-              decoration: const BoxDecoration(color: SkinTokens.background),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 350;
-                  return Column(
-                    children: [
-                      _ProfileHeader(compact: compact),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          key: const Key('profile-scroll'),
-                          physics: const ClampingScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(
-                            compact ? 14 : 20,
-                            8,
-                            compact ? 14 : 20,
-                            28,
-                          ),
-                          child: Column(
-                            children: [
-                              _IdentitySection(compact: compact),
-                              SizedBox(height: compact ? 22 : 28),
-                              const _ProfileFields(),
-                              SizedBox(height: compact ? 26 : 34),
-                              const _LogoutButton(),
-                            ],
-                          ),
-                        ),
+    final content = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+        child: DecoratedBox(
+          decoration: const BoxDecoration(color: SkinTokens.background),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 350;
+              return Column(
+                children: [
+                  if (embedded)
+                    _EmbeddedProfileHeader(compact: compact)
+                  else
+                    _ProfileHeader(compact: compact),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      key: const Key('profile-scroll'),
+                      physics: const ClampingScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        compact ? 14 : 20,
+                        8,
+                        compact ? 14 : 20,
+                        28,
                       ),
-                    ],
-                  );
-                },
-              ),
-            ),
+                      child: Column(
+                        children: [
+                          _IdentitySection(compact: compact),
+                          SizedBox(height: compact ? 22 : 28),
+                          const _ProfileFields(),
+                          SizedBox(height: compact ? 18 : 22),
+                          const _SupportLinks(),
+                          SizedBox(height: compact ? 26 : 34),
+                          const _LogoutButton(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
-      bottomNavigationBar: const SkinBottomNav(currentIndex: -1),
+    );
+
+    if (embedded) return content;
+
+    return Scaffold(
+      backgroundColor: SkinTokens.background,
+      body: SafeArea(child: content),
+      bottomNavigationBar: const SkinBottomNav(currentIndex: 2),
     );
   }
+}
+
+class _EmbeddedProfileHeader extends StatelessWidget {
+  final bool compact;
+
+  const _EmbeddedProfileHeader({required this.compact});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: EdgeInsets.fromLTRB(compact ? 18 : 22, 18, 18, 8),
+        child: const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Profil Saya',
+            style: TextStyle(
+              color: SkinProfilePage._navy,
+              fontSize: 27,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      );
 }
 
 class _ProfileHeader extends StatelessWidget {
@@ -542,6 +573,107 @@ class _FieldDivider extends StatelessWidget {
       indent: 52,
       endIndent: 14,
       color: SkinTokens.border,
+    );
+  }
+}
+
+class _SupportLinks extends StatelessWidget {
+  const _SupportLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: SkinTokens.surface,
+        borderRadius: BorderRadius.circular(SkinTokens.radius),
+        border: Border.all(color: SkinTokens.border),
+      ),
+      child: Column(
+        children: [
+          _SupportLink(
+            key: const Key('profile-open-help'),
+            icon: Icons.help_outline_rounded,
+            label: 'Bantuan',
+            subtitle: 'Pusat bantuan dan pertanyaan umum',
+            onTap: () => Navigator.of(context).pushNamed('/help'),
+          ),
+          const Divider(
+            height: 1,
+            indent: 52,
+            endIndent: 14,
+            color: SkinTokens.border,
+          ),
+          _SupportLink(
+            key: const Key('profile-open-about'),
+            icon: Icons.info_outline_rounded,
+            label: 'Tentang Kami',
+            subtitle: 'Kenali SkinSight lebih dekat',
+            onTap: () => Navigator.of(context).pushNamed('/about'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SupportLink extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SupportLink({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 13, 10, 13),
+          child: Row(
+            children: [
+              Icon(icon, color: SkinProfilePage._deepTeal, size: 23),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: SkinProfilePage._navy,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: SkinTokens.muted,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: SkinTokens.muted,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

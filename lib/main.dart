@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/auth_service.dart';
 import 'models/profile_data.dart';
 import 'theme/skin_theme.dart';
+import 'pages/skin_about_page.dart';
+import 'pages/skin_help_page.dart';
 import 'pages/skin_history_page.dart';
 import 'pages/skin_home_page.dart';
 import 'pages/skin_login_page.dart';
@@ -65,9 +67,9 @@ class SkinSightApp extends StatelessWidget {
           '/education': (_) => const SkinHomePage(initialIndex: 1),
           // Kept as an alias so old deep links remain valid.
           '/catalog': (_) => const SkinHomePage(initialIndex: 1),
-          '/about': (_) => const SkinHomePage(initialIndex: 3),
+          '/about': (_) => const SkinAboutPage(),
           '/login': (_) => const SkinLoginPage(),
-          '/help': (_) => const SkinHomePage(initialIndex: 2),
+          '/help': (_) => const SkinHelpPage(),
           '/history': (_) => const SkinHistoryPage(),
           '/notifications': (_) => const SkinNotificationsPage(),
           '/profile': (_) => const SkinProfilePage(),

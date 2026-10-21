@@ -17,7 +17,11 @@ void main() {
       await tester.pumpWidget(const SkinSightApp());
       await tester.pumpAndSettle();
       await enterHome(tester);
-      await tester.tap(find.byKey(const Key('open-help')));
+      await tester.tap(find.byKey(const Key('bottom-profile')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('profile-open-help')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('profile-open-help')));
       await tester.pumpAndSettle();
 
       expect(find.text('Pusat Bantuan'), findsOneWidget);
@@ -35,7 +39,7 @@ void main() {
     });
   }
 
-  testWidgets('help back button returns to home', (tester) async {
+  testWidgets('help back button returns to the profile tab', (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -44,13 +48,17 @@ void main() {
     await tester.pumpWidget(const SkinSightApp());
     await tester.pumpAndSettle();
     await enterHome(tester);
-    await tester.tap(find.byKey(const Key('open-help')));
+    await tester.tap(find.byKey(const Key('bottom-profile')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('profile-open-help')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('profile-open-help')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('help-back')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Aktivitas Kulit'), findsOneWidget);
-    expect(find.text('Bantuan'), findsOneWidget);
-    expect(find.text('Profile'), findsNothing);
+    expect(find.text('Profil Saya'), findsOneWidget);
+    expect(find.byKey(const Key('profile-open-help')), findsOneWidget);
+    expect(find.byKey(const Key('profile-open-about')), findsOneWidget);
   });
 }

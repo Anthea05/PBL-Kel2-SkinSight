@@ -21,6 +21,8 @@ void main() {
 
     expect(find.text('Profil Saya'), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const Key('logout-account')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('logout-account')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('confirm-logout')));

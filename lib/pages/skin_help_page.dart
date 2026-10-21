@@ -63,7 +63,7 @@ class SkinHelpPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: SkinTokens.background,
       body: SafeArea(bottom: false, child: content),
-      bottomNavigationBar: const SkinBottomNav(currentIndex: 2),
+      bottomNavigationBar: const SkinBottomNav(currentIndex: -1),
     );
   }
 }

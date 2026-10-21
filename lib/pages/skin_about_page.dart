@@ -19,14 +19,14 @@ class SkinAboutPage extends StatelessWidget {
           key: const Key('about-page-scroll'),
           physics: const ClampingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 38),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _AboutBrandBar(),
-              SizedBox(height: 18),
-              _AboutHero(),
-              SizedBox(height: 28),
-              Text(
+              _AboutBrandBar(showBack: !embedded),
+              const SizedBox(height: 18),
+              const _AboutHero(),
+              const SizedBox(height: 28),
+              const Text(
                 'TENTANG KAMI',
                 key: Key('about-page-title'),
                 style: TextStyle(
@@ -36,8 +36,8 @@ class SkinAboutPage extends StatelessWidget {
                   letterSpacing: 1.6,
                 ),
               ),
-              SizedBox(height: 9),
-              Text(
+              const SizedBox(height: 9),
+              const Text(
                 'Lebih dekat dengan kulitmu.',
                 style: TextStyle(
                   color: SkinTokens.ink,
@@ -47,8 +47,8 @@ class SkinAboutPage extends StatelessWidget {
                   letterSpacing: -.7,
                 ),
               ),
-              SizedBox(height: 13),
-              Text(
+              const SizedBox(height: 13),
+              const Text(
                 'SkinSight hadir untuk membantu kamu memahami perubahan kulit secara lebih tenang—melalui catatan visual, edukasi yang mudah dibaca, dan check-in yang konsisten.',
                 style: TextStyle(
                   color: SkinTokens.muted,
@@ -56,14 +56,14 @@ class SkinAboutPage extends StatelessWidget {
                   height: 1.58,
                 ),
               ),
-              SizedBox(height: 34),
-              _PurposeSection(),
-              SizedBox(height: 30),
-              _Principles(),
-              SizedBox(height: 30),
-              _MedicalNote(),
-              SizedBox(height: 20),
-              Center(
+              const SizedBox(height: 34),
+              const _PurposeSection(),
+              const SizedBox(height: 30),
+              const _Principles(),
+              const SizedBox(height: 30),
+              const _MedicalNote(),
+              const SizedBox(height: 20),
+              const Center(
                 child: Text(
                   'SkinSight · Versi 1.1.0',
                   style: TextStyle(
@@ -86,19 +86,41 @@ class SkinAboutPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFBF3),
       body: SafeArea(bottom: false, child: content),
-      bottomNavigationBar: const SkinBottomNav(currentIndex: 3),
+      bottomNavigationBar: const SkinBottomNav(currentIndex: -1),
     );
   }
 }
 
 class _AboutBrandBar extends StatelessWidget {
-  const _AboutBrandBar();
+  final bool showBack;
+  const _AboutBrandBar({required this.showBack});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) => Row(
         children: [
+          if (showBack) ...[
+            Material(
+              color: Colors.white.withValues(alpha: .94),
+              shape: const CircleBorder(),
+              child: InkWell(
+                key: const Key('about-back'),
+                onTap: () => Navigator.of(context).maybePop(),
+                customBorder: const CircleBorder(),
+                child: const SizedBox(
+                  width: 42,
+                  height: 42,
+                  child: Icon(
+                    Icons.chevron_left_rounded,
+                    color: SkinTokens.primary,
+                    size: 30,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           const _BrandIcon(),
           const SizedBox(width: 10),
           const Expanded(

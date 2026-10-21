@@ -8,10 +8,9 @@ import 'package:provider/provider.dart';
 
 import '../models/profile_data.dart';
 import '../widgets/skin_bottom_nav.dart';
-import 'skin_about_page.dart';
 import 'skin_education_page.dart';
-import 'skin_help_page.dart';
 import 'skin_notifications_page.dart';
+import 'skin_profile_page.dart';
 import 'skin_quiz_page.dart';
 import 'skin_scan_page.dart';
 
@@ -33,7 +32,7 @@ class SkinHomePage extends StatefulWidget {
   State<SkinHomePage> createState() => _SkinHomePageState();
 }
 
-/// Menjaga tampilan Home lama dan footer empat tab dari versi baru.
+/// Menjaga tampilan Home lama dan footer tiga tab dari versi baru.
 /// Tab memakai IndexedStack agar tidak dihancurkan setiap berpindah menu.
 class _SkinHomePageState extends State<SkinHomePage> {
   late int _currentIndex;
@@ -44,7 +43,7 @@ class _SkinHomePageState extends State<SkinHomePage> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, 3);
+    _currentIndex = widget.initialIndex.clamp(0, 2);
     _startFirstLoad();
   }
 
@@ -85,9 +84,8 @@ class _SkinHomePageState extends State<SkinHomePage> {
                     embedded: true,
                     key: PageStorageKey('education-tab'),
                   ),
-                  SkinHelpPage(embedded: true, key: PageStorageKey('help-tab')),
-                  SkinAboutPage(
-                      embedded: true, key: PageStorageKey('about-tab')),
+                  SkinProfilePage(
+                      embedded: true, key: PageStorageKey('profile-tab')),
                 ]),
                 if (!_loaded.contains(_currentIndex))
                   Positioned.fill(

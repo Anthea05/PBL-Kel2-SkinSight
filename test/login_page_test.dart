@@ -56,7 +56,8 @@ void main() {
     await tester.tap(find.byKey(const Key('login-submit')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Aktivitas Kulit'), findsOneWidget);
+    expect(find.byKey(const Key('login-google')), findsNothing);
+    expect(find.byKey(const Key('bottom-home')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -70,7 +71,8 @@ void main() {
     await tester.tap(find.byKey(const Key('login-google')));
     await tester.pumpAndSettle();
 
-    expect(find.text('Aktivitas Kulit'), findsOneWidget);
+    expect(find.byKey(const Key('login-google')), findsNothing);
+    expect(find.byKey(const Key('bottom-home')), findsOneWidget);
   });
 
   testWidgets('Daftar link opens the registration form', (tester) async {

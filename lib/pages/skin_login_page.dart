@@ -26,6 +26,7 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
   bool _obscurePassword = true;
   bool _registerMode = false;
   bool _busy = false;
+  bool _googleBusy = false;
 
   @override
   void dispose() {
@@ -68,7 +69,10 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
 
   Future<void> _continueWithGoogle() async {
     if (_busy) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _googleBusy = true;
+    });
     try {
       await context.read<AuthService>().signInWithGoogle();
       if (!mounted) return;
@@ -79,7 +83,12 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
         SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
       );
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _googleBusy = false;
+        });
+      }
     }
   }
 
@@ -245,7 +254,10 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
                                   const SizedBox(height: 18),
                                   const _OrDivider(),
                                   const SizedBox(height: 18),
-                                  _GoogleButton(onTap: _continueWithGoogle),
+                                  _GoogleButton(
+                                    onTap: _continueWithGoogle,
+                                    busy: _googleBusy,
+                                  ),
                                 ],
                                 const SizedBox(height: 24),
                                 Wrap(
@@ -418,14 +430,15 @@ class _PrimaryAuthButton extends StatelessWidget {
 
 class _GoogleButton extends StatelessWidget {
   final VoidCallback onTap;
+  final bool busy;
 
-  const _GoogleButton({required this.onTap});
+  const _GoogleButton({required this.onTap, this.busy = false});
 
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
       key: const Key('login-google'),
-      onPressed: onTap,
+      onPressed: busy ? null : onTap,
       style: OutlinedButton.styleFrom(
         foregroundColor: _SkinLoginPageState._navy,
         backgroundColor: Colors.white.withValues(alpha: .92),
@@ -434,20 +447,40 @@ class _GoogleButton extends StatelessWidget {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(SkinTokens.radius)),
       ),
-      child: const FittedBox(
+      child: FittedBox(
         fit: BoxFit.scaleDown,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _GoogleMark(),
-            SizedBox(width: 11),
-            Text(
-              'Masuk dengan Google',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+        child: busy
+            ? const Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: _SkinLoginPageState._teal,
+                    ),
+                  ),
+                  SizedBox(width: 11),
+                  Text(
+                    'Menghubungkan ke Google...',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              )
+            : const Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _GoogleMark(),
+                  SizedBox(width: 11),
+                  Text(
+                    'Masuk dengan Google',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
       ),
     );
   }
