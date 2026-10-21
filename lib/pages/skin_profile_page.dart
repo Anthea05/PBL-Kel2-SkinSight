@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme/skin_theme.dart';
+import '../models/auth_session.dart';
 import '../widgets/skin_page_header.dart';
+import '../widgets/skin_page_background.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -26,7 +28,7 @@ class SkinProfilePage extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
         child: DecoratedBox(
-          decoration: const BoxDecoration(color: SkinTokens.background),
+          decoration: const BoxDecoration(color: Colors.transparent),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 350;
@@ -47,6 +49,7 @@ class SkinProfilePage extends StatelessWidget {
                         28,
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _IdentitySection(compact: compact),
                           SizedBox(height: compact ? 22 : 28),
@@ -71,7 +74,9 @@ class SkinProfilePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: SkinTokens.background,
-      body: SafeArea(child: content),
+      body: SkinPageBackground(
+        child: SafeArea(child: content),
+      ),
       bottomNavigationBar: const SkinBottomNav(currentIndex: 2),
     );
   }
@@ -710,10 +715,10 @@ class _LogoutButton extends StatelessWidget {
       try {
         await context.read<AuthService>().signOut();
       } catch (_) {
-        // Best effort: tetap keluar dari UI walau sesi server gagal.
+        // Best effort: sesi lokal tetap diakhiri bila server tidak tersedia.
       }
       if (!context.mounted) return;
-      // Tangkap messenger SEBELUM navigasi: context rute ini mati setelah pop.
+      AuthSession.instance.signOut();
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
       messenger.showSnackBar(

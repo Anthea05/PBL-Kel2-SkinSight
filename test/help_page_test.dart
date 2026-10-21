@@ -32,8 +32,6 @@ void main() {
       expect(find.text('Tentang SkinSight'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('Cara menggunakan SkinSight'));
-      await tester.pumpAndSettle();
       expect(find.text('Isi kuis kondisi kulit'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

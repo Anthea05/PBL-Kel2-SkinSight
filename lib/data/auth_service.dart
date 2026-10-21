@@ -12,21 +12,30 @@ const authRedirectTo = 'io.supabase.skinsight://login-callback/';
 /// Kontrak auth agar UI bisa diuji tanpa jaringan.
 /// Produksi: [SupabaseAuthService]. Tes/widget: [FakeAuthService].
 abstract class AuthService {
-  Future<void> signUp({required String name, required String email, required String password});
+  Future<void> signUp(
+      {required String name, required String email, required String password});
   Future<void> signIn({required String email, required String password});
   Future<void> signInWithGoogle();
   Future<void> signOut();
 }
 
-void validateRegister({required String name, required String email, required String password}) {
-  if (name.trim().isEmpty) throw ArgumentError('Nama perlu diisi.');
-  if (!email.contains('@')) throw ArgumentError('Masukkan alamat email yang valid.');
-  if (password.length < 6) throw ArgumentError('Password minimal 6 karakter.');
+void validateRegister(
+    {required String name, required String email, required String password}) {
+  if (name.trim().isEmpty) {
+    throw ArgumentError('Nama perlu diisi.');
+  }
+  if (!email.contains('@')) {
+    throw ArgumentError('Masukkan alamat email yang valid.');
+  }
+  if (password.length < 6) {
+    throw ArgumentError('Password minimal 6 karakter.');
+  }
 }
 
 String friendlyAuthError(Object e) {
   final msg = e.toString();
-  if (msg.contains('User already registered') || msg.contains('already been registered')) {
+  if (msg.contains('User already registered') ||
+      msg.contains('already been registered')) {
     return 'Email sudah terdaftar. Silakan masuk.';
   }
   if (msg.contains('Invalid login credentials')) {
@@ -47,7 +56,10 @@ class SupabaseAuthService implements AuthService {
   SupabaseClient get _client => Supabase.instance.client;
 
   @override
-  Future<void> signUp({required String name, required String email, required String password}) async {
+  Future<void> signUp(
+      {required String name,
+      required String email,
+      required String password}) async {
     validateRegister(name: name, email: email, password: password);
     try {
       await _client.auth.signUp(
@@ -63,7 +75,8 @@ class SupabaseAuthService implements AuthService {
   @override
   Future<void> signIn({required String email, required String password}) async {
     try {
-      await _client.auth.signInWithPassword(email: email.trim(), password: password);
+      await _client.auth
+          .signInWithPassword(email: email.trim(), password: password);
     } catch (e) {
       throw Exception(friendlyAuthError(e));
     }
@@ -152,7 +165,10 @@ class FakeAuthService implements AuthService {
   final Map<String, String> _passwords = {'alea@skinsight.id': 'skinsight123'};
 
   @override
-  Future<void> signUp({required String name, required String email, required String password}) async {
+  Future<void> signUp(
+      {required String name,
+      required String email,
+      required String password}) async {
     validateRegister(name: name, email: email, password: password);
     final key = email.trim();
     if (_passwords.containsKey(key)) {

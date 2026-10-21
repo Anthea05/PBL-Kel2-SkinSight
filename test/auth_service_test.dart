@@ -4,17 +4,25 @@ import 'package:skinsight/data/auth_service.dart';
 void main() {
   test('FakeAuthService signUp dan signIn berhasil', () async {
     final auth = FakeAuthService();
-    await auth.signUp(name: 'Alea', email: 'alea.baru@skinsight.id', password: 'skinsight123');
-    await auth.signIn(email: 'alea.baru@skinsight.id', password: 'skinsight123');
+    await auth.signUp(
+        name: 'Alea',
+        email: 'alea.baru@skinsight.id',
+        password: 'skinsight123');
+    await auth.signIn(
+        email: 'alea.baru@skinsight.id', password: 'skinsight123');
     await auth.signIn(email: 'alea@skinsight.id', password: 'skinsight123');
   });
 
   test('validateRegister menolak nama kosong dan password pendek', () {
-    expect(() => validateRegister(name: '', email: 'a@b.id', password: '123456'),
+    expect(
+        () => validateRegister(name: '', email: 'a@b.id', password: '123456'),
         throwsArgumentError);
-    expect(() => validateRegister(name: 'Alea', email: 'tidak-valid', password: '123456'),
+    expect(
+        () => validateRegister(
+            name: 'Alea', email: 'tidak-valid', password: '123456'),
         throwsArgumentError);
-    expect(() => validateRegister(name: 'Alea', email: 'a@b.id', password: '123'),
+    expect(
+        () => validateRegister(name: 'Alea', email: 'a@b.id', password: '123'),
         throwsArgumentError);
   });
 
@@ -41,7 +49,8 @@ void main() {
 
   test('FakeAuthService menerima akun hasil signUp', () async {
     final auth = FakeAuthService();
-    await auth.signUp(name: 'Baru', email: 'baru@skinsight.id', password: 'rahasia123');
+    await auth.signUp(
+        name: 'Baru', email: 'baru@skinsight.id', password: 'rahasia123');
     await auth.signIn(email: 'baru@skinsight.id', password: 'rahasia123');
   });
 }

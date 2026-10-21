@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:skinsight/main.dart';
+import 'package:skinsight/models/auth_session.dart';
 
 Future<void> _openLogin(WidgetTester tester) async {
   await tester.pumpWidget(const SkinSightApp());
@@ -9,6 +10,10 @@ Future<void> _openLogin(WidgetTester tester) async {
   await tester.ensureVisible(startButton);
   await tester.pumpAndSettle();
   await tester.tap(startButton);
+  await tester.pumpAndSettle();
+  final loginChoice = find.byKey(const Key('auth-login'));
+  await tester.ensureVisible(loginChoice);
+  await tester.tap(loginChoice);
   await tester.pumpAndSettle();
 }
 
@@ -34,6 +39,7 @@ void main() {
   }
 
   testWidgets('dummy email and password can log in', (tester) async {
+    AuthSession.instance.completeOnboarding();
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -58,10 +64,12 @@ void main() {
 
     expect(find.byKey(const Key('login-google')), findsNothing);
     expect(find.byKey(const Key('bottom-home')), findsOneWidget);
+    expect(find.text('Aktivitas Terbaru'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets('Google login opens home', (tester) async {
+    AuthSession.instance.completeOnboarding();
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -73,6 +81,7 @@ void main() {
 
     expect(find.byKey(const Key('login-google')), findsNothing);
     expect(find.byKey(const Key('bottom-home')), findsOneWidget);
+    expect(find.text('Aktivitas Terbaru'), findsOneWidget);
   });
 
   testWidgets('Daftar link opens the registration form', (tester) async {
@@ -82,7 +91,10 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
 
     await _openLogin(tester);
-    await tester.tap(find.byKey(const Key('login-register-toggle')));
+    final registerToggle = find.byKey(const Key('login-register-toggle'));
+    await tester.ensureVisible(registerToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(registerToggle);
     await tester.pumpAndSettle();
 
     expect(find.text('Buat akun SkinSight'), findsOneWidget);

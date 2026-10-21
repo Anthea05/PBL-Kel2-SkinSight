@@ -73,7 +73,10 @@ void main() {
 
     expect(find.byKey(const Key('about-hero')), findsOneWidget);
     expect(find.byKey(const Key('about-page-title')), findsOneWidget);
-    expect(find.text('Lebih dekat dengan kulitmu.'), findsOneWidget);
+    expect(
+      find.text('Membantu mencatat, bukan mendiagnosis.'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 }

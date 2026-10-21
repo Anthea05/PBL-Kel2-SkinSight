@@ -8,16 +8,19 @@ import '../data/skin_journey_store.dart';
 
 import '../theme/skin_theme.dart';
 import '../widgets/skin_page_header.dart';
+import '../widgets/skin_page_background.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'skin_result_page.dart';
 
 class SkinScanPage extends StatefulWidget {
   final bool enableCamera;
+
   /// Mengembalikan bytes ke halaman sesi foto tanpa membuka Hasil Analisis.
   final bool returnPhoto;
 
-  const SkinScanPage({super.key, this.enableCamera = true, this.returnPhoto = false});
+  const SkinScanPage(
+      {super.key, this.enableCamera = true, this.returnPhoto = false});
 
   @override
   State<SkinScanPage> createState() => _SkinScanPageState();
@@ -179,9 +182,10 @@ class _SkinScanPageState extends State<SkinScanPage>
     }
     await Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
-        builder: (_) => SkinResultPage(selfieBytes: bytes,
-          analysis: SkinDemoData.forPhoto(bytes,
-            sessionIndex: SkinJourneyStore.instance.photos.length)),
+        builder: (_) => SkinResultPage(
+            selfieBytes: bytes,
+            analysis: SkinDemoData.forPhoto(bytes,
+                sessionIndex: SkinJourneyStore.instance.photos.length)),
       ),
     );
   }
@@ -197,93 +201,91 @@ class _SkinScanPageState extends State<SkinScanPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SkinTokens.background,
-      body: SafeArea(
+      body: SkinPageBackground(
+          child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final compact = constraints.maxWidth < 350;
-                return DecoratedBox(
-                  decoration: const BoxDecoration(color: SkinTokens.background),
-                  child: Stack(
-                    children: [
-                      Column(
-                        children: [
-                          _ScanHeader(
-                            compact: compact,
-                            onBack: () => Navigator.of(context).pop(),
-                          ),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              physics: const ClampingScrollPhysics(),
-                              padding: EdgeInsets.fromLTRB(
-                                compact ? 12 : 18,
-                                8,
-                                compact ? 12 : 18,
-                                24,
-                              ),
-                              child: Column(
-                                children: [
-                                  _CameraFrame(
-                                    compact: compact,
-                                    controller: _controller,
-                                    loading: _isLoading,
-                                    errorMessage: _errorMessage,
-                                    onRetry: _initializeCamera,
-                                  ),
-                                  const SizedBox(height: 14),
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 8),
-                                    child: Text(
-                                      'Ambil foto wajah tanpa filter, dengan pencahayaan merata dan posisi serupa tiap check-in. Foto tidak menentukan diagnosis.',
-                                      textAlign: TextAlign.center,
-                                      style: SkinTokens.caption,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  _ModeSwitch(
-                                    automatic: _automaticMode,
-                                    compact: compact,
-                                    onChanged: (value) => setState(
-                                      () => _automaticMode = value,
-                                    ),
-                                  ),
-                                  SizedBox(height: compact ? 16 : 22),
-                                  _CaptureControls(
-                                    compact: compact,
-                                    canSwitch: _cameras.length > 1,
-                                    isCapturing: _isCapturing,
-                                    onGallery: _pickFromGallery,
-                                    onCapture: _takePicture,
-                                    onSwitch: _switchCamera,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    _automaticMode
-                                        ? 'Pastikan wajah terang, lalu tekan tombol saat posisi sudah pas.'
-                                        : 'Mode manual aktif. Tekan tombol untuk mengambil selfie.',
+                return Stack(
+                  children: [
+                    Column(
+                      children: [
+                        _ScanHeader(
+                          compact: compact,
+                          onBack: () => Navigator.of(context).pop(),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            physics: const ClampingScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(
+                              compact ? 12 : 18,
+                              8,
+                              compact ? 12 : 18,
+                              24,
+                            ),
+                            child: Column(
+                              children: [
+                                _CameraFrame(
+                                  compact: compact,
+                                  controller: _controller,
+                                  loading: _isLoading,
+                                  errorMessage: _errorMessage,
+                                  onRetry: _initializeCamera,
+                                ),
+                                const SizedBox(height: 14),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                  child: Text(
+                                    'Ambil foto wajah tanpa filter, dengan pencahayaan merata dan posisi serupa tiap check-in. Foto tidak menentukan diagnosis.',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: _navy.withValues(alpha: .62),
-                                      fontSize: compact ? 12 : 13,
-                                      height: 1.35,
-                                    ),
+                                    style: SkinTokens.caption,
                                   ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(height: 12),
+                                _ModeSwitch(
+                                  automatic: _automaticMode,
+                                  compact: compact,
+                                  onChanged: (value) => setState(
+                                    () => _automaticMode = value,
+                                  ),
+                                ),
+                                SizedBox(height: compact ? 16 : 22),
+                                _CaptureControls(
+                                  compact: compact,
+                                  canSwitch: _cameras.length > 1,
+                                  isCapturing: _isCapturing,
+                                  onGallery: _pickFromGallery,
+                                  onCapture: _takePicture,
+                                  onSwitch: _switchCamera,
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  _automaticMode
+                                      ? 'Pastikan wajah terang, lalu tekan tombol saat posisi sudah pas.'
+                                      : 'Mode manual aktif. Tekan tombol untuk mengambil selfie.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: _navy.withValues(alpha: .62),
+                                    fontSize: compact ? 12 : 13,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 );
               },
             ),
           ),
         ),
-      ),
+      )),
     );
   }
 }

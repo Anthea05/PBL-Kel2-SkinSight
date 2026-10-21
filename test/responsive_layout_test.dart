@@ -27,14 +27,14 @@ void main() {
       await tester.pumpAndSettle();
       await enterHome(tester);
 
-      expect(find.text('Aktivitas Kulit'), findsOneWidget);
-      expect(find.text('Scan Terakhir'), findsOneWidget);
+      expect(find.text('Aktivitas Terbaru'), findsOneWidget);
+      expect(find.byKey(const Key('recent-activity-empty')), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
       await tester.pumpAndSettle();
 
-      expect(find.text('Riwayat Perubahan'), findsOneWidget);
+      expect(find.byKey(const Key('home-open-skin-journey')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }

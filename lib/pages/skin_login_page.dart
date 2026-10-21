@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../data/auth_service.dart';
+import '../models/auth_session.dart';
 import '../theme/skin_theme.dart';
+import '../widgets/skin_page_background.dart';
 
 class SkinLoginPage extends StatefulWidget {
-  const SkinLoginPage({super.key});
+  const SkinLoginPage({super.key, this.initialRegisterMode = false});
+
+  final bool initialRegisterMode;
 
   @override
   State<SkinLoginPage> createState() => _SkinLoginPageState();
@@ -24,9 +28,15 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
   final _scrollController = ScrollController();
 
   bool _obscurePassword = true;
-  bool _registerMode = false;
+  late bool _registerMode;
   bool _busy = false;
   bool _googleBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _registerMode = widget.initialRegisterMode;
+  }
 
   @override
   void dispose() {
@@ -56,7 +66,9 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
         );
       }
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+      AuthSession.instance.signIn();
+      final destination = _destinationAfterAuthentication;
+      Navigator.of(context).pushNamedAndRemoveUntil(destination, (_) => false);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,7 +88,9 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
     try {
       await context.read<AuthService>().signInWithGoogle();
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+      AuthSession.instance.signIn();
+      final destination = _destinationAfterAuthentication;
+      Navigator.of(context).pushNamedAndRemoveUntil(destination, (_) => false);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -91,6 +105,11 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
       }
     }
   }
+
+  String get _destinationAfterAuthentication =>
+      _registerMode || !AuthSession.instance.hasCompletedOnboarding
+          ? '/onboarding'
+          : '/home';
 
   void _toggleMode() {
     setState(() {
@@ -111,194 +130,350 @@ class _SkinLoginPageState extends State<SkinLoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: SkinTokens.background,
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              const ColoredBox(color: SkinTokens.background),
-              ColoredBox(color: Colors.white.withValues(alpha: .26)),
-              SafeArea(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compact = constraints.maxWidth < 350;
-                    return SingleChildScrollView(
-                      key: const Key('login-scroll'),
-                      controller: _scrollController,
-                      physics: const ClampingScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(
-                        compact ? 20 : 28,
-                        compact ? 24 : 36,
-                        compact ? 20 : 28,
-                        28,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight:
-                              constraints.maxHeight - (compact ? 52 : 64),
+      body: SkinPageBackground(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ColoredBox(color: Colors.white.withValues(alpha: .18)),
+                SafeArea(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 350;
+                      return SingleChildScrollView(
+                        key: const Key('login-scroll'),
+                        controller: _scrollController,
+                        physics: const ClampingScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          compact ? 20 : 28,
+                          compact ? 24 : 36,
+                          compact ? 20 : 28,
+                          28,
                         ),
-                        child: IntrinsicHeight(
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                const _LoginBrand(),
-                                SizedBox(height: compact ? 24 : 34),
-                                SizedBox(height: compact ? 16 : 20),
-                                AnimatedSwitcher(
-                                  duration: Duration.zero,
-                                  child: Column(
-                                    key: ValueKey(_registerMode),
-                                    children: [
-                                      Text(
-                                        _registerMode
-                                            ? 'Buat akun SkinSight'
-                                            : 'Selamat datang kembali',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: _navy,
-                                          fontSize: compact ? 25 : 29,
-                                          height: 1.08,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: -.7,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        _registerMode
-                                            ? 'Mulai kenali kondisi kulitmu dengan akun baru.'
-                                            : 'Masuk untuk melanjutkan perjalanan kulitmu.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: _muted,
-                                          fontSize: 16,
-                                          height: 1.35,
-                                        ),
-                                      ),
-                                    ],
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight:
+                                constraints.maxHeight - (compact ? 52 : 64),
+                          ),
+                          child: IntrinsicHeight(
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _LoginVisualHero(
+                                    compact: compact,
+                                    registerMode: _registerMode,
                                   ),
-                                ),
-                                SizedBox(height: compact ? 22 : 28),
-                                if (_registerMode) ...[
-                                  _AuthField(
-                                    fieldKey: const Key('register-name'),
-                                    controller: _nameController,
-                                    label: 'Nama lengkap',
-                                    icon: Icons.person_outline_rounded,
-                                    textInputAction: TextInputAction.next,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Nama perlu diisi.'
-                                            : null,
+                                  const SizedBox(height: 14),
+                                  Container(
+                                    padding: EdgeInsets.fromLTRB(
+                                      compact ? 17 : 20,
+                                      compact ? 20 : 24,
+                                      compact ? 17 : 20,
+                                      17,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: .92),
+                                      borderRadius: BorderRadius.circular(28),
+                                      border: Border.all(color: Colors.white),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        AnimatedSwitcher(
+                                          duration: Duration.zero,
+                                          child: Column(
+                                            key: ValueKey(_registerMode),
+                                            children: [
+                                              Text(
+                                                _registerMode
+                                                    ? 'Buat akun SkinSight'
+                                                    : 'Selamat datang kembali',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: _navy,
+                                                  fontSize: compact ? 25 : 29,
+                                                  height: 1.08,
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: -.7,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                _registerMode
+                                                    ? 'Mulai kenali kondisi kulitmu dengan akun baru.'
+                                                    : 'Masuk untuk melanjutkan perjalanan kulitmu.',
+                                                textAlign: TextAlign.center,
+                                                style: const TextStyle(
+                                                  color: _muted,
+                                                  fontSize: 16,
+                                                  height: 1.35,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(height: compact ? 22 : 28),
+                                        if (!_registerMode) ...[
+                                          _GoogleButton(
+                                            onTap: _continueWithGoogle,
+                                            busy: _googleBusy,
+                                          ),
+                                          const SizedBox(height: 18),
+                                          const _OrDivider(),
+                                          const SizedBox(height: 18),
+                                        ],
+                                        if (_registerMode) ...[
+                                          _AuthField(
+                                            fieldKey:
+                                                const Key('register-name'),
+                                            controller: _nameController,
+                                            label: 'Nama lengkap',
+                                            icon: Icons.person_outline_rounded,
+                                            textInputAction:
+                                                TextInputAction.next,
+                                            validator: (value) =>
+                                                value == null ||
+                                                        value.trim().isEmpty
+                                                    ? 'Nama perlu diisi.'
+                                                    : null,
+                                          ),
+                                          const SizedBox(height: 13),
+                                        ],
+                                        _AuthField(
+                                          fieldKey: const Key('login-email'),
+                                          controller: _emailController,
+                                          label: 'Alamat email',
+                                          icon: Icons.mail_outline_rounded,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
+                                          textInputAction: TextInputAction.next,
+                                          validator: (value) {
+                                            final email = value?.trim() ?? '';
+                                            if (email.isEmpty) {
+                                              return 'Email perlu diisi.';
+                                            }
+                                            if (!email.contains('@')) {
+                                              return 'Masukkan alamat email yang valid.';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                        const SizedBox(height: 13),
+                                        _AuthField(
+                                          fieldKey: const Key('login-password'),
+                                          controller: _passwordController,
+                                          label: 'Password',
+                                          icon: Icons.lock_outline_rounded,
+                                          obscureText: _obscurePassword,
+                                          textInputAction: TextInputAction.done,
+                                          onSubmitted: (_) => _submit(),
+                                          suffix: IconButton(
+                                            key: const Key(
+                                              'login-password-visibility',
+                                            ),
+                                            onPressed: () => setState(
+                                              () => _obscurePassword =
+                                                  !_obscurePassword,
+                                            ),
+                                            tooltip: _obscurePassword
+                                                ? 'Tampilkan password'
+                                                : 'Sembunyikan password',
+                                            icon: Icon(
+                                              _obscurePassword
+                                                  ? Icons
+                                                      .visibility_off_outlined
+                                                  : Icons.visibility_outlined,
+                                              color: _teal,
+                                            ),
+                                          ),
+                                          validator: (value) {
+                                            if ((value ?? '').length < 6) {
+                                              return 'Password minimal 6 karakter.';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                        SizedBox(height: compact ? 18 : 22),
+                                        _PrimaryAuthButton(
+                                          label: _busy
+                                              ? 'Memproses...'
+                                              : _registerMode
+                                                  ? 'Daftar'
+                                                  : 'Masuk',
+                                          onTap: _busy ? () {} : _submit,
+                                        ),
+                                        const SizedBox(height: 24),
+                                        Wrap(
+                                          alignment: WrapAlignment.center,
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.center,
+                                          children: [
+                                            Text(
+                                              _registerMode
+                                                  ? 'Sudah punya akun?'
+                                                  : 'Belum punya akun?',
+                                              style: const TextStyle(
+                                                color: _muted,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            TextButton(
+                                              key: const Key(
+                                                'login-register-toggle',
+                                              ),
+                                              onPressed: _toggleMode,
+                                              child: Text(
+                                                _registerMode
+                                                    ? 'Masuk'
+                                                    : 'Daftar',
+                                                style: const TextStyle(
+                                                  color: _deepTeal,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        const _LoginLegalLinks(),
+                                      ],
+                                    ),
                                   ),
-                                  const SizedBox(height: 13),
                                 ],
-                                _AuthField(
-                                  fieldKey: const Key('login-email'),
-                                  controller: _emailController,
-                                  label: 'Alamat email',
-                                  icon: Icons.mail_outline_rounded,
-                                  keyboardType: TextInputType.emailAddress,
-                                  textInputAction: TextInputAction.next,
-                                  validator: (value) {
-                                    final email = value?.trim() ?? '';
-                                    if (email.isEmpty) {
-                                      return 'Email perlu diisi.';
-                                    }
-                                    if (!email.contains('@')) {
-                                      return 'Masukkan alamat email yang valid.';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 13),
-                                _AuthField(
-                                  fieldKey: const Key('login-password'),
-                                  controller: _passwordController,
-                                  label: 'Password',
-                                  icon: Icons.lock_outline_rounded,
-                                  obscureText: _obscurePassword,
-                                  textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _submit(),
-                                  suffix: IconButton(
-                                    key: const Key('login-password-visibility'),
-                                    onPressed: () => setState(
-                                      () =>
-                                          _obscurePassword = !_obscurePassword,
-                                    ),
-                                    tooltip: _obscurePassword
-                                        ? 'Tampilkan password'
-                                        : 'Sembunyikan password',
-                                    icon: Icon(
-                                      _obscurePassword
-                                          ? Icons.visibility_off_outlined
-                                          : Icons.visibility_outlined,
-                                      color: _teal,
-                                    ),
-                                  ),
-                                  validator: (value) {
-                                    if ((value ?? '').length < 6) {
-                                      return 'Password minimal 6 karakter.';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                SizedBox(height: compact ? 18 : 22),
-                                _PrimaryAuthButton(
-                                  label: _registerMode ? 'Daftar' : 'Masuk',
-                                  onTap: _submit,
-                                ),
-                                if (!_registerMode) ...[
-                                  const SizedBox(height: 18),
-                                  const _OrDivider(),
-                                  const SizedBox(height: 18),
-                                  _GoogleButton(
-                                    onTap: _continueWithGoogle,
-                                    busy: _googleBusy,
-                                  ),
-                                ],
-                                const SizedBox(height: 24),
-                                Wrap(
-                                  alignment: WrapAlignment.center,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    Text(
-                                      _registerMode
-                                          ? 'Sudah punya akun?'
-                                          : 'Belum punya akun?',
-                                      style: const TextStyle(
-                                        color: _muted,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    TextButton(
-                                      key: const Key('login-register-toggle'),
-                                      onPressed: _toggleMode,
-                                      child: Text(
-                                        _registerMode ? 'Masuk' : 'Daftar',
-                                        style: const TextStyle(
-                                          color: _deepTeal,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LoginVisualHero extends StatelessWidget {
+  const _LoginVisualHero({
+    required this.compact,
+    required this.registerMode,
+  });
+
+  final bool compact;
+  final bool registerMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: compact ? 180 : 215,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFCBE8E3), Color(0xFFE6F2DE)],
+        ),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: compact ? -12 : 0,
+            bottom: -10,
+            width: compact ? 155 : 190,
+            height: compact ? 165 : 205,
+            child: Image.asset(
+              'lib/assets/images/start_avatar.png',
+              fit: BoxFit.contain,
+              alignment: Alignment.bottomCenter,
+            ),
+          ),
+          Positioned(
+            left: 8,
+            top: 7,
+            child: IconButton(
+              key: const Key('login-back'),
+              tooltip: 'Kembali',
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.arrow_back_rounded),
+            ),
+          ),
+          Positioned(
+            left: 18,
+            top: compact ? 57 : 66,
+            width: compact ? 152 : 185,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _LoginBrand(),
+                const SizedBox(height: 13),
+                Text(
+                  registerMode
+                      ? 'Mulai catatan kulitmu.'
+                      : 'Lanjutkan perjalananmu.',
+                  style: TextStyle(
+                    color: _SkinLoginPageState._navy,
+                    fontSize: compact ? 18 : 22,
+                    height: 1.16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginLegalLinks extends StatelessWidget {
+  const _LoginLegalLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Divider(color: SkinTokens.border),
+        const SizedBox(height: 5),
+        const Text(
+          'Dengan melanjutkan, kamu dapat membaca ketentuan berikut.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _SkinLoginPageState._muted,
+            fontSize: 11.5,
+            height: 1.35,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 2,
+          runSpacing: 0,
+          children: [
+            TextButton(
+              key: const Key('login-open-privacy'),
+              onPressed: () => Navigator.of(context).pushNamed('/privacy'),
+              child: const Text('Kebijakan Privasi'),
+            ),
+            TextButton(
+              key: const Key('login-open-terms'),
+              onPressed: () => Navigator.of(context).pushNamed('/terms'),
+              child: const Text('Syarat & Ketentuan'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -308,43 +483,38 @@ class _LoginBrand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.blur_circular_rounded, color: _SkinLoginPageState._teal),
-        SizedBox(width: 8),
-        Text.rich(
-          TextSpan(
-            children: [
+    return const Align(
+      alignment: Alignment.centerLeft,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.blur_circular_rounded, color: _SkinLoginPageState._teal),
+            SizedBox(width: 8),
+            Text.rich(
               TextSpan(
-                text: 'Skin',
-                style: TextStyle(color: _SkinLoginPageState._deepTeal),
+                children: [
+                  TextSpan(
+                    text: 'Skin',
+                    style: TextStyle(color: _SkinLoginPageState._deepTeal),
+                  ),
+                  TextSpan(
+                    text: 'Sight',
+                    style: TextStyle(color: _SkinLoginPageState._teal),
+                  ),
+                ],
               ),
-              TextSpan(
-                text: 'Sight',
-                style: TextStyle(color: _SkinLoginPageState._teal),
-              ),
-            ],
-          ),
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
 
 class _AuthField extends StatelessWidget {
-  final Key fieldKey;
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-  final Widget? suffix;
-  final ValueChanged<String>? onSubmitted;
-  final String? Function(String?)? validator;
-
   const _AuthField({
     required this.fieldKey,
     required this.controller,
@@ -357,6 +527,17 @@ class _AuthField extends StatelessWidget {
     this.onSubmitted,
     this.validator,
   });
+
+  final Key fieldKey;
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final Widget? suffix;
+  final ValueChanged<String>? onSubmitted;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -402,10 +583,10 @@ class _AuthField extends StatelessWidget {
 }
 
 class _PrimaryAuthButton extends StatelessWidget {
+  const _PrimaryAuthButton({required this.label, required this.onTap});
+
   final String label;
   final VoidCallback onTap;
-
-  const _PrimaryAuthButton({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -417,7 +598,8 @@ class _PrimaryAuthButton extends StatelessWidget {
         foregroundColor: Colors.white,
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(SkinTokens.radius)),
+          borderRadius: BorderRadius.circular(SkinTokens.radius),
+        ),
         elevation: 0,
       ),
       child: Text(
@@ -445,7 +627,8 @@ class _GoogleButton extends StatelessWidget {
         minimumSize: const Size.fromHeight(55),
         side: const BorderSide(color: SkinTokens.border),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(SkinTokens.radius)),
+          borderRadius: BorderRadius.circular(SkinTokens.radius),
+        ),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -512,8 +695,10 @@ class _OrDivider extends StatelessWidget {
         Expanded(child: Divider(color: SkinTokens.border)),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 13),
-          child:
-              Text('atau', style: TextStyle(color: _SkinLoginPageState._muted)),
+          child: Text(
+            'atau',
+            style: TextStyle(color: _SkinLoginPageState._muted),
+          ),
         ),
         Expanded(child: Divider(color: SkinTokens.border)),
       ],

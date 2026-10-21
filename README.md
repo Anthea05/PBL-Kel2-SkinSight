@@ -37,7 +37,7 @@ Proyek ini dikembangkan oleh mahasiswa Program Studi Teknik Informatika, Politek
 ## 🛠️ Teknologi yang Digunakan
 * **Frontend / Mobile App:** [Flutter](https://flutter.dev/) (Dart)
 * **Machine Learning:** Python, TensorFlow / Keras (Model arsitektur CNN)
-* **Dataset:** 
+* **Dataset:**
   * [Skin Disease Dataset](https://www.kaggle.com/datasets/pacificrm/skindiseasedataset) (Kaggle)
   * Indonesian Skincare Dataset (Female Daily)
 
@@ -104,3 +104,15 @@ Aplikasi **SkinSight** dirancang murni sebagai alat bantu edukasi dan rekomendas
 
 ## 📄 Lisensi
 Proyek ini dikembangkan dalam rangka *Project Based Learning (PBL)* Politeknik Negeri Malang Tahun 2026. Semua hak cipta atas laporan dan kode sumber mengikuti kebijakan institusi terkait.
+
+---
+
+## 🎨 Aset UI
+
+Aset antarmuka yang tersedia meliputi `skin_girl.png`, `skin_magnifier.png`,
+`skin_analyze_title.png`, `cat_happy.png`, `city_background.png`, `clouds.png`,
+`bubbles.png`, `leaves_flowers.png`, `sparkles.png`, `hero_decor.png`,
+`try_now_sticker.png`, dan `description_sticker.png`.
+
+Halaman Flutter menggunakan kanvas desain 941×1672 dan menskalakan komposisi
+secara proporsional.

@@ -10,6 +10,10 @@ Future<void> _openLogin(WidgetTester tester) async {
   await tester.pumpAndSettle();
   await tester.tap(startButton);
   await tester.pumpAndSettle();
+  final loginChoice = find.byKey(const Key('auth-login'));
+  await tester.ensureVisible(loginChoice);
+  await tester.tap(loginChoice);
+  await tester.pumpAndSettle();
 }
 
 void main() {
