@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_assets.dart';
 import '../data/skin_journey_store.dart';
 import '../theme/skin_theme.dart';
+import '../widgets/asset_images.dart';
 import '../widgets/skin_page_header.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_3d.dart';
+import '../widgets/skin_ui.dart';
 import 'skin_progress_page.dart';
 import 'skin_quiz_page.dart';
 
 class SkinJourneysPage extends StatelessWidget {
   const SkinJourneysPage({super.key});
-
-  static const _cream = Color(0xFFFFFBF4);
-  static const _navy = Color(0xFF16363C);
-  static const _teal = Color(0xFF087D73);
-  static const _mint = Color(0xFFE4F5ED);
 
   Future<void> _startJourney(BuildContext context) async {
     SkinJourneyStore.instance.beginNewJourney();
@@ -38,26 +37,29 @@ class SkinJourneysPage extends StatelessWidget {
   ) async {
     final action = await showModalBottomSheet<_JourneyAction>(
       context: context,
-      showDragHandle: true,
-      backgroundColor: _cream,
+      isScrollControlled: true,
       builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                child: Text(
-                  journey.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _navy,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                  ),
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                child: Row(
+                  children: [
+                    const SkinIconTile(icon: Icons.spa_outlined, size: 40),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        journey.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: SkinTokens.cardTitle.copyWith(fontSize: 17),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               _actionTile(
@@ -101,12 +103,15 @@ class SkinJourneysPage extends StatelessWidget {
               const Divider(height: 20),
               ListTile(
                 key: Key('trash-journey-${journey.id}'),
-                leading: const Icon(Icons.delete_outline_rounded,
-                    color: Color(0xFFB44B55)),
+                leading: const SkinIconTile(
+                  icon: Icons.delete_outline_rounded,
+                  tone: SkinTone.danger,
+                  size: 38,
+                ),
                 title: const Text(
                   'Pindahkan ke sampah',
                   style: TextStyle(
-                    color: Color(0xFFB44B55),
+                    color: SkinTokens.coral,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -155,7 +160,7 @@ class SkinJourneysPage extends StatelessWidget {
   }) {
     return ListTile(
       key: key,
-      leading: Icon(icon, color: _teal),
+      leading: SkinIconTile(icon: icon, size: 38),
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
       onTap: () => Navigator.pop(context, action),
     );
@@ -169,6 +174,7 @@ class SkinJourneysPage extends StatelessWidget {
     final name = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        icon: const SkinIconTile(icon: Icons.edit_outlined, size: 48),
         title: const Text('Edit nama perjalanan'),
         content: TextFormField(
           key: const Key('journey-name-field'),
@@ -180,6 +186,7 @@ class SkinJourneysPage extends StatelessWidget {
           onChanged: (value) => draftName = value,
           onFieldSubmitted: (value) => Navigator.pop(dialogContext, value),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -187,6 +194,7 @@ class SkinJourneysPage extends StatelessWidget {
           ),
           FilledButton(
             key: const Key('save-journey-name'),
+            style: FilledButton.styleFrom(minimumSize: const Size(96, 46)),
             onPressed: () => Navigator.pop(dialogContext, draftName),
             child: const Text('Simpan'),
           ),
@@ -202,82 +210,89 @@ class SkinJourneysPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = SkinJourneyStore.instance;
     return Scaffold(
-      backgroundColor: _cream,
+      backgroundColor: SkinTokens.background,
       body: SkinPageBackground(
           child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
             child: AnimatedBuilder(
               animation: store,
               builder: (context, _) {
                 final journeys = store.journeys;
-                return ListView(
-                  key: const Key('journeys-list'),
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
-                  children: [
-                    const SkinPageHeader(
-                      title: 'Skin Journey',
-                      backKey: Key('journeys-back'),
-                    ),
-                    const Text(
-                      'Pantau setiap perjalanan kulit secara terpisah.',
-                      style: SkinTokens.caption,
-                    ),
-                    const SizedBox(height: 18),
-                    _NewJourneyCard(onTap: () => _startJourney(context)),
-                    const SizedBox(height: 25),
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'Perjalanan Saya',
-                            style: TextStyle(
-                              color: _navy,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
+                return Column(children: [
+                  const SkinPageHeader(
+                    title: 'Skin Journey',
+                    subtitle: 'Pantau setiap perjalanan kulit secara terpisah.',
+                    backKey: Key('journeys-back'),
+                  ),
+                  Expanded(
+                      child: ListView(
+                    key: const Key('journeys-list'),
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                    children: [
+                      SkinReveal(
+                        child: _NewJourneyCard(
+                          onTap: () => _startJourney(context),
+                        ),
+                      ),
+                      const SizedBox(height: 26),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              'Perjalanan Saya',
+                              style: SkinTokens.section,
                             ),
                           ),
-                        ),
-                        Text(
-                          '${journeys.length} perjalanan',
-                          style: SkinTokens.caption,
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          key: const Key('open-journey-trash'),
-                          tooltip: 'Sampah',
-                          onPressed: () => Navigator.of(context).push<void>(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const SkinJourneyTrashPage(),
+                          SkinPill(
+                            label: '${journeys.length} perjalanan',
+                            tone: SkinTone.neutral,
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            key: const Key('open-journey-trash'),
+                            tooltip: 'Sampah',
+                            onPressed: () => Navigator.of(context).push<void>(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const SkinJourneyTrashPage(),
+                              ),
+                            ),
+                            icon: Badge(
+                              isLabelVisible: store.trashedJourneys.isNotEmpty,
+                              backgroundColor: SkinTokens.coral,
+                              label: Text('${store.trashedJourneys.length}'),
+                              child: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: SkinTokens.muted,
+                              ),
                             ),
                           ),
-                          icon: Badge(
-                            isLabelVisible: store.trashedJourneys.isNotEmpty,
-                            label: Text('${store.trashedJourneys.length}'),
-                            child: const Icon(Icons.delete_outline_rounded),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (journeys.isEmpty)
+                        const _EmptyJourneys()
+                      else
+                        for (var index = 0;
+                            index < journeys.length;
+                            index++) ...[
+                          SkinReveal.staggered(
+                            index: index,
+                            child: _JourneyListItem(
+                              journey: journeys[index],
+                              onTap: () =>
+                                  _openJourney(context, journeys[index]),
+                              onMore: () =>
+                                  _showActions(context, journeys[index]),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    if (journeys.isEmpty)
-                      const _EmptyJourneys()
-                    else
-                      for (var index = 0; index < journeys.length; index++) ...[
-                        _JourneyListItem(
-                          journey: journeys[index],
-                          onTap: () => _openJourney(context, journeys[index]),
-                          onMore: () => _showActions(context, journeys[index]),
-                        ),
-                        if (index < journeys.length - 1)
-                          const Divider(
-                            height: 1,
-                            color: Color(0xFFDDE7E2),
-                          ),
-                      ],
-                  ],
-                );
+                          if (index < journeys.length - 1)
+                            const SizedBox(height: 12),
+                        ],
+                    ],
+                  )),
+                ]);
               },
             ),
           ),
@@ -295,44 +310,81 @@ class _NewJourneyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFE4F4F1),
-        borderRadius: BorderRadius.circular(22),
+        gradient: SkinTokens.brandGradient,
+        borderRadius: BorderRadius.circular(SkinTokens.radiusXl),
+        boxShadow: SkinTokens.glow(SkinTokens.primary, opacity: .26),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          const Row(
-            children: [
-              Icon(Icons.add_circle_outline_rounded,
-                  color: SkinJourneysPage._teal, size: 21),
-              SizedBox(width: 9),
-              Expanded(
-                child: Text(
-                  'Mulai Perjalanan Baru',
-                  style: TextStyle(
-                    color: SkinJourneysPage._navy,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
+          Positioned(
+            right: -40,
+            top: -50,
+            child: Container(
+              width: 170,
+              height: 170,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .09),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            right: -6,
+            top: 4,
+            width: 104,
+            height: 104,
+            child: const Skin3D(AppAssets.journey3d, float: true),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(right: 96),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mulai Perjalanan Baru',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 19,
+                          height: 1.2,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -.3,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        'Buat perjalanan baru dengan kuis dan scan awal.',
+                        style: TextStyle(
+                          color: Color(0xDDFFFFFF),
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 7),
-          const Text(
-            'Buat perjalanan baru dengan kuis dan scan awal.',
-            style: SkinTokens.caption,
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              key: const Key('start-new-journey'),
-              onPressed: onTap,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Mulai perjalanan baru'),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: const Key('start-new-journey'),
+                    onPressed: onTap,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: SkinTokens.primaryDark,
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Mulai perjalanan baru'),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -352,123 +404,104 @@ class _JourneyListItem extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onMore;
 
-  String _date(DateTime date) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'Mei',
-      'Jun',
-      'Jul',
-      'Agu',
-      'Sep',
-      'Okt',
-      'Nov',
-      'Des',
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final findings = journey.findings;
     final start = journey.baselineDate ?? journey.createdAt;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: Key('journey-card-${journey.id}'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _JourneyThumbnail(journey: journey),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return SkinCard(
+      inkKey: Key('journey-card-${journey.id}'),
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+      borderColor: journey.isPinned ? SkinTokens.mintStrong : SkinTokens.border,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _JourneyThumbnail(journey: journey),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        if (journey.isPinned) ...[
-                          const Icon(
-                            Icons.push_pin_rounded,
-                            color: SkinJourneysPage._teal,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 5),
-                        ],
-                        Expanded(
-                          child: Text(
-                            journey.name,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: SkinJourneysPage._navy,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 7,
-                      runSpacing: 5,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        _StatusChip(status: journey.status),
-                        Text('Dimulai ${_date(start)}',
-                            style: SkinTokens.caption),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      findings.isEmpty
-                          ? 'Belum ada hasil scan'
-                          : findings.join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: SkinJourneysPage._navy,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                    if (journey.isPinned) ...[
+                      const Icon(
+                        Icons.push_pin_rounded,
+                        color: SkinTokens.primary,
+                        size: 14,
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${journey.photos.length} foto · '
-                      '${journey.checkins.length} check-in',
-                      style: SkinTokens.caption,
+                      const SizedBox(width: 5),
+                    ],
+                    Expanded(
+                      child: Text(
+                        journey.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: SkinTokens.cardTitle,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 4),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    key: Key('journey-menu-${journey.id}'),
-                    tooltip: 'Kelola perjalanan',
-                    visualDensity: VisualDensity.compact,
-                    onPressed: onMore,
-                    icon: const Icon(Icons.more_vert_rounded),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 7,
+                  runSpacing: 5,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _StatusChip(status: journey.status),
+                    Text('Dimulai ${SkinFormat.shortDate(start)}',
+                        style: SkinTokens.caption.copyWith(fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (findings.isEmpty)
+                  const Text(
+                    'Belum ada hasil scan',
+                    style: TextStyle(
+                      color: SkinTokens.muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                else
+                  Text(
+                    findings.join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: SkinTokens.ink,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    color: SkinJourneysPage._teal,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.photo_library_outlined,
+                        size: 13, color: SkinTokens.muted),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '${journey.photos.length} foto · '
+                        '${journey.checkins.length} check-in',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: SkinTokens.caption.copyWith(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+          IconButton(
+            key: Key('journey-menu-${journey.id}'),
+            tooltip: 'Kelola perjalanan',
+            visualDensity: VisualDensity.compact,
+            onPressed: onMore,
+            icon: const Icon(Icons.more_vert_rounded, color: SkinTokens.muted),
+          ),
+        ],
       ),
     );
   }
@@ -483,15 +516,22 @@ class _JourneyThumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     final photo = journey.photos.isEmpty ? null : journey.photos.first;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: photo != null && photo.bytes.isNotEmpty
-          ? Image.memory(photo.bytes, width: 68, height: 68, fit: BoxFit.cover)
+          ? Image.memory(
+              photo.bytes,
+              width: 72,
+              height: 84,
+              fit: BoxFit.cover,
+              cacheWidth: thumbnailCacheWidth(context, 72),
+            )
           : Container(
-              width: 68,
-              height: 68,
-              color: SkinJourneysPage._mint,
+              width: 72,
+              height: 84,
+              decoration:
+                  const BoxDecoration(gradient: SkinTokens.softGradient),
               child: const Icon(Icons.spa_outlined,
-                  color: SkinJourneysPage._teal, size: 30),
+                  color: SkinTokens.primary, size: 30),
             ),
     );
   }
@@ -504,36 +544,43 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, background, foreground) = switch (status) {
-      JourneyStatus.active => (
-          'Aktif',
-          const Color(0xFFDDF4E7),
-          const Color(0xFF16734B),
-        ),
+    final (label, tone, icon) = switch (status) {
+      JourneyStatus.active => ('Aktif', SkinTone.success, Icons.circle),
       JourneyStatus.completed => (
           'Selesai',
-          const Color(0xFFE4EEF8),
-          const Color(0xFF315F86),
+          SkinTone.info,
+          Icons.check_rounded
         ),
       JourneyStatus.cancelled => (
           'Batal',
-          const Color(0xFFF6E7E8),
-          const Color(0xFF9D424B),
+          SkinTone.danger,
+          Icons.close_rounded
         ),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(7, 3, 9, 3),
       decoration: BoxDecoration(
-        color: background,
+        color: tone.background,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: foreground,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: status == JourneyStatus.active ? 7 : 11,
+            color: tone.foreground,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: tone.foreground,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -546,11 +593,13 @@ class _EmptyJourneys extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       key: Key('empty-journeys'),
-      padding: EdgeInsets.symmetric(vertical: 32),
-      child: Text(
-        'Belum ada perjalanan.',
-        textAlign: TextAlign.center,
-        style: SkinTokens.caption,
+      padding: EdgeInsets.symmetric(vertical: 28),
+      child: SkinEmptyState(
+        image: AppAssets.journey3d,
+        tone: SkinTone.peach,
+        title: 'Belum ada perjalanan.',
+        message:
+            'Mulai perjalanan baru untuk memantau kulitmu dari waktu ke waktu.',
       ),
     );
   }
@@ -563,66 +612,77 @@ class SkinJourneyTrashPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = SkinJourneyStore.instance;
     return Scaffold(
-      backgroundColor: SkinJourneysPage._cream,
+      backgroundColor: SkinTokens.background,
       body: SkinPageBackground(
           child: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
             child: AnimatedBuilder(
               animation: store,
               builder: (context, _) {
                 final items = store.trashedJourneys;
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
+                return Column(
                   children: [
                     const SkinPageHeader(
                       title: 'Sampah',
+                      subtitle: 'Perjalanan yang dipindahkan',
                       backKey: Key('journey-trash-back'),
                     ),
-                    const Text(
-                      'Perjalanan di sini tidak dihapus permanen.',
-                      style: SkinTokens.caption,
-                    ),
-                    const SizedBox(height: 18),
-                    if (items.isEmpty)
-                      const _EmptyTrash()
-                    else
-                      for (final journey in items)
-                        Container(
-                          key: Key('trashed-journey-${journey.id}'),
-                          margin: const EdgeInsets.only(bottom: 11),
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: SkinTokens.border),
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                        children: [
+                          const SkinNotice(
+                            dense: true,
+                            tone: SkinTone.neutral,
+                            icon: Icons.restore_rounded,
+                            message:
+                                'Perjalanan di sini tidak dihapus permanen.',
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.delete_outline_rounded,
-                                  color: SkinTokens.muted),
-                              const SizedBox(width: 11),
-                              Expanded(
-                                child: Text(
-                                  journey.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: SkinJourneysPage._navy,
-                                    fontWeight: FontWeight.w800,
+                          const SizedBox(height: 16),
+                          if (items.isEmpty)
+                            const _EmptyTrash()
+                          else
+                            for (final journey in items)
+                              Padding(
+                                key: Key('trashed-journey-${journey.id}'),
+                                padding: const EdgeInsets.only(bottom: 11),
+                                child: SkinCard(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                                  child: Row(
+                                    children: [
+                                      const SkinIconTile(
+                                        icon: Icons.delete_outline_rounded,
+                                        tone: SkinTone.neutral,
+                                        size: 40,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          journey.name,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: SkinTokens.cardTitle,
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        key: Key(
+                                            'restore-journey-${journey.id}'),
+                                        onPressed: () =>
+                                            store.restoreJourney(journey.id),
+                                        icon: const Icon(Icons.restore_rounded,
+                                            size: 18),
+                                        label: const Text('Pulihkan'),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              TextButton(
-                                key: Key('restore-journey-${journey.id}'),
-                                onPressed: () =>
-                                    store.restoreJourney(journey.id),
-                                child: const Text('Pulihkan'),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
+                      ),
+                    ),
                   ],
                 );
               },
@@ -639,20 +699,14 @@ class _EmptyTrash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      key: const Key('empty-journey-trash'),
-      padding: const EdgeInsets.all(30),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: SkinTokens.border),
-      ),
-      child: const Column(
-        children: [
-          Icon(Icons.delete_sweep_outlined, color: SkinTokens.muted, size: 34),
-          SizedBox(height: 8),
-          Text('Sampah masih kosong.', style: SkinTokens.caption),
-        ],
+    return const SkinCard(
+      key: Key('empty-journey-trash'),
+      padding: EdgeInsets.all(28),
+      child: SkinEmptyState(
+        compact: true,
+        icon: Icons.delete_sweep_outlined,
+        tone: SkinTone.neutral,
+        title: 'Sampah masih kosong.',
       ),
     );
   }

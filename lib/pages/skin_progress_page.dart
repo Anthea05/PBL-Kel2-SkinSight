@@ -1,13 +1,17 @@
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../core/app_assets.dart';
 import '../data/skin_journey_store.dart';
 import '../data/skin_timeline_engine.dart';
 import '../models/skin_analysis.dart';
 import '../theme/skin_theme.dart';
+import '../widgets/asset_images.dart';
 import '../widgets/skin_checkin_shortcut.dart';
 import '../widgets/skin_page_header.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_3d.dart';
+import '../widgets/skin_ui.dart';
 import 'skin_checkin_page.dart';
 import 'skin_quiz_page.dart';
 import 'skin_result_page.dart';
@@ -22,25 +26,8 @@ class SkinProgressPage extends StatefulWidget {
 
 class _SkinProgressPageState extends State<SkinProgressPage> {
   String _selected = 'Acne';
-  static const _navy = Color(0xFF16363C);
-  static const _teal = Color(0xFF087D73);
-  static const _cream = Color(0xFFFFFBF4);
-  static const _mint = Color(0xFFE4F5ED);
 
-  String _date(DateTime d) => '${d.day} ${const [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'Mei',
-        'Jun',
-        'Jul',
-        'Agu',
-        'Sep',
-        'Okt',
-        'Nov',
-        'Des'
-      ][d.month - 1]}';
+  String _date(DateTime d) => SkinFormat.dayMonth(d);
   String _value(String name, double v) =>
       SkinJourneyStore.detectionClasses.contains(name)
           ? '${v.toInt()}'
@@ -49,16 +36,26 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
       ? 'area terdeteksi'
       : 'luas mask wajah';
 
+  String _statusSubtitle(SkinJourneyStore store) {
+    if (!store.hasBaseline) return 'Belum ada scan awal';
+    return switch (store.selectedJourneyStatus) {
+      JourneyStatus.active =>
+        'Perjalanan aktif · minggu ke-${store.currentWeek}',
+      JourneyStatus.completed => 'Perjalanan selesai',
+      JourneyStatus.cancelled => 'Perjalanan dibatalkan',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final store = SkinJourneyStore.instance;
     return Scaffold(
-      backgroundColor: _cream,
+      backgroundColor: SkinTokens.background,
       body: SkinPageBackground(
           child: SafeArea(
               child: Center(
                   child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
+        constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
         child: AnimatedBuilder(
             animation: store,
             builder: (context, _) {
@@ -74,319 +71,370 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
               // Satu event per TANGGAL, bukan per foto atau per laporan.
               // Data beberapa sesi tetap disimpan dan dapat dibuka masing-masing.
               final events = _dailyEvents(store, engine);
+              final header = SkinPageHeader(
+                title: store.selectedJourneyName,
+                subtitle: _statusSubtitle(store),
+                backKey: const Key('journey-back'),
+              );
               if (store.shouldShowJourneyCompletion) {
-                return ListView(
-                  key: const Key('completed-journey-detail'),
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
-                  children: [
-                    SkinPageHeader(
-                      title: store.selectedJourneyName,
-                      backKey: const Key('journey-back'),
+                return Column(children: [
+                  header,
+                  Expanded(
+                    child: ListView(
+                      key: const Key('completed-journey-detail'),
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                      children: [
+                        _JourneyCompletionContent(engine: engine),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    _JourneyCompletionContent(engine: engine),
-                  ],
-                );
+                  ),
+                ]);
               }
-              return ListView(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 32),
-                  children: [
-                    SkinPageHeader(
-                      title: store.selectedJourneyName,
-                      backKey: const Key('journey-back'),
-                    ),
-                    const SizedBox(height: 8),
-                    if (!store.isSelectedJourneyActive) ...[
-                      _journeyStatusBanner(store.selectedJourneyStatus),
-                      const SizedBox(height: 12),
-                    ],
-                    if (!store.hasBaseline)
-                      _emptyJourney(context)
-                    else ...[
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFFB8EBDD),
-                                  Color(0xFFE3F5EA),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight),
-                            borderRadius: BorderRadius.circular(26)),
-                        child: Stack(children: [
-                          Positioned(
-                              right: -4,
-                              top: -8,
-                              child: Icon(Icons.spa_rounded,
-                                  color: Colors.white.withValues(alpha: .7),
-                                  size: 84)),
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(children: [
-                                  const Text('PERJALANAN KULITMU',
-                                      style: TextStyle(
-                                          color: _teal,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w900,
-                                          letterSpacing: 1.3)),
-                                  const Spacer(),
-                                  const Icon(Icons.spa_outlined,
-                                      color: _teal, size: 18),
-                                ]),
-                                const SizedBox(height: 12),
-                                GestureDetector(
-                                    onLongPress: kDebugMode
-                                        ? () async {
-                                            final selectedDate =
-                                                await showDatePicker(
-                                                    context: context,
-                                                    firstDate:
-                                                        store.baselineDate!,
-                                                    lastDate: DateTime(2035),
-                                                    initialDate: store.today
-                                                            .isBefore(store
-                                                                .baselineDate!)
-                                                        ? store.baselineDate!
-                                                        : store.today);
-                                            if (selectedDate != null) {
-                                              store
-                                                  .setTestingDate(selectedDate);
-                                            }
-                                          }
-                                        : null,
-                                    child: Text(
-                                        'Minggu ke-${store.currentWeek}',
-                                        style: const TextStyle(
-                                            fontSize: 27,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: -.7,
-                                            color: _navy))),
-                                const SizedBox(height: 5),
-                                Text('Dimulai ${_date(store.baselineDate!)}',
-                                    style: const TextStyle(
-                                        color: SkinTokens.muted, fontSize: 13)),
-                                const SizedBox(height: 14),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    const Text('DEMO',
-                                        style: TextStyle(
-                                            color: _teal,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 1)),
-                                    _demoDateButton(
-                                      key: const Key('demo-add-day'),
-                                      label: '+1 hari',
-                                      onPressed: () => store.advanceDemoDate(1),
-                                    ),
-                                    _demoDateButton(
-                                      key: const Key('demo-add-week'),
-                                      label: '+1 minggu',
-                                      onPressed: () => store.advanceDemoDate(7),
-                                    ),
-                                    if (store.isSelectedJourneyActive)
-                                      _demoDateButton(
-                                        key: const Key(
-                                            'demo-complete-journey'),
-                                        label: 'Auto selesai',
-                                        onPressed: () => store
-                                            .completeSelectedJourneyForDemo(),
-                                      ),
-                                  ],
+              return Column(children: [
+                header,
+                Expanded(
+                  child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                      children: [
+                        if (!store.isSelectedJourneyActive) ...[
+                          _journeyStatusBanner(store.selectedJourneyStatus),
+                          const SizedBox(height: 12),
+                        ],
+                        if (!store.hasBaseline)
+                          _emptyJourney(context)
+                        else ...[
+                          SkinReveal(child: _heroCard(context, store, engine)),
+                          if (store.hasCheckinDue) ...[
+                            const SizedBox(height: 14),
+                            SkinCheckinShortcut(
+                              key: const Key('journey-checkin-shortcut'),
+                              buttonKey: const Key('journey-start-checkin'),
+                              week: store.currentWeek,
+                              dueDate: store.activeDueDate!,
+                              status: store.checkinPromptStatus!,
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const SkinCheckinPage(),
                                 ),
-                              ]),
-                        ]),
-                      ),
-                      if (store.hasCheckinDue) ...[
-                        const SizedBox(height: 12),
-                        SkinCheckinShortcut(
-                          key: const Key('journey-checkin-shortcut'),
-                          buttonKey: const Key('journey-start-checkin'),
-                          week: store.currentWeek,
-                          dueDate: store.activeDueDate!,
-                          status: store.checkinPromptStatus!,
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const SkinCheckinPage(),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 28),
+                          const SkinSectionTitle(
+                            title: 'Grafik temuan kulit',
+                            subtitle:
+                                'Pilih kondisi untuk melihat perbandingan tiap tanggal.',
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final c in classes)
+                                ChoiceChip(
+                                  label: Text(c),
+                                  selected: selected == c,
+                                  onSelected: (_) =>
+                                      setState(() => _selected = c),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SkinReveal(
+                            delay: const Duration(milliseconds: 80),
+                            child: _chartPanel(selected, values, isDetection),
+                          ),
+                          const SizedBox(height: 30),
+                          SkinSectionTitle(
+                            title: 'Timeline',
+                            subtitle:
+                                'Riwayat → hari ini → jadwal mendatang, dalam satu garis waktu.',
+                            trailing: SkinPill(
+                              label: '${events.length} momen',
+                              tone: SkinTone.neutral,
+                              icon: Icons.calendar_month_rounded,
                             ),
                           ),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      const Text('Grafik temuan kulit',
-                          style: TextStyle(
-                              fontSize: 23,
-                              fontWeight: FontWeight.w900,
-                              color: _navy)),
-                      const SizedBox(height: 5),
-                      const Text(
-                          'Pilih kondisi untuk melihat perbandingan tiap tanggal.',
-                          style: SkinTokens.caption),
-                      const SizedBox(height: 13),
-                      SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                              children: classes
-                                  .map((c) => Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 8),
-                                        child: ChoiceChip(
-                                            label: Text(c),
-                                            selected: selected == c,
-                                            showCheckmark: false,
-                                            backgroundColor: Colors.white,
-                                            selectedColor:
-                                                const Color(0xFFCEF0E5),
-                                            labelStyle: TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                color: selected == c
-                                                    ? _teal
-                                                    : SkinTokens.muted),
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(22),
-                                                side: BorderSide(
-                                                    color: selected == c
-                                                        ? const Color(
-                                                            0xFF9ED5C6)
-                                                        : const Color(
-                                                            0xFFE0EAE5))),
-                                            onSelected: (_) =>
-                                                setState(() => _selected = c)),
-                                      ))
-                                  .toList())),
-                      const SizedBox(height: 12),
-                      _panel(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                            Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                      child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                        Text(selected,
-                                            style: const TextStyle(
-                                                fontSize: 19,
-                                                fontWeight: FontWeight.w900,
-                                                color: _navy)),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                            isDetection
-                                                ? 'Jumlah temuan terdeteksi'
-                                                : 'Luas mask wajah',
-                                            style: SkinTokens.caption),
-                                      ])),
-                                  if (values.isNotEmpty)
-                                    Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                              _value(
-                                                  selected, values.last.value),
-                                              style: const TextStyle(
-                                                  fontSize: 29,
-                                                  color: _teal,
-                                                  fontWeight: FontWeight.w900)),
-                                          Text(_unit(selected),
-                                              style: const TextStyle(
-                                                  color: SkinTokens.muted,
-                                                  fontSize: 11)),
-                                        ]),
-                                ]),
-                            const SizedBox(height: 14),
-                            if (values.isEmpty)
-                              const SizedBox(
-                                  height: 165,
-                                  child: Center(
-                                      child: Text(
-                                          'Belum ada titik pengamatan untuk kelas ini.',
-                                          textAlign: TextAlign.center,
-                                          style: SkinTokens.caption)))
-                            else ...[
-                              SizedBox(
-                                  height: 178,
-                                  width: double.infinity,
-                                  child: CustomPaint(
-                                      painter: _JourneyPlot(
-                                          values, _teal, isDetection))),
-                              const SizedBox(height: 6),
-                              Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: values
-                                      .map((v) => Text(_date(v.date),
-                                          style: const TextStyle(
-                                              fontSize: 10,
-                                              color: SkinTokens.muted)))
-                                      .toList()),
-                              const SizedBox(height: 17),
-                              Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                      color: const Color(0xFFF0F8F4),
-                                      borderRadius: BorderRadius.circular(13)),
-                                  child: Row(children: [
-                                    const Icon(Icons.compare_arrows_rounded,
-                                        color: _teal, size: 21),
-                                    const SizedBox(width: 9),
-                                    Expanded(
-                                        child: Text(
-                                            values.length == 1
-                                                ? 'Pengamatan awal: ${_value(selected, values.first.value)} ${_unit(selected)}'
-                                                : 'Dari ${_value(selected, values.first.value)} ke ${_value(selected, values.last.value)} ${_unit(selected)}',
-                                            style: const TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w700,
-                                                color: _navy))),
-                                  ])),
-                            ],
-                            const SizedBox(height: 13),
-                            Text(
-                                isDetection
-                                    ? 'Angka menunjukkan jumlah box terdeteksi pada foto dengan pose dan versi model yang sebanding; bukan tingkat keparahan.'
-                                    : 'Angka menunjukkan proporsi luas mask dari area wajah yang valid; bukan skor kesembuhan.',
-                                style: const TextStyle(
-                                    color: SkinTokens.muted,
-                                    fontSize: 11,
-                                    height: 1.4)),
-                          ])),
-                      const SizedBox(height: 26),
-                      Row(children: [
-                        const Expanded(
-                            child: Text('Timeline',
-                                style: TextStyle(
-                                    fontSize: 23,
-                                    fontWeight: FontWeight.w900,
-                                    color: _navy))),
-                        const Icon(Icons.calendar_month_rounded, color: _teal),
+                          const SizedBox(height: 16),
+                          if (events.isEmpty)
+                            const Text('Belum ada peristiwa atau jadwal.',
+                                style: SkinTokens.caption),
+                          ...List.generate(
+                              events.length,
+                              (i) => _timelineRow(
+                                  context, events[i], i == events.length - 1)),
+                        ],
                       ]),
-                      const SizedBox(height: 6),
-                      const Text(
-                          'Riwayat → hari ini → jadwal mendatang, dalam satu garis waktu.',
-                          style: SkinTokens.caption),
-                      const SizedBox(height: 12),
-                      if (events.isEmpty)
-                        const Text('Belum ada peristiwa atau jadwal.',
-                            style: SkinTokens.caption),
-                      ...List.generate(
-                          events.length,
-                          (i) => _timelineRow(
-                              context, events[i], i == events.length - 1)),
-                    ],
-                  ]);
+                ),
+              ]);
             }),
       )))),
     );
+  }
+
+  Widget _heroCard(
+    BuildContext context,
+    SkinJourneyStore store,
+    SkinTimelineEngine engine,
+  ) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: SkinTokens.deepGradient,
+        borderRadius: BorderRadius.circular(SkinTokens.radiusXl),
+        boxShadow: SkinTokens.glow(SkinTokens.primaryDark, opacity: .3),
+      ),
+      child: Stack(children: [
+        Positioned(
+          right: -40,
+          top: -46,
+          child: Container(
+            width: 170,
+            height: 170,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .07),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Positioned(
+          right: 14,
+          top: 14,
+          child: Icon(Icons.spa_rounded,
+              color: Colors.white.withValues(alpha: .22), size: 64),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PERJALANAN KULITMU',
+                style: SkinTokens.eyebrow.copyWith(
+                  color: const Color(0xFFBFD8D2),
+                ),
+              ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                  onLongPress: kDebugMode
+                      ? () async {
+                          final selectedDate = await showDatePicker(
+                              context: context,
+                              firstDate: store.baselineDate!,
+                              lastDate: DateTime(2035),
+                              initialDate:
+                                  store.today.isBefore(store.baselineDate!)
+                                      ? store.baselineDate!
+                                      : store.today);
+                          if (selectedDate != null) {
+                            store.setTestingDate(selectedDate);
+                          }
+                        }
+                      : null,
+                  child: Text('Minggu ke-${store.currentWeek}',
+                      style: const TextStyle(
+                          fontFamily: SkinTokens.serif,
+                          fontSize: 40,
+                          height: 1.0,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white))),
+              const SizedBox(height: 4),
+              Text(
+                'Dimulai ${SkinFormat.date(store.baselineDate!)}',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: .75),
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(children: [
+                _heroStat('${store.photos.length}', 'Sesi foto'),
+                const SizedBox(width: 8),
+                _heroStat('${store.checkins.length}', 'Check-in'),
+                const SizedBox(width: 8),
+                _heroStat('${engine.tracks.length}', 'Dipantau'),
+              ]),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: .14),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Icon(Icons.science_outlined,
+                          size: 14, color: Color(0xFFEBD7AE)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'MODE DEMO · simulasi waktu',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: SkinTokens.eyebrow.copyWith(
+                            color: const Color(0xFFEBD7AE),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 9),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _demoDateButton(
+                          key: const Key('demo-add-day'),
+                          label: '+1 hari',
+                          onPressed: () => store.advanceDemoDate(1),
+                        ),
+                        _demoDateButton(
+                          key: const Key('demo-add-week'),
+                          label: '+1 minggu',
+                          onPressed: () => store.advanceDemoDate(7),
+                        ),
+                        if (store.isSelectedJourneyActive)
+                          _demoDateButton(
+                            key: const Key('demo-complete-journey'),
+                            label: 'Auto selesai',
+                            onPressed: () =>
+                                store.completeSelectedJourneyForDemo(),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _heroStat(String value, String label) => Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(children: [
+            Text(value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                )),
+            const SizedBox(height: 1),
+            Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: .72),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                )),
+          ]),
+        ),
+      );
+
+  Widget _chartPanel(
+    String selected,
+    List<JourneyMetric> values,
+    bool isDetection,
+  ) {
+    return _panel(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(selected,
+              style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: SkinTokens.ink)),
+          const SizedBox(height: 3),
+          Text(isDetection ? 'Jumlah temuan terdeteksi' : 'Luas mask wajah',
+              style: SkinTokens.caption),
+        ])),
+        if (values.isNotEmpty)
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(_value(selected, values.last.value),
+                style: const TextStyle(
+                    fontSize: 30,
+                    height: 1.05,
+                    color: SkinTokens.primary,
+                    fontWeight: FontWeight.w800)),
+            Text(_unit(selected),
+                style: const TextStyle(color: SkinTokens.muted, fontSize: 11)),
+          ]),
+      ]),
+      const SizedBox(height: 16),
+      if (values.isEmpty)
+        const SizedBox(
+            height: 150,
+            child: SkinEmptyState(
+              compact: true,
+              icon: Icons.show_chart_rounded,
+              title: 'Belum ada data',
+              message: 'Belum ada titik pengamatan untuk kelas ini.',
+            ))
+      else ...[
+        SizedBox(
+            height: 180,
+            width: double.infinity,
+            child: CustomPaint(
+                painter:
+                    _JourneyPlot(values, SkinTokens.primary, isDetection))),
+        const SizedBox(height: 6),
+        Padding(
+          padding: const EdgeInsets.only(left: 35),
+          child: Row(
+              mainAxisAlignment: values.length == 1
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.spaceBetween,
+              children: values
+                  .map((v) => Text(_date(v.date),
+                      style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: SkinTokens.muted)))
+                  .toList()),
+        ),
+        const SizedBox(height: 16),
+        Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+                color: SkinTokens.mint,
+                borderRadius: BorderRadius.circular(14)),
+            child: Row(children: [
+              const Icon(Icons.compare_arrows_rounded,
+                  color: SkinTokens.primaryDark, size: 21),
+              const SizedBox(width: 9),
+              Expanded(
+                  child: Text(
+                      values.length == 1
+                          ? 'Pengamatan awal: ${_value(selected, values.first.value)} ${_unit(selected)}'
+                          : 'Dari ${_value(selected, values.first.value)} ke ${_value(selected, values.last.value)} ${_unit(selected)}',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: SkinTokens.ink))),
+            ])),
+      ],
+      const SizedBox(height: 12),
+      Text(
+          isDetection
+              ? 'Angka menunjukkan jumlah box terdeteksi pada foto dengan pose dan versi model yang sebanding; bukan tingkat keparahan.'
+              : 'Angka menunjukkan proporsi luas mask dari area wajah yang valid; bukan skor kesembuhan.',
+          style: const TextStyle(
+              color: SkinTokens.muted, fontSize: 11.5, height: 1.45)),
+    ]));
   }
 
   /// Satu baris timeline untuk satu tanggal kalender, bahkan jika pada hari
@@ -450,10 +498,12 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('${photos.length} sesi foto tersimpan',
             style: const TextStyle(
-                color: _navy, fontSize: 12, fontWeight: FontWeight.w800)),
+                color: SkinTokens.ink,
+                fontSize: 12,
+                fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
         SizedBox(
-          height: 106,
+          height: 102,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: photos.length,
@@ -463,27 +513,30 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
               return InkWell(
                 key: Key('journey-session-${p.id}'),
                 onTap: () => _openSavedSession(context, p),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(14),
                           child: p.bytes.isNotEmpty
                               ? Image.memory(p.bytes,
-                                  width: 72, height: 76, fit: BoxFit.cover)
-                              : Container(
-                                  width: 72,
+                                  width: 70,
                                   height: 76,
-                                  color: _mint,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: thumbnailCacheWidth(context, 70))
+                              : Container(
+                                  width: 70,
+                                  height: 76,
+                                  color: SkinTokens.mint,
                                   child: const Icon(Icons.image_outlined,
-                                      color: _teal))),
+                                      color: SkinTokens.primary))),
                       const SizedBox(height: 5),
                       Text('Sesi ${index + 1}',
                           style: const TextStyle(
                               fontSize: 11,
-                              color: _teal,
-                              fontWeight: FontWeight.w700)),
+                              color: SkinTokens.primary,
+                              fontWeight: FontWeight.w800)),
                     ]),
               );
             },
@@ -493,16 +546,19 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
     );
   }
 
-  Widget _emptyJourney(BuildContext context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-            color: _mint, borderRadius: BorderRadius.circular(24)),
+  Widget _emptyJourney(BuildContext context) => SkinCard(
+        padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+        gradient: SkinTokens.softGradient,
+        borderColor: Colors.white,
         child: Column(children: [
-          const Icon(Icons.spa_rounded, size: 49, color: _teal),
-          const SizedBox(height: 12),
+          SizedBox(
+            width: 120,
+            height: 120,
+            child: const Skin3D(AppAssets.journey3d, float: true),
+          ),
+          const SizedBox(height: 14),
           const Text('Mulai perjalanan kulitmu',
-              style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.w900, color: _navy)),
+              textAlign: TextAlign.center, style: SkinTokens.section),
           const SizedBox(height: 8),
           const Text(
               'Simpan hasil scan pertama untuk membuka grafik, catatan kondisi, dan check-in mingguan.',
@@ -524,41 +580,24 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
       );
 
   Widget _journeyStatusBanner(JourneyStatus status) {
-    final (label, icon, color, background) = switch (status) {
+    final (label, icon, tone) = switch (status) {
       JourneyStatus.active => (
           'Perjalanan aktif',
           Icons.play_circle_outline_rounded,
-          _teal,
-          _mint,
+          SkinTone.primary,
         ),
       JourneyStatus.completed => (
           'Perjalanan ini telah selesai',
           Icons.task_alt_rounded,
-          const Color(0xFF315F86),
-          const Color(0xFFE4EEF8),
+          SkinTone.info,
         ),
       JourneyStatus.cancelled => (
           'Perjalanan ini dibatalkan',
           Icons.cancel_outlined,
-          const Color(0xFF9D424B),
-          const Color(0xFFF6E7E8),
+          SkinTone.danger,
         ),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(children: [
-        Icon(icon, color: color, size: 19),
-        const SizedBox(width: 9),
-        Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    color: color, fontSize: 12, fontWeight: FontWeight.w800))),
-      ]),
-    );
+    return SkinNotice(message: label, icon: icon, tone: tone, dense: true);
   }
 
   /// Satu urutan: riwayat, periode yang terlewat, check-in tersedia,
@@ -627,169 +666,230 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
   Widget _timelineRow(BuildContext context, _Event e, bool last) {
     final isCurrentDue = e.dueDate != null;
     final isFuture = e.isPlanned || e.isResearch;
-    final foreground = isFuture ? SkinTokens.muted : _navy;
+    final foreground = isFuture ? SkinTokens.muted : SkinTokens.ink;
+    final String? label = e.isMissed
+        ? 'TERLEWAT'
+        : isCurrentDue
+            ? (SkinJourneyStore.sameDay(e.date,
+                    SkinJourneyStore.day(SkinJourneyStore.instance.today))
+                ? 'HARI INI'
+                : 'BELUM DIISI')
+            : e.isResearch
+                ? 'ACUAN RISET'
+                : e.isPlanned
+                    ? 'JADWAL'
+                    : null;
+    final labelTone = e.isMissed
+        ? SkinTone.danger
+        : isCurrentDue
+            ? SkinTone.peach
+            : SkinTone.neutral;
     return IntrinsicHeight(
         child: Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
-            width: 39,
+            width: 40,
             child: Column(children: [
               Container(
-                  width: 36,
-                  height: 36,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
+                      gradient: isCurrentDue ? SkinTokens.brandGradient : null,
                       color: isCurrentDue
-                          ? const Color(0xFFCEF0E5)
+                          ? null
                           : isFuture
-                              ? const Color(0xFFF1F5F2)
-                              : _mint,
+                              ? Colors.white
+                              : SkinTokens.mint,
+                      border: isFuture
+                          ? Border.all(color: SkinTokens.border)
+                          : null,
+                      boxShadow: isCurrentDue
+                          ? SkinTokens.glow(SkinTokens.primary, opacity: .25)
+                          : null,
                       shape: BoxShape.circle),
                   child: Icon(e.icon,
                       color: isCurrentDue
-                          ? _teal
+                          ? Colors.white
                           : isFuture
-                              ? SkinTokens.muted
-                              : _teal,
+                              ? SkinTokens.subtle
+                              : SkinTokens.primaryDark,
                       size: 18)),
               if (!last)
                 Expanded(
                     child: Container(
                         width: 2,
-                        margin: const EdgeInsets.symmetric(vertical: 3),
-                        color: const Color(0xFFD2E8E0))),
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isFuture
+                              ? SkinTokens.border
+                              : SkinTokens.mintStrong,
+                          borderRadius: BorderRadius.circular(1),
+                        ))),
             ])),
         const SizedBox(width: 12),
         Expanded(
             child: Padding(
-          padding: const EdgeInsets.fromLTRB(0, 1, 0, 23),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Text(_date(e.date),
-                  style: const TextStyle(
-                      color: _teal, fontSize: 12, fontWeight: FontWeight.w800)),
-              const SizedBox(width: 8),
-              if (e.isMissed)
-                _tinyLabel('TERLEWAT')
-              else if (isCurrentDue)
-                _tinyLabel(SkinJourneyStore.sameDay(e.date,
-                        SkinJourneyStore.day(SkinJourneyStore.instance.today))
-                    ? 'HARI INI'
-                    : 'BELUM DIISI')
-              else if (e.isResearch)
-                _tinyLabel('ACUAN RISET')
-              else if (e.isPlanned)
-                _tinyLabel('JADWAL'),
-            ]),
-            const SizedBox(height: 6),
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
+          padding: EdgeInsets.only(bottom: last ? 0 : 16),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            decoration: BoxDecoration(
+              color: isFuture ? SkinTokens.glassSoft : SkinTokens.glassStrong,
+              borderRadius: BorderRadius.circular(SkinTokens.radiusLg),
+              border: Border.all(
+                color: isCurrentDue ? SkinTokens.primary : Colors.white,
+                width: isCurrentDue ? 1.4 : 1,
+              ),
+              boxShadow: isFuture ? null : SkinTokens.shadows,
+            ),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Text(_date(e.date),
+                    style: const TextStyle(
+                        color: SkinTokens.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800)),
+                if (label != null) ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: SkinPill(label: label, tone: labelTone, dense: true),
+                  ),
+                ],
+              ]),
+              const SizedBox(height: 6),
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      Text(e.title,
+                          style: TextStyle(
+                              color: foreground,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800)),
+                      if (e.classItems.isEmpty && e.description.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(e.description, style: SkinTokens.caption),
+                      ] else ...[
+                        for (final item in e.classItems) ...[
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: SkinTokens.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(item.name,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: SkinTokens.ink,
+                                      fontSize: 13)),
+                            ),
+                          ]),
+                          const SizedBox(height: 3),
+                          Text(item.message, style: SkinTokens.caption),
+                          if (item.focus.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(item.focus, style: SkinTokens.caption),
+                          ],
+                          for (final note in item.notes) ...[
+                            const SizedBox(height: 4),
+                            Text(note, style: SkinTokens.caption),
+                          ],
+                          if (item.source != 'Dokumentasi SkinSight')
+                            Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text('Referensi: ${item.source}',
+                                    style: const TextStyle(
+                                        fontSize: 10.5,
+                                        color: SkinTokens.subtle))),
+                        ],
+                        if (e.isMissed) ...[
+                          const SizedBox(height: 6),
+                          const Text(
+                              'Tidak ada laporan check-in pada minggu ini.',
+                              style: SkinTokens.caption),
+                        ],
+                      ],
+                    ])),
+                if (isCurrentDue) ...[
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    key: const Key('start-timeline-checkin'),
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                            builder: (_) => const SkinCheckinPage())),
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size(70, 38),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        textStyle: Theme.of(context)
+                            .textTheme
+                            .labelLarge!
+                            .copyWith(
+                                fontSize: 13, fontWeight: FontWeight.w800)),
+                    child: const Text('Mulai'),
+                  ),
+                ],
+              ]),
+              // Check-in yang dilakukan pada hari yang sama tidak menciptakan
+              // titik tanggal baru: rangkuman disisipkan ke event harian ini.
+              for (final report in e.reports) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: SkinTokens.surfaceAlt,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                    Text(e.title,
-                        style: TextStyle(
-                            color: foreground,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 5),
-                    if (e.classItems.isEmpty && e.description.isNotEmpty)
-                      Text(e.description, style: SkinTokens.caption)
-                    else ...[
-                      for (final item in e.classItems) ...[
-                        const SizedBox(height: 7),
-                        Text(item.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: _navy,
-                                fontSize: 13)),
-                        const SizedBox(height: 3),
-                        Text(item.message, style: SkinTokens.caption),
-                        if (item.focus.isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(item.focus, style: SkinTokens.caption),
-                        ],
-                        for (final note in item.notes) ...[
-                          const SizedBox(height: 4),
-                          Text(note, style: SkinTokens.caption),
-                        ],
-                        if (item.source != 'Dokumentasi SkinSight')
-                          Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text('Referensi: ${item.source}',
-                                  style: const TextStyle(
-                                      fontSize: 10, color: SkinTokens.muted))),
-                        const SizedBox(height: 8),
-                      ],
-                      if (e.isMissed)
-                        const Text(
-                            'Tidak ada laporan check-in pada minggu ini.',
+                        const Text('Laporan check-in',
+                            style: TextStyle(
+                                color: SkinTokens.ink,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        Text(
+                            report.perClass.entries
+                                .map((item) => '${item.key}: ${item.value}')
+                                .join(' · '),
                             style: SkinTokens.caption),
-                    ],
-                  ])),
-              if (isCurrentDue) ...[
-                const SizedBox(width: 8),
-                FilledButton(
-                  key: const Key('start-timeline-checkin'),
-                  onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                          builder: (_) => const SkinCheckinPage())),
-                  style: FilledButton.styleFrom(
-                      minimumSize: const Size(66, 36),
-                      padding: const EdgeInsets.symmetric(horizontal: 12)),
-                  child: const Text('Mulai'),
+                        const SizedBox(height: 3),
+                        Text(
+                            'Perawatan: ${report.treatment} · Iritasi: ${report.irritation}',
+                            style: SkinTokens.caption),
+                      ]),
                 ),
               ],
+              _photoSessions(context, e.photos),
+              if (e.reviewNames.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                for (final name in e.reviewNames)
+                  TextButton.icon(
+                      onPressed: () {
+                        if (SkinJourneyStore.instance.closeCondition(name)) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(
+                                  'Pemantauan $name diakhiri. Riwayat tetap tersimpan.')));
+                        }
+                      },
+                      icon: const Icon(Icons.done_all, size: 16),
+                      label: Text('Akhiri pemantauan $name')),
+              ],
             ]),
-            // Check-in yang dilakukan pada hari yang sama tidak menciptakan
-            // titik tanggal baru: rangkuman disisipkan ke event harian ini.
-            for (final report in e.reports) ...[
-              const SizedBox(height: 10),
-              const Text('Laporan check-in',
-                  style: TextStyle(
-                      color: _navy, fontSize: 12, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 4),
-              Text(
-                  report.perClass.entries
-                      .map((item) => '${item.key}: ${item.value}')
-                      .join(' · '),
-                  style: SkinTokens.caption),
-              const SizedBox(height: 3),
-              Text(
-                  'Perawatan: ${report.treatment} · Iritasi: ${report.irritation}',
-                  style: SkinTokens.caption),
-            ],
-            _photoSessions(context, e.photos),
-            if (e.reviewNames.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              for (final name in e.reviewNames)
-                TextButton.icon(
-                    onPressed: () {
-                      if (SkinJourneyStore.instance.closeCondition(name)) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(
-                                'Pemantauan $name diakhiri. Riwayat tetap tersimpan.')));
-                      }
-                    },
-                    icon: const Icon(Icons.done_all, size: 16),
-                    label: Text('Akhiri pemantauan $name')),
-            ],
-          ]),
+          ),
         )),
       ],
     ));
   }
-
-  Widget _tinyLabel(String title) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-            color: const Color(0xFFEAF5F0),
-            borderRadius: BorderRadius.circular(9)),
-        child: Text(title,
-            style: const TextStyle(
-                color: _teal, fontSize: 9, fontWeight: FontWeight.w800)),
-      );
 
   Widget _demoDateButton({
     required Key key,
@@ -802,23 +902,21 @@ class _SkinProgressPageState extends State<SkinProgressPage> {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 34),
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          foregroundColor: _teal,
-          backgroundColor: Colors.white.withValues(alpha: .72),
-          side: const BorderSide(color: Color(0xFF99CFC2)),
-          textStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ),
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.white.withValues(alpha: .1),
+          side: BorderSide(color: Colors.white.withValues(alpha: .3)),
+          shape: const StadiumBorder(),
+          textStyle: Theme.of(context).textTheme.labelLarge!.copyWith(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+              ),
         ),
         child: Text(label),
       );
 
-  Widget _panel({required Widget child}) => Container(
+  Widget _panel({required Widget child}) => SkinCard(
         padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFE2ECE6))),
+        radius: SkinTokens.radiusXl,
         child: child,
       );
 }
@@ -899,198 +997,204 @@ class _JourneyCompletionContentState extends State<_JourneyCompletionContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          key: const Key('journey-complete-banner'),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: SkinTokens.border),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: SkinTokens.mint,
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: const Icon(
-                  Icons.check_circle_outline_rounded,
-                  color: SkinTokens.primaryDark,
-                  size: 23,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Perjalanan pemantauanmu selesai!',
-                      style: TextStyle(
-                        color: SkinTokens.ink,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                      ),
+        SkinReveal(
+          child: Container(
+            key: const Key('journey-complete-banner'),
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              gradient: SkinTokens.warmGradient,
+              borderRadius: BorderRadius.circular(SkinTokens.radiusXl),
+              border: Border.all(color: const Color(0xFFFFFFFF)),
+              boxShadow: SkinTokens.shadows,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 12, 18),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SkinPill(
+                          label: 'SELESAI',
+                          tone: SkinTone.peach,
+                          icon: Icons.emoji_events_outlined,
+                          dense: true,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Perjalanan pemantauanmu selesai!',
+                          style: TextStyle(
+                            color: SkinTokens.ink,
+                            fontSize: 18,
+                            height: 1.25,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 5),
+                        Text(
+                          'Kamu sudah mencapai akhir periode pemantauan yang dijadwalkan. Yuk, lihat kembali perubahan yang tercatat.',
+                          style: SkinTokens.caption,
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Kamu sudah mencapai akhir periode pemantauan yang dijadwalkan. Yuk, lihat kembali perubahan yang tercatat.',
-                      style: SkinTokens.caption,
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 84,
+                    height: 84,
+                    child: const Skin3D(AppAssets.celebrate3d, float: true),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-        const SizedBox(height: 22),
-        const Text(
-          'Ringkasan perjalanan',
-          style: TextStyle(
-            color: SkinTokens.ink,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
+        const SizedBox(height: 24),
+        const SkinSectionTitle(
+          title: 'Ringkasan perjalanan',
+          subtitle:
+              'Ringkasan menggunakan data yang tersimpan pada perjalanan ini.',
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Row(
           children: [
             _SummaryMetric(
               value: '${widget.engine.maxHorizon}',
               label: 'Minggu',
+              icon: Icons.date_range_rounded,
             ),
+            const SizedBox(width: 10),
             _SummaryMetric(
               value: '${store.checkins.length}',
               label: 'Check-in',
+              icon: Icons.task_alt_rounded,
             ),
+            const SizedBox(width: 10),
             _SummaryMetric(
               value: '${store.photos.length}',
               label: 'Sesi foto',
+              icon: Icons.photo_library_outlined,
             ),
           ],
         ),
+        const SizedBox(height: 26),
+        const SkinSectionTitle(
+          title: 'Perkembangan kulit',
+          subtitle:
+              'Perbandingan hanya ditampilkan jika hasil foto memenuhi syarat kesebandingan.',
+        ),
         const SizedBox(height: 12),
-        const Text(
-          'Ringkasan menggunakan data yang tersimpan pada perjalanan ini.',
-          style: SkinTokens.caption,
+        SkinCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: conditions.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Belum ada kondisi dengan data yang dapat diringkas.',
+                    style: SkinTokens.caption,
+                  ),
+                )
+              : Column(
+                  children: [
+                    for (var i = 0; i < conditions.length; i++) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                conditions[i],
+                                style: const TextStyle(
+                                  color: SkinTokens.ink,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Flexible(
+                              child: Text(
+                                _progressLabel(conditions[i]),
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(
+                                  color: SkinTokens.primaryDark,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (i < conditions.length - 1) const Divider(height: 1),
+                    ],
+                  ],
+                ),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Divider(color: SkinTokens.border),
-        ),
-        const Text(
-          'Perkembangan kulit',
-          style: TextStyle(
-            color: SkinTokens.ink,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (conditions.isEmpty)
-          const Text(
-            'Belum ada kondisi dengan data yang dapat diringkas.',
-            style: SkinTokens.caption,
-          )
-        else
-          for (final condition in conditions)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 26),
+        SkinCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Bagaimana pengalamanmu?',
+                style: SkinTokens.section,
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                'Berikan rating dan ceritakan pengalamanmu selama menggunakan Skin Journey.',
+                style: SkinTokens.caption,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                key: const Key('journey-feedback-stars'),
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Text(
-                      condition,
-                      style: const TextStyle(
-                        color: SkinTokens.ink,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                  for (var star = 1; star <= 5; star++)
+                    IconButton(
+                      key: Key('journey-feedback-star-$star'),
+                      tooltip: '$star bintang',
+                      padding: const EdgeInsets.all(5),
+                      onPressed: submitted
+                          ? null
+                          : () => setState(() => _rating = star),
+                      icon: Icon(
+                        star <= _rating
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
+                        color: star <= _rating
+                            ? const Color(0xFFE4A72D)
+                            : SkinTokens.subtle,
+                        size: 32,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Flexible(
-                    child: Text(
-                      _progressLabel(condition),
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(
-                        color: SkinTokens.ink,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
                 ],
               ),
-            ),
-        const SizedBox(height: 5),
-        const Text(
-          'Perbandingan hanya ditampilkan jika hasil foto memenuhi syarat kesebandingan.',
-          style: SkinTokens.caption,
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
-          child: Divider(color: SkinTokens.border),
-        ),
-        const Text(
-          'Bagaimana pengalamanmu?',
-          style: TextStyle(
-            color: SkinTokens.ink,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 5),
-        const Text(
-          'Berikan rating dan ceritakan pengalamanmu selama menggunakan Skin Journey.',
-          style: SkinTokens.caption,
-        ),
-        const SizedBox(height: 12),
-        Row(
-          key: const Key('journey-feedback-stars'),
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var star = 1; star <= 5; star++)
-              IconButton(
-                key: Key('journey-feedback-star-$star'),
-                tooltip: '$star bintang',
-                onPressed:
-                    submitted ? null : () => setState(() => _rating = star),
-                icon: Icon(
-                  star <= _rating
-                      ? Icons.star_rounded
-                      : Icons.star_border_rounded,
-                  color: star <= _rating
-                      ? const Color(0xFFE4A72D)
-                      : SkinTokens.muted,
-                  size: 32,
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('journey-feedback-text'),
+                controller: _feedbackController,
+                enabled: !submitted,
+                minLines: 3,
+                maxLines: 5,
+                maxLength: 500,
+                decoration: const InputDecoration(
+                  labelText: 'Feedback',
+                  hintText:
+                      'Tulis pengalamanmu selama menjalani pemantauan kulit.',
+                  alignLabelWithHint: true,
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          key: const Key('journey-feedback-text'),
-          controller: _feedbackController,
-          enabled: !submitted,
-          minLines: 3,
-          maxLines: 5,
-          maxLength: 500,
-          decoration: const InputDecoration(
-            labelText: 'Feedback',
-            hintText: 'Tulis pengalamanmu selama menjalani pemantauan kulit.',
-            alignLabelWithHint: true,
+              const SizedBox(height: 10),
+              FilledButton(
+                key: const Key('journey-feedback-submit'),
+                onPressed: submitted ? null : _submitFeedback,
+                child: Text(submitted ? 'Feedback terkirim' : 'Kirim'),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 10),
-        FilledButton(
-          key: const Key('journey-feedback-submit'),
-          onPressed: submitted ? null : _submitFeedback,
-          child: Text(submitted ? 'Feedback terkirim' : 'Kirim'),
         ),
       ],
     );
@@ -1098,27 +1202,48 @@ class _JourneyCompletionContentState extends State<_JourneyCompletionContent> {
 }
 
 class _SummaryMetric extends StatelessWidget {
-  const _SummaryMetric({required this.value, required this.label});
+  const _SummaryMetric({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
 
   final String value;
   final String label;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: SkinTokens.ink,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: SkinTokens.glassStrong,
+          borderRadius: BorderRadius.circular(SkinTokens.radiusLg),
+          border: Border.all(color: Colors.white),
+          boxShadow: SkinTokens.shadows,
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: SkinTokens.primary),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: const TextStyle(
+                color: SkinTokens.ink,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 3),
-          Text(label, style: SkinTokens.caption),
-        ],
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: SkinTokens.caption.copyWith(fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1198,22 +1323,22 @@ class _JourneyPlot extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     const top = 12.0;
-    final bottom = size.height - 18;
-    final left = 35.0;
-    final right = size.width - 8;
+    final bottom = size.height - 10;
+    const left = 35.0;
+    final right = size.width - 10;
     final ceiling = points.isEmpty
         ? 1.0
         : math.max(detection ? 1.0 : .05,
             points.map((p) => p.value).reduce(math.max) * 1.2);
-    final textStyle = TextStyle(color: const Color(0xFF819A94), fontSize: 10);
+    const textStyle = TextStyle(color: Color(0xFF9AA8A3), fontSize: 10);
+    final grid = Paint()
+      ..color = const Color(0xFFDCE5E0)
+      ..strokeWidth = 1;
     for (int i = 0; i <= 3; i++) {
       final y = top + (bottom - top) * i / 3;
-      canvas.drawLine(
-          Offset(left, y),
-          Offset(right, y),
-          Paint()
-            ..color = const Color(0xFFE7EFEA)
-            ..strokeWidth = 1);
+      for (var x = left; x < right; x += 8) {
+        canvas.drawLine(Offset(x, y), Offset(math.min(x + 4, right), y), grid);
+      }
       final val = ceiling * (3 - i) / 3;
       final painter = TextPainter(
           text: TextSpan(
@@ -1234,28 +1359,45 @@ class _JourneyPlot extends CustomPainter {
       return Offset(x, y);
     }
 
+    // Kurva halus (cubic) di antara titik pengamatan.
     final line = Path()..moveTo(point(0).dx, point(0).dy);
     for (int i = 1; i < points.length; i++) {
-      line.lineTo(point(i).dx, point(i).dy);
+      final a = point(i - 1);
+      final b = point(i);
+      final midX = (a.dx + b.dx) / 2;
+      line.cubicTo(midX, a.dy, midX, b.dy, b.dx, b.dy);
     }
     if (points.length > 1) {
       final fill = Path.from(line)
         ..lineTo(point(points.length - 1).dx, bottom)
         ..lineTo(point(0).dx, bottom)
         ..close();
-      canvas.drawPath(fill, Paint()..color = color.withValues(alpha: .10));
+      canvas.drawPath(
+        fill,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [color.withValues(alpha: .24), color.withValues(alpha: 0)],
+          ).createShader(Rect.fromLTRB(left, top, right, bottom)),
+      );
       canvas.drawPath(
           line,
           Paint()
             ..color = color
-            ..strokeWidth = 3.3
+            ..strokeWidth = 3.2
             ..strokeCap = StrokeCap.round
             ..strokeJoin = StrokeJoin.round
             ..style = PaintingStyle.stroke);
     }
     for (int i = 0; i < points.length; i++) {
-      canvas.drawCircle(point(i), 5.3, Paint()..color = Colors.white);
-      canvas.drawCircle(point(i), 4.0, Paint()..color = color);
+      final isLast = i == points.length - 1;
+      if (isLast) {
+        canvas.drawCircle(
+            point(i), 10, Paint()..color = color.withValues(alpha: .16));
+      }
+      canvas.drawCircle(point(i), 5.6, Paint()..color = Colors.white);
+      canvas.drawCircle(point(i), isLast ? 4.4 : 3.8, Paint()..color = color);
     }
   }
 

@@ -25,13 +25,21 @@ void main() {
       await tester.tap(find.byKey(const Key('open-profile')));
       await tester.pumpAndSettle();
 
+      // Kartu 1: identitas + akses "Profil Saya"; kartu 2: lainnya.
       expect(find.text('Profil Saya'), findsOneWidget);
+      expect(find.text('Alea Kucing'), findsOneWidget);
+      expect(find.byKey(const Key('open-account-details')), findsOneWidget);
+      expect(find.byKey(const Key('logout-account')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Halaman detail akun berisi semua informasi.
+      await tester.tap(find.byKey(const Key('open-account-details')));
+      await tester.pumpAndSettle();
       expect(find.text('Alea Kucing'), findsNWidgets(2));
       expect(find.text('Password'), findsOneWidget);
       expect(find.text('••••••••••••'), findsOneWidget);
       expect(find.text('+62 812-3456-7890'), findsOneWidget);
-      expect(find.text('alea.kucing@email.com'), findsOneWidget);
-      expect(find.byKey(const Key('logout-account')), findsOneWidget);
+      expect(find.text('alea.kucing@email.com'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
     });
   }
@@ -48,6 +56,8 @@ void main() {
     await tester.tap(find.byKey(const Key('open-profile')));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const Key('open-account-details')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('edit-profile-name')));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -58,6 +68,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Alea Putri'), findsNWidgets(2));
+
+    await tester.tap(find.byKey(const Key('account-back')));
+    await tester.pumpAndSettle();
+    expect(find.text('Alea Putri'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('profile-back')));
     await tester.pumpAndSettle();
@@ -75,6 +89,8 @@ void main() {
     await tester.pumpAndSettle();
     await enterHome(tester);
     await tester.tap(find.byKey(const Key('open-profile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-account-details')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('edit-profile-password')));
     await tester.pumpAndSettle();

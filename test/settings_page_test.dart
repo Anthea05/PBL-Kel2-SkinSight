@@ -8,7 +8,7 @@ import 'test_helpers.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('settings changes global font and defaults to Roboto',
+  testWidgets('settings changes global font and defaults to Plus Jakarta Sans',
       (tester) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
@@ -25,7 +25,7 @@ void main() {
     await enterHome(tester);
 
     expect(find.byKey(const Key('open-settings')), findsOneWidget);
-    expect(SkinFontSettings.instance.fontFamily, 'Roboto');
+    expect(SkinFontSettings.instance.fontFamily, 'PlusJakartaSans');
 
     await tester.tap(find.byKey(const Key('open-settings')));
     await tester.pumpAndSettle();
@@ -37,11 +37,11 @@ void main() {
 
     await tester.tap(find.byKey(const Key('font-roboto')));
     await tester.pumpAndSettle();
-    expect(SkinFontSettings.instance.fontFamily, 'Roboto');
+    expect(SkinFontSettings.instance.fontFamily, 'PlusJakartaSans');
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('start page always uses handwritten font', (tester) async {
+  testWidgets('start page uses the app body font', (tester) async {
     SkinFontSettings.instance.select(SkinFontChoice.roboto);
     addTearDown(
       () => SkinFontSettings.instance.select(SkinFontChoice.roboto),
@@ -54,7 +54,7 @@ void main() {
     expect(startButton, findsOneWidget);
     expect(
       Theme.of(tester.element(startButton)).textTheme.bodyMedium?.fontFamily,
-      'Kalam',
+      'PlusJakartaSans',
     );
     expect(tester.takeException(), isNull);
   });

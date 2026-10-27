@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../data/skin_journey_store.dart';
 import '../models/skin_analysis.dart';
 import '../theme/skin_theme.dart';
+import '../widgets/asset_images.dart';
 import '../widgets/skin_page_header.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_ui.dart';
 import 'skin_result_page.dart';
 import 'skin_scan_page.dart';
 
@@ -18,8 +20,6 @@ class SkinJourneyPhotosPage extends StatefulWidget {
 
 class _SkinJourneyPhotosPageState extends State<SkinJourneyPhotosPage> {
   final store = SkinJourneyStore.instance;
-  static const _teal = Color(0xFF087D73);
-  static const _navy = Color(0xFF16363C);
 
   SkinAnalysis _analysis(JourneyPhoto p) => SkinAnalysis(
         id: p.id,
@@ -85,168 +85,223 @@ class _SkinJourneyPhotosPageState extends State<SkinJourneyPhotosPage> {
         backgroundColor: SkinTokens.background,
         body: SkinPageBackground(
             child: SafeArea(
+                bottom: false,
                 child: Center(
                     child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
-          child: AnimatedBuilder(
-              animation: store,
-              builder: (context, _) => Column(children: [
-                    const SkinPageHeader(
-                        title: 'Sesi Foto', backKey: Key('session-back')),
-                    Expanded(
-                        child: ListView(
-                            padding: const EdgeInsets.fromLTRB(20, 15, 20, 25),
-                            children: [
-                          Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Expanded(
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                      Text('Foto hari ini',
-                                          style: SkinTokens.title),
-                                      SizedBox(height: 5),
-                                      Text(
-                                          'Pilih foto untuk melihat hasil analisisnya.',
-                                          style: SkinTokens.caption),
-                                    ])),
-                                const SizedBox(width: 12),
-                                Material(
-                                    color: _teal,
-                                    borderRadius: BorderRadius.circular(17),
-                                    child: InkWell(
-                                        key: const Key('add-session'),
-                                        onTap: _addPhoto,
-                                        borderRadius: BorderRadius.circular(17),
-                                        child: const SizedBox(
-                                            width: 52,
-                                            height: 52,
-                                            child: Icon(Icons.add_rounded,
-                                                color: Colors.white,
-                                                size: 30)))),
-                              ]),
-                          const SizedBox(height: 20),
-                          if (store.pendingPhotos.isEmpty)
-                            Container(
-                                padding: const EdgeInsets.all(25),
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border:
-                                        Border.all(color: SkinTokens.border)),
-                                child: const Column(children: [
-                                  Icon(Icons.add_photo_alternate_outlined,
-                                      size: 34, color: _teal),
-                                  SizedBox(height: 9),
-                                  Text('Belum ada foto pada check-in ini',
-                                      textAlign: TextAlign.center,
-                                      style: SkinTokens.section),
-                                  SizedBox(height: 6),
-                                  Text(
-                                      'Tekan + untuk menambah sesi, atau selesai tanpa foto.',
-                                      textAlign: TextAlign.center,
-                                      style: SkinTokens.caption),
-                                ])),
-                          for (int i = 0; i < store.pendingPhotos.length; i++)
-                            Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _sessionCard(
-                                    store.pendingPhotos[i], i + 1)),
-                          if (store.pendingPhotos.isNotEmpty) ...[
-                            const SizedBox(height: 11),
-                            Container(
-                                padding: const EdgeInsets.all(17),
-                                decoration: BoxDecoration(
-                                    color: SkinTokens.mint,
-                                    borderRadius: BorderRadius.circular(19)),
-                                child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                  constraints:
+                      const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+                  child: AnimatedBuilder(
+                      animation: store,
+                      builder: (context, _) => Column(children: [
+                            SkinPageHeader(
+                              title: 'Sesi Foto',
+                              subtitle: store.pendingPhotos.isEmpty
+                                  ? 'Belum ada foto di check-in ini'
+                                  : '${store.pendingPhotos.length} foto di draft check-in',
+                              backKey: const Key('session-back'),
+                            ),
+                            Expanded(
+                                child: ListView(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        20, 4, 20, 25),
                                     children: [
-                                      Text(
-                                          'Ringkasan ${store.pendingPhotos.length} sesi',
-                                          style: SkinTokens.section),
-                                      const SizedBox(height: 9),
-                                      // Hasil per foto tidak digabung atau dirata-ratakan;
-                                      // pose yang berbeda tidak mewakili area identik.
-                                      for (int i = 0;
-                                          i < store.pendingPhotos.length;
-                                          i++)
-                                        Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 6),
-                                            child: Text(
-                                                'Sesi ${i + 1} · ${_finding(store.pendingPhotos[i])}',
-                                                style: SkinTokens.caption)),
-                                      const SizedBox(height: 4),
-                                      const Text(
-                                          'Hasil dicatat per foto, tanpa rata-rata lintas pose.',
-                                          style: TextStyle(
-                                              color: SkinTokens.muted,
-                                              fontSize: 11)),
-                                    ])),
-                          ],
-                        ])),
-                    Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                        child: SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                                key: const Key('finish-sessions'),
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: const Icon(Icons.check_rounded),
-                                label: const Text('Selesai tambah sesi')))),
-                  ])),
-        )))),
+                                  SkinCard(
+                                    gradient: SkinTokens.softGradient,
+                                    borderColor: Colors.white,
+                                    padding: const EdgeInsets.fromLTRB(
+                                        18, 16, 14, 16),
+                                    child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          const Expanded(
+                                              child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                Text('Foto hari ini',
+                                                    style: SkinTokens.section),
+                                                SizedBox(height: 5),
+                                                Text(
+                                                    'Pilih foto untuk melihat hasil analisisnya.',
+                                                    style: SkinTokens.caption),
+                                              ])),
+                                          const SizedBox(width: 12),
+                                          DecoratedBox(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(18),
+                                              boxShadow: SkinTokens.glow(
+                                                  SkinTokens.primary,
+                                                  opacity: .3),
+                                            ),
+                                            child: Material(
+                                                color: SkinTokens.primary,
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                                child: InkWell(
+                                                    key: const Key(
+                                                        'add-session'),
+                                                    onTap: _addPhoto,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            18),
+                                                    child: const Tooltip(
+                                                      message: 'Tambah foto',
+                                                      child: SizedBox(
+                                                          width: 54,
+                                                          height: 54,
+                                                          child: Icon(
+                                                              Icons
+                                                                  .add_a_photo_rounded,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 25)),
+                                                    ))),
+                                          ),
+                                        ]),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  if (store.pendingPhotos.isEmpty)
+                                    const SkinCard(
+                                      padding: EdgeInsets.all(26),
+                                      child: SkinEmptyState(
+                                        compact: true,
+                                        icon:
+                                            Icons.add_photo_alternate_outlined,
+                                        title:
+                                            'Belum ada foto pada check-in ini',
+                                        message:
+                                            'Tekan + untuk menambah sesi, atau selesai tanpa foto.',
+                                      ),
+                                    ),
+                                  for (int i = 0;
+                                      i < store.pendingPhotos.length;
+                                      i++)
+                                    Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12),
+                                        child: SkinReveal(
+                                          child: _sessionCard(
+                                              store.pendingPhotos[i], i + 1),
+                                        )),
+                                  if (store.pendingPhotos.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    SkinCard(
+                                      color: SkinTokens.mint,
+                                      borderColor: null,
+                                      shadow: false,
+                                      child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                                'Ringkasan ${store.pendingPhotos.length} sesi',
+                                                style: SkinTokens.section),
+                                            const SizedBox(height: 10),
+                                            // Hasil per foto tidak digabung atau dirata-ratakan;
+                                            // pose yang berbeda tidak mewakili area identik.
+                                            for (int i = 0;
+                                                i < store.pendingPhotos.length;
+                                                i++)
+                                              Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 6),
+                                                  child: Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      SkinPill(
+                                                        label: 'Sesi ${i + 1}',
+                                                        tone: SkinTone.neutral,
+                                                        dense: true,
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Text(
+                                                            _finding(store
+                                                                    .pendingPhotos[
+                                                                i]),
+                                                            style: SkinTokens
+                                                                .caption),
+                                                      ),
+                                                    ],
+                                                  )),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                                'Hasil dicatat per foto, tanpa rata-rata lintas pose.',
+                                                style: TextStyle(
+                                                    color: SkinTokens.muted,
+                                                    fontSize: 11.5)),
+                                          ]),
+                                    ),
+                                  ],
+                                ])),
+                            SkinBottomBar(
+                              child: SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton.icon(
+                                      key: const Key('finish-sessions'),
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      icon: const Icon(Icons.check_rounded),
+                                      label:
+                                          const Text('Selesai tambah sesi'))),
+                            ),
+                          ])),
+                )))),
       );
 
-  Widget _sessionCard(JourneyPhoto p, int index) => Container(
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: SkinTokens.border)),
+  Widget _sessionCard(JourneyPhoto p, int index) => SkinCard(
+        padding: EdgeInsets.zero,
         child: Row(children: [
           Expanded(
             child: InkWell(
                 key: Key('open-session-$index'),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(SkinTokens.radiusLg),
                 onTap: () => _openResult(p),
                 child: Padding(
                     padding: const EdgeInsets.all(11),
                     child: Row(children: [
                       ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           child: Image.memory(p.bytes,
-                              width: 78, height: 90, fit: BoxFit.cover)),
+                              width: 74,
+                              height: 86,
+                              fit: BoxFit.cover,
+                              cacheWidth: thumbnailCacheWidth(context, 74))),
                       const SizedBox(width: 12),
                       Expanded(
                           child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                            Row(children: [
-                              Expanded(
-                                  child: Text('Sesi $index',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 16,
-                                          color: _navy))),
-                              const Icon(Icons.chevron_right_rounded,
-                                  color: _teal),
-                            ]),
-                            const SizedBox(height: 5),
+                            Text('Sesi $index',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                    color: SkinTokens.ink)),
+                            const SizedBox(height: 4),
                             Text(_finding(p),
                                 maxLines: 3,
                                 overflow: TextOverflow.ellipsis,
                                 style: SkinTokens.caption),
-                            const SizedBox(height: 5),
-                            Text(
-                                '${p.skinType ?? 'Belum diketahui'} · Lihat hasil',
-                                style: const TextStyle(
-                                    color: _teal,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12)),
+                            const SizedBox(height: 6),
+                            Row(children: [
+                              Flexible(
+                                child: Text(
+                                    '${p.skinType ?? 'Belum diketahui'} · Lihat hasil',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        color: SkinTokens.primary,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12)),
+                              ),
+                              const Icon(Icons.chevron_right_rounded,
+                                  size: 18, color: SkinTokens.primary),
+                            ]),
                           ])),
                     ]))),
           ),

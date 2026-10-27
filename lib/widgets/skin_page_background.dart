@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Background visual bersama untuk halaman SkinSight yang sebelumnya polos.
-/// Dekorasi tidak menerima input sehingga tidak mengganggu gesture halaman.
+import '../theme/skin_theme.dart';
+
+/// Latar visual bersama: sage pucat dengan gradien radial lembut (cahaya
+/// putih di kiri atas, aqua-sage di kanan, aloe samar di bawah). Dekorasi
+/// tidak menerima input sehingga tidak mengganggu gesture halaman.
 class SkinPageBackground extends StatelessWidget {
   const SkinPageBackground({super.key, required this.child});
 
@@ -10,33 +13,30 @@ class SkinPageBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFF9FBF7), Color(0xFFEAF5F1)],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: SkinTokens.sageGradient),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Positioned(
-            top: -88,
-            right: -72,
+          const Positioned(
+            top: -180,
+            left: -140,
             child: IgnorePointer(
-                child: _BackgroundOrb(
-              size: 220,
-              color: Color(0x3074C3B4),
-            )),
+              child: _Glow(size: 460, color: Color(0xCCFFFFFF)),
+            ),
           ),
-          Positioned(
-            left: -105,
-            bottom: 56,
+          const Positioned(
+            top: 120,
+            right: -170,
             child: IgnorePointer(
-                child: _BackgroundOrb(
-              size: 235,
-              color: Color(0x20F0B3A7),
-            )),
+              child: _Glow(size: 380, color: Color(0x80BFD8D2)),
+            ),
+          ),
+          const Positioned(
+            left: -120,
+            bottom: -140,
+            child: IgnorePointer(
+              child: _Glow(size: 400, color: Color(0x40A9CDB0)),
+            ),
           ),
           child,
         ],
@@ -45,8 +45,8 @@ class SkinPageBackground extends StatelessWidget {
   }
 }
 
-class _BackgroundOrb extends StatelessWidget {
-  const _BackgroundOrb({required this.size, required this.color});
+class _Glow extends StatelessWidget {
+  const _Glow({required this.size, required this.color});
 
   final double size;
   final Color color;
@@ -56,7 +56,12 @@ class _BackgroundOrb extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withValues(alpha: 0)],
+        ),
+      ),
     );
   }
 }

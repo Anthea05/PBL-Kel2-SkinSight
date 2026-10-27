@@ -15,9 +15,11 @@ void main() {
       await tester.pumpWidget(const SkinSightApp());
       await tester.pumpAndSettle();
 
-      expect(find.text('SkinSight'), findsOneWidget);
+      expect(find.text('Glow On the Go'), findsOneWidget);
       expect(find.textContaining('Start your'), findsOneWidget);
+      expect(find.textContaining('skin journey'), findsOneWidget);
       expect(find.textContaining('Kenali kondisi kulitmu'), findsOneWidget);
+      expect(find.text('Enter'), findsOneWidget);
       expect(find.byKey(const Key('start-button')), findsOneWidget);
       expect(find.byKey(const Key('start-login-link')), findsOneWidget);
       expect(tester.takeException(), isNull);

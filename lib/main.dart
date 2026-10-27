@@ -7,12 +7,17 @@ import 'models/profile_data.dart';
 import 'models/font_settings.dart';
 import 'models/auth_session.dart';
 import 'theme/skin_theme.dart';
+import 'widgets/skin_page_background.dart';
+import 'core/app_assets.dart';
+import 'widgets/skin_3d.dart';
+import 'widgets/skin_ui.dart';
 import 'pages/skin_about_page.dart';
 import 'pages/skin_help_page.dart';
 import 'pages/skin_history_page.dart';
 import 'pages/skin_home_page.dart';
 import 'pages/skin_login_page.dart';
 import 'pages/skin_notifications_page.dart';
+import 'pages/skin_account_page.dart';
 import 'pages/skin_profile_page.dart';
 import 'pages/skin_result_page.dart';
 import 'pages/skin_start_page.dart';
@@ -66,10 +71,39 @@ class _SkinSightBootstrapState extends State<_SkinSightBootstrap> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: SkinTokens.theme(),
-      home: const Scaffold(
-        backgroundColor: SkinTokens.background,
-        body: Center(
-          child: CircularProgressIndicator(color: SkinTokens.primary),
+      home: const _SplashScreen(),
+    );
+  }
+}
+
+/// Layar pembuka singkat selama preferensi dimuat.
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: SkinPageBackground(
+        child: SizedBox.expand(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Skin3D(AppAssets.aloe3d, width: 170, height: 108),
+              SizedBox(height: 14),
+              SkinWordmark(fontSize: 32),
+              SizedBox(height: 6),
+              Text(
+                'Kenali, catat, dan pahami kulitmu',
+                style: TextStyle(color: SkinTokens.muted, fontSize: 14),
+              ),
+              SizedBox(height: 34),
+              SizedBox(
+                width: 26,
+                height: 26,
+                child: CircularProgressIndicator(strokeWidth: 2.4),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -121,17 +155,6 @@ class SkinSightApp extends StatelessWidget {
                   : '/',
           theme: SkinTokens.theme(
             fontFamily: SkinFontSettings.instance.fontFamily,
-          ).copyWith(
-            pageTransitionsTheme: const PageTransitionsTheme(
-              builders: {
-                TargetPlatform.android: _NoPageTransitionsBuilder(),
-                TargetPlatform.iOS: _NoPageTransitionsBuilder(),
-                TargetPlatform.macOS: _NoPageTransitionsBuilder(),
-                TargetPlatform.windows: _NoPageTransitionsBuilder(),
-                TargetPlatform.linux: _NoPageTransitionsBuilder(),
-                TargetPlatform.fuchsia: _NoPageTransitionsBuilder(),
-              },
-            ),
           ),
           routes: {
             '/': (_) => const SkinStartPage(),
@@ -148,6 +171,7 @@ class SkinSightApp extends StatelessWidget {
             '/history': (_) => const SkinHistoryPage(),
             '/notifications': (_) => const SkinNotificationsPage(),
             '/profile': (_) => const SkinProfilePage(),
+            '/account': (_) => const SkinAccountPage(),
             '/settings': (_) => const SkinSettingsPage(),
             '/privacy': (_) => const SkinPrivacyPage(),
             '/terms': (_) => const SkinTermsPage(),
@@ -156,20 +180,5 @@ class SkinSightApp extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _NoPageTransitionsBuilder extends PageTransitionsBuilder {
-  const _NoPageTransitionsBuilder();
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return child;
   }
 }

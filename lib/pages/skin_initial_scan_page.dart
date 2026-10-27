@@ -7,8 +7,10 @@ import '../data/skin_history_repository.dart';
 import '../data/skin_journey_store.dart';
 import '../models/skin_analysis.dart';
 import '../theme/skin_theme.dart';
+import '../widgets/asset_images.dart';
 import '../widgets/skin_page_header.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_ui.dart';
 import 'skin_result_page.dart';
 import 'skin_scan_page.dart';
 
@@ -244,10 +246,12 @@ class _SkinInitialScanPageState extends State<SkinInitialScanPage> {
   Widget build(BuildContext context) {
     final hasScans = _sessions.isNotEmpty;
     final average = hasScans ? _averageAnalysis() : null;
+    final full = _sessions.length >= _maxScans;
     return Scaffold(
-      backgroundColor: const Color(0xFFF2F8F5),
+      backgroundColor: SkinTokens.background,
       body: SkinPageBackground(
         child: SafeArea(
+          bottom: false,
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
@@ -255,100 +259,124 @@ class _SkinInitialScanPageState extends State<SkinInitialScanPage> {
                 children: [
                   const SkinPageHeader(
                     title: 'Kumpulan Foto',
+                    subtitle: 'Baseline awal Skin Journey',
                     backKey: Key('initial-scan-back'),
+                  ),
+                  // Kartu progres tetap terlihat agar aksi tambah foto
+                  // selalu bisa dijangkau tanpa scroll.
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                      decoration: BoxDecoration(
+                        gradient: SkinTokens.softGradient,
+                        borderRadius:
+                            BorderRadius.circular(SkinTokens.radiusXl),
+                        border: Border.all(color: Colors.white),
+                        boxShadow: SkinTokens.shadows,
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Tambah Foto',
+                                      style: SkinTokens.section,
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      '${_sessions.length} dari $_maxScans foto tersimpan',
+                                      style: SkinTokens.caption,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 11,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${_sessions.length}/$_maxScans',
+                                  style: const TextStyle(
+                                    color: SkinTokens.primaryDark,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton.filled(
+                                key: const Key('add-initial-scan'),
+                                tooltip:
+                                    full ? 'Maksimal 3 foto' : 'Tambah scan',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: SkinTokens.primary,
+                                  minimumSize: const Size(46, 46),
+                                ),
+                                onPressed: full ? null : _addScan,
+                                icon: const Icon(Icons.add_a_photo_rounded),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          SkinProgressBar(
+                            key: const Key('initial-photo-progress'),
+                            value: _sessions.length / _maxScans,
+                            background: Colors.white,
+                            gradient: SkinTokens.brandGradient,
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              for (var i = 0; i < _maxScans; i++) ...[
+                                Expanded(
+                                  child: _PhotoSlot(
+                                    number: i + 1,
+                                    photo: i < _sessions.length
+                                        ? _sessions[i].selfieBytes
+                                        : null,
+                                    filled: i < _sessions.length,
+                                    isNext: i == _sessions.length,
+                                    onAdd: _addScan,
+                                  ),
+                                ),
+                                if (i < _maxScans - 1)
+                                  const SizedBox(width: 10),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: ListView(
                       key: const Key('initial-scan-list'),
                       physics: const ClampingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
                       children: [
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(16, 15, 12, 14),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFE4F4EF), Color(0xFFF2F8F5)],
-                            ),
-                            borderRadius: BorderRadius.circular(23),
-                            border: Border.all(color: const Color(0xFFD2E6DF)),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Tambah Foto',
-                                          style: SkinTokens.section,
-                                        ),
-                                        const SizedBox(height: 3),
-                                        Text(
-                                          '${_sessions.length} dari $_maxScans foto tersimpan',
-                                          style: SkinTokens.caption,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '${_sessions.length}/$_maxScans',
-                                      style: const TextStyle(
-                                        color: SkinTokens.primaryDark,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton.filled(
-                                    key: const Key('add-initial-scan'),
-                                    tooltip: _sessions.length >= _maxScans
-                                        ? 'Maksimal 3 foto'
-                                        : 'Tambah scan',
-                                    onPressed: _sessions.length >= _maxScans
-                                        ? null
-                                        : _addScan,
-                                    icon: const Icon(Icons.add_rounded),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: LinearProgressIndicator(
-                                  key: const Key('initial-photo-progress'),
-                                  minHeight: 6,
-                                  value: _sessions.length / _maxScans,
-                                  backgroundColor: Colors.white,
-                                  color: SkinTokens.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 14),
                         if (!hasScans)
                           const _EmptyInitialScan()
                         else
                           for (var index = 0; index < _sessions.length; index++)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 11),
-                              child: _InitialScanCard(
-                                analysis: _sessions[index],
-                                index: index + 1,
-                                onOpen: () => _openScanDetail(_sessions[index]),
-                                onRemove: () => _removeScan(index),
+                              child: SkinReveal(
+                                child: _InitialScanCard(
+                                  analysis: _sessions[index],
+                                  index: index + 1,
+                                  onOpen: () =>
+                                      _openScanDetail(_sessions[index]),
+                                  onRemove: () => _removeScan(index),
+                                ),
                               ),
                             ),
                         if (average != null) ...[
@@ -361,9 +389,7 @@ class _SkinInitialScanPageState extends State<SkinInitialScanPage> {
                       ],
                     ),
                   ),
-                  SafeArea(
-                    top: false,
-                    minimum: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  SkinBottomBar(
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
@@ -386,6 +412,120 @@ class _SkinInitialScanPageState extends State<SkinInitialScanPage> {
   }
 }
 
+class _PhotoSlot extends StatelessWidget {
+  const _PhotoSlot({
+    required this.number,
+    required this.photo,
+    required this.filled,
+    required this.isNext,
+    required this.onAdd,
+  });
+
+  final int number;
+  final Uint8List? photo;
+  final bool filled;
+  final bool isNext;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(18);
+    return AspectRatio(
+      aspectRatio: 1.15,
+      child: filled
+          ? Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: radius,
+                  child: photo == null
+                      ? const ColoredBox(
+                          color: SkinTokens.mint,
+                          child: Icon(Icons.face_outlined,
+                              color: SkinTokens.primary),
+                        )
+                      : LayoutBuilder(
+                          builder: (context, constraints) => Image.memory(
+                            photo!,
+                            fit: BoxFit.cover,
+                            cacheWidth: thumbnailCacheWidth(
+                              context,
+                              constraints.maxWidth,
+                            ),
+                          ),
+                        ),
+                ),
+                Positioned(
+                  left: 6,
+                  top: 6,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      gradient: SkinTokens.brandGradient,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_rounded,
+                        size: 14, color: Colors.white),
+                  ),
+                ),
+              ],
+            )
+          : Material(
+              color: Colors.white.withValues(alpha: isNext ? .9 : .55),
+              borderRadius: radius,
+              child: InkWell(
+                onTap: isNext ? onAdd : null,
+                borderRadius: radius,
+                child: CustomPaint(
+                  painter: _DashedBorderPainter(
+                    color:
+                        isNext ? SkinTokens.primary : SkinTokens.borderStrong,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      isNext ? Icons.add_rounded : Icons.photo_outlined,
+                      color: isNext ? SkinTokens.primary : SkinTokens.subtle,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  const _DashedBorderPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        (Offset.zero & size).deflate(1),
+        const Radius.circular(17),
+      ));
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        canvas.drawPath(metric.extractPath(distance, distance + 6), paint);
+        distance += 11;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter old) => old.color != color;
+}
+
 class _BaselineAverageSummary extends StatelessWidget {
   const _BaselineAverageSummary({
     required this.analysis,
@@ -406,56 +546,50 @@ class _BaselineAverageSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: const Key('initial-average-result'),
-      padding: const EdgeInsets.fromLTRB(17, 16, 17, 15),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(SkinTokens.radiusLg),
         border: Border.all(color: SkinTokens.border),
+        boxShadow: SkinTokens.shadows,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.analytics_outlined,
-                color: SkinTokens.primary,
-                size: 21,
-              ),
-              const SizedBox(width: 9),
+              const SkinIconTile(icon: Icons.analytics_outlined, size: 40),
+              const SizedBox(width: 11),
               const Expanded(
                 child: Text('Rata-rata Hasil', style: SkinTokens.section),
               ),
-              Text(
-                '$photoCount foto',
-                style: const TextStyle(
-                  color: SkinTokens.primaryDark,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              SkinPill(label: '$photoCount foto'),
             ],
           ),
-          const SizedBox(height: 13),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: SkinTokens.mint,
               borderRadius: BorderRadius.circular(15),
             ),
             child: Row(
               children: [
-                const Text(
-                  'Jenis kulit',
-                  style: TextStyle(color: SkinTokens.muted, fontSize: 12),
+                const Icon(Icons.water_drop_outlined,
+                    size: 18, color: SkinTokens.primaryDark),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Jenis kulit',
+                    style: TextStyle(color: SkinTokens.muted, fontSize: 12.5),
+                  ),
                 ),
-                const Spacer(),
                 Text(
                   analysis.skinType,
                   style: const TextStyle(
                     color: SkinTokens.ink,
                     fontSize: 16,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 if (analysis.skinTypeConfidence != null) ...[
@@ -472,36 +606,35 @@ class _BaselineAverageSummary extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 11),
+          const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              final itemWidth = (constraints.maxWidth - 9) / 2;
+              final itemWidth = (constraints.maxWidth - 10) / 2;
               return Wrap(
-                spacing: 9,
+                spacing: 10,
                 runSpacing: 8,
                 children: [
                   for (final name in SkinJourneyStore.visualClasses)
-                    SizedBox(
+                    Container(
                       key: ValueKey('initial-average-$name'),
                       width: itemWidth,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: SkinTokens.surfaceAlt,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: Row(
                         children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: SkinTokens.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 7),
                           Expanded(
                             child: Text(
                               name,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: SkinTokens.muted,
-                                fontSize: 11.5,
+                                fontSize: 12,
                               ),
                             ),
                           ),
@@ -509,7 +642,7 @@ class _BaselineAverageSummary extends StatelessWidget {
                             _metric(name),
                             style: const TextStyle(
                               color: SkinTokens.ink,
-                              fontSize: 11.5,
+                              fontSize: 13,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -536,15 +669,15 @@ class _EmptyInitialScan extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(22, 26, 22, 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(SkinTokens.radiusLg),
         border: Border.all(color: SkinTokens.border),
       ),
-      child: const Center(
-        child: Text(
-          'Belum ada foto baseline',
-          style: SkinTokens.section,
-          textAlign: TextAlign.center,
-        ),
+      child: const SkinEmptyState(
+        compact: true,
+        icon: Icons.add_a_photo_outlined,
+        title: 'Belum ada foto baseline',
+        message:
+            'Ketuk tombol kamera untuk mengambil foto pertama. Foto yang serupa membuat perbandingan lebih akurat.',
       ),
     );
   }
@@ -569,7 +702,7 @@ class _InitialScanCard extends StatelessWidget {
       key: ValueKey('initial-scan-$index'),
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(SkinTokens.radiusLg),
         side: const BorderSide(color: SkinTokens.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -580,21 +713,22 @@ class _InitialScanCard extends StatelessWidget {
           padding: const EdgeInsets.all(11),
           child: Row(children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(13),
+              borderRadius: BorderRadius.circular(14),
               child: analysis.selfieBytes == null
                   ? const ColoredBox(
                       color: SkinTokens.mint,
                       child: SizedBox(
-                        width: 72,
-                        height: 82,
+                        width: 66,
+                        height: 78,
                         child: Icon(Icons.face_outlined),
                       ),
                     )
                   : Image.memory(
                       analysis.selfieBytes!,
-                      width: 72,
-                      height: 82,
+                      width: 66,
+                      height: 78,
                       fit: BoxFit.cover,
+                      cacheWidth: thumbnailCacheWidth(context, 66),
                     ),
             ),
             const SizedBox(width: 12),
@@ -610,21 +744,18 @@ class _InitialScanCard extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Text(
                     '${analysis.visualFindings.length} temuan visual · ${analysis.skinType}',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: SkinTokens.caption,
                   ),
-                  const SizedBox(height: 5),
-                  const Text(
-                    'Siap dihitung ke baseline',
-                    style: TextStyle(
-                      color: SkinTokens.primary,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  const SizedBox(height: 6),
+                  const SkinPill(
+                    label: 'Siap dihitung ke baseline',
+                    icon: Icons.check_rounded,
+                    dense: true,
                   ),
                 ],
               ),
@@ -637,11 +768,6 @@ class _InitialScanCard extends StatelessWidget {
                 Icons.delete_outline_rounded,
                 color: SkinTokens.coral,
               ),
-            ),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: SkinTokens.muted,
-              size: 20,
             ),
           ]),
         ),

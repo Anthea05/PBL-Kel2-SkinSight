@@ -17,7 +17,8 @@ class SkinFontSettings extends ChangeNotifier {
   SkinFontChoice get choice => _choice;
 
   String get fontFamily => switch (_choice) {
-        SkinFontChoice.roboto => 'Roboto',
+        // Nama enum dipertahankan agar preferensi lama tetap terbaca.
+        SkinFontChoice.roboto => 'PlusJakartaSans',
         SkinFontChoice.handwritten => 'Kalam',
       };
 

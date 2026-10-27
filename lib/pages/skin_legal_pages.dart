@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/skin_theme.dart';
 import '../widgets/skin_page_background.dart';
 import '../widgets/skin_page_header.dart';
+import '../widgets/skin_ui.dart';
 
 class SkinPrivacyPage extends StatelessWidget {
   const SkinPrivacyPage({super.key});
@@ -12,6 +13,7 @@ class SkinPrivacyPage extends StatelessWidget {
         pageKey: Key('privacy-page'),
         title: 'Kebijakan Privasi',
         eyebrow: 'PRIVASI & DATA',
+        icon: Icons.privacy_tip_outlined,
         introduction:
             'Kebijakan ini menjelaskan data yang dapat diproses oleh SkinSight, tujuan penggunaannya, penyimpanan, serta hak pengguna. Dokumen disusun dengan memperhatikan UU Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi dan peraturan Indonesia yang relevan.',
         sections: _privacySections,
@@ -26,6 +28,7 @@ class SkinTermsPage extends StatelessWidget {
         pageKey: Key('terms-page'),
         title: 'Syarat & Ketentuan',
         eyebrow: 'KETENTUAN PENGGUNAAN',
+        icon: Icons.gavel_rounded,
         introduction:
             'Ketentuan ini mengatur penggunaan SkinSight. Dengan menggunakan aplikasi, pengguna diharapkan memahami fungsi, batasan, serta tanggung jawabnya ketika memberikan foto dan informasi.',
         sections: _termsSections,
@@ -37,6 +40,7 @@ class _LegalPage extends StatelessWidget {
     required this.pageKey,
     required this.title,
     required this.eyebrow,
+    required this.icon,
     required this.introduction,
     required this.sections,
   });
@@ -44,6 +48,7 @@ class _LegalPage extends StatelessWidget {
   final Key pageKey;
   final String title;
   final String eyebrow;
+  final IconData icon;
   final String introduction;
   final List<_LegalSectionData> sections;
 
@@ -61,35 +66,62 @@ class _LegalPage extends StatelessWidget {
                 children: [
                   SkinPageHeader(
                     title: title,
+                    subtitle: '${sections.length} bagian · draf dokumen',
                     backKey: const Key('legal-back'),
                   ),
                   Expanded(
                     child: ListView(
                       key: const Key('legal-scroll'),
                       physics: const ClampingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 5, 20, 36),
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 36),
                       children: [
-                        Text(
-                          eyebrow,
-                          style: const TextStyle(
-                            color: SkinTokens.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
+                        SkinReveal(
+                          child: SkinCard(
+                            gradient: SkinTokens.softGradient,
+                            borderColor: Colors.white,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    SkinIconTile(icon: icon, filled: true),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        eyebrow,
+                                        style: SkinTokens.eyebrow,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                Text(title, style: SkinTokens.title),
+                                const SizedBox(height: 8),
+                                const SkinPill(
+                                  label: 'Pembaruan draf: 18 Oktober 2026',
+                                  tone: SkinTone.neutral,
+                                  icon: Icons.update_rounded,
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  introduction,
+                                  style: SkinTokens.body.copyWith(
+                                    fontSize: 14.5,
+                                    color: SkinTokens.muted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 9),
-                        Text(title, style: SkinTokens.title),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Pembaruan draf: 18 Oktober 2026',
-                          style: SkinTokens.caption,
+                        const SizedBox(height: 14),
+                        const SkinNotice(
+                          tone: SkinTone.warning,
+                          icon: Icons.description_outlined,
+                          message:
+                              'Status dokumen: draf. Identitas pengelola, kontak resmi, retensi data, ketentuan pengguna anak, dan arsitektur produksi harus dilengkapi serta ditinjau sebelum aplikasi dipublikasikan.',
                         ),
-                        const SizedBox(height: 17),
-                        Text(introduction, style: SkinTokens.body),
                         const SizedBox(height: 18),
-                        const _DraftNotice(),
-                        const SizedBox(height: 22),
                         for (var index = 0;
                             index < sections.length;
                             index++) ...[
@@ -98,7 +130,7 @@ class _LegalPage extends StatelessWidget {
                             data: sections[index],
                           ),
                           if (index < sections.length - 1)
-                            const Divider(height: 30),
+                            const SizedBox(height: 12),
                         ],
                       ],
                     ),
@@ -113,40 +145,6 @@ class _LegalPage extends StatelessWidget {
   }
 }
 
-class _DraftNotice extends StatelessWidget {
-  const _DraftNotice();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: SkinTokens.mint,
-        borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: SkinTokens.border),
-      ),
-      child: const Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.description_outlined, color: SkinTokens.primary, size: 21),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Status dokumen: draf. Identitas pengelola, kontak resmi, retensi data, ketentuan pengguna anak, dan arsitektur produksi harus dilengkapi serta ditinjau sebelum aplikasi dipublikasikan.',
-              style: TextStyle(
-                color: SkinTokens.ink,
-                fontSize: 12.5,
-                height: 1.45,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _LegalSection extends StatelessWidget {
   const _LegalSection({required this.number, required this.data});
 
@@ -155,58 +153,82 @@ class _LegalSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: SkinTokens.mint,
-                shape: BoxShape.circle,
-              ),
-              child: Text(
-                '$number',
-                style: const TextStyle(
-                  color: SkinTokens.primaryDark,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
+    return SkinCard(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      shadow: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: SkinTokens.mint,
+                  shape: BoxShape.circle,
                 ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(child: Text(data.title, style: SkinTokens.section)),
-          ],
-        ),
-        const SizedBox(height: 10),
-        for (final paragraph in data.paragraphs) ...[
-          Text(paragraph, style: SkinTokens.body),
-          const SizedBox(height: 9),
-        ],
-        for (final bullet in data.bullets)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 5,
-                  height: 5,
-                  margin: const EdgeInsets.only(top: 8, right: 10),
-                  decoration: const BoxDecoration(
-                    color: SkinTokens.primary,
-                    shape: BoxShape.circle,
+                child: Text(
+                  '$number',
+                  style: const TextStyle(
+                    color: SkinTokens.primaryDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                Expanded(child: Text(bullet, style: SkinTokens.body)),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(data.title, style: SkinTokens.cardTitle),
+                ),
+              ),
+            ],
           ),
-      ],
+          const SizedBox(height: 12),
+          for (final paragraph in data.paragraphs) ...[
+            Text(
+              paragraph,
+              style: const TextStyle(
+                color: SkinTokens.ink,
+                fontSize: 14.5,
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          for (final bullet in data.bullets)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 3, right: 10),
+                    child: Icon(
+                      Icons.check_circle_outline_rounded,
+                      size: 16,
+                      color: SkinTokens.primary,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      bullet,
+                      style: const TextStyle(
+                        color: SkinTokens.ink,
+                        fontSize: 14.5,
+                        height: 1.55,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

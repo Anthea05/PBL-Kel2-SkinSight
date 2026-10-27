@@ -3,6 +3,7 @@ import '../data/skin_journey_store.dart';
 import '../theme/skin_theme.dart';
 import '../widgets/skin_page_header.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_ui.dart';
 import 'skin_initial_scan_page.dart';
 import 'skin_progress_page.dart';
 
@@ -171,92 +172,167 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
     );
   }
 
+  int get _answeredCount => questions.where((q) {
+        final id = q.$1;
+        return id == 'M07'
+            ? _concerns.isNotEmpty
+            : (_answers[id]?.isNotEmpty ?? false);
+      }).length;
+
   Widget _option(String id, String answer) {
     final selected =
         id == 'M07' ? _concerns.contains(answer) : _answers[id] == answer;
-    return OutlinedButton(
-      onPressed: () => _choose(id, answer),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: selected ? SkinTokens.primaryDark : SkinTokens.muted,
-        backgroundColor: selected ? SkinTokens.mint : SkinTokens.surface,
-        side: BorderSide(
-          color: selected ? SkinTokens.primary : SkinTokens.border,
-          width: selected ? 1.5 : 1,
-        ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        minimumSize: const Size(64, 43),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-      ),
-      child: Text(answer),
+    return _OptionPill(
+      label: answer,
+      selected: selected,
+      multi: id == 'M07',
+      onTap: () => _choose(id, answer),
     );
   }
 
   Widget _question(int index) {
     final q = questions[index];
+    final answered =
+        q.$1 == 'M07' ? _concerns.isNotEmpty : _answers[q.$1] != null;
     return Container(
       key: _questionKeys[index],
-      margin: const EdgeInsets.only(bottom: 26),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(q.$2, style: SkinTokens.section.copyWith(fontSize: 17)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: q.$3.map((answer) => _option(q.$1, answer)).toList(),
+      margin: const EdgeInsets.only(bottom: 14),
+      child: SkinReveal.staggered(
+        index: index,
+        child: AnimatedContainer(
+          duration: SkinTokens.medium,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(SkinTokens.radiusLg),
+            border: Border.all(
+              color: answered ? SkinTokens.mintStrong : SkinTokens.border,
+            ),
+            boxShadow: SkinTokens.shadows,
           ),
-          if (q.$1 == 'M01' && _answers['M01'] == 'Ya') ...[
-            const SizedBox(height: 16),
-            TextField(
-              controller: _regimenName,
-              decoration: const InputDecoration(
-                labelText: 'Nama perawatan (opsional)',
-                hintText: 'Produk atau bahan yang sedang dipakai',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  AnimatedContainer(
+                    duration: SkinTokens.medium,
+                    width: 30,
+                    height: 30,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      gradient: answered ? SkinTokens.brandGradient : null,
+                      color: answered ? null : SkinTokens.surfaceAlt,
+                      shape: BoxShape.circle,
+                    ),
+                    child: answered
+                        ? const Icon(Icons.check_rounded,
+                            size: 17, color: Colors.white)
+                        : Text(
+                            '${index + 1}',
+                            style: const TextStyle(
+                              color: SkinTokens.muted,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'PERTANYAAN ${index + 1}',
+                      style: SkinTokens.eyebrow.copyWith(
+                        color: answered ? SkinTokens.primary : SkinTokens.muted,
+                      ),
+                    ),
+                  ),
+                  if (q.$1 == 'M07')
+                    const SkinPill(
+                      label: 'Pilih beberapa',
+                      tone: SkinTone.info,
+                      dense: true,
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              initialValue: _regimenClass,
-              decoration: const InputDecoration(
-                labelText: 'Perawatan ini untuk kondisi apa? (opsional)',
+              const SizedBox(height: 12),
+              Text(
+                q.$2,
+                style: const TextStyle(
+                  color: SkinTokens.ink,
+                  fontSize: 16,
+                  height: 1.35,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              items: SkinJourneyStore.visualClasses
-                  .map(
-                    (name) => DropdownMenuItem(value: name, child: Text(name)),
-                  )
-                  .toList(),
-              onChanged: (value) => setState(() => _regimenClass = value),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  firstDate: DateTime(2010),
-                  lastDate: DateTime.now(),
-                  initialDate: _regimenStart ?? DateTime.now(),
-                );
-                if (picked != null) setState(() => _regimenStart = picked);
-              },
-              icon: const Icon(Icons.calendar_today_outlined, size: 18),
-              label: Text(_regimenStart == null
-                  ? 'Sejak kapan digunakan? (opsional)'
-                  : '${_regimenStart!.day}/${_regimenStart!.month}/${_regimenStart!.year}'),
-            ),
-          ],
-        ],
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: q.$3.map((answer) => _option(q.$1, answer)).toList(),
+              ),
+              if (q.$1 == 'M01' && _answers['M01'] == 'Ya') ...[
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _regimenName,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama perawatan (opsional)',
+                    hintText: 'Produk atau bahan yang sedang dipakai',
+                    prefixIcon: Icon(Icons.medication_outlined),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: _regimenClass,
+                  isExpanded: true,
+                  borderRadius: BorderRadius.circular(16),
+                  decoration: const InputDecoration(
+                    labelText: 'Perawatan ini untuk kondisi apa? (opsional)',
+                  ),
+                  items: SkinJourneyStore.visualClasses
+                      .map(
+                        (name) =>
+                            DropdownMenuItem(value: name, child: Text(name)),
+                      )
+                      .toList(),
+                  onChanged: (value) => setState(() => _regimenClass = value),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      firstDate: DateTime(2010),
+                      lastDate: DateTime.now(),
+                      initialDate: _regimenStart ?? DateTime.now(),
+                    );
+                    if (picked != null) setState(() => _regimenStart = picked);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                  icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                  label: Text(_regimenStart == null
+                      ? 'Sejak kapan digunakan? (opsional)'
+                      : 'Sejak ${SkinFormat.date(_regimenStart!)}'),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final answered = _answeredCount;
     return Scaffold(
       backgroundColor: SkinTokens.background,
       body: SkinPageBackground(
           child: SafeArea(
+        bottom: false,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
@@ -264,7 +340,42 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
               children: [
                 SkinPageHeader(
                   title: 'Kuesioner Awal',
+                  subtitle: '${questions.length} pertanyaan · sekitar 1 menit',
                   backKey: const Key('quiz-back'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '$answered dari ${questions.length} terjawab',
+                              style: const TextStyle(
+                                color: SkinTokens.ink,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '${(answered / questions.length * 100).round()}%',
+                            style: const TextStyle(
+                              color: SkinTokens.primary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      SkinProgressBar(
+                        value: answered / questions.length,
+                        gradient: SkinTokens.brandGradient,
+                      ),
+                    ],
+                  ),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
@@ -276,31 +387,92 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
                           'Jawab tujuh pertanyaan berikut sesuai kondisimu.',
                           style: SkinTokens.caption,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 14),
                         ...List.generate(questions.length, _question),
-                        CheckboxListTile(
-                          value: _consent,
-                          contentPadding: EdgeInsets.zero,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          onChanged: (value) =>
-                              setState(() => _consent = value ?? false),
-                          title: const Text(
-                            'Saya mengizinkan foto diproses untuk analisis dan pemantauan.',
-                            style:
-                                TextStyle(fontSize: 14, color: SkinTokens.ink),
+                        const SizedBox(height: 4),
+                        AnimatedContainer(
+                          duration: SkinTokens.medium,
+                          padding: const EdgeInsets.fromLTRB(6, 6, 14, 8),
+                          decoration: BoxDecoration(
+                            color: _consent
+                                ? SkinTokens.mint
+                                : SkinTokens.peachSoft,
+                            borderRadius:
+                                BorderRadius.circular(SkinTokens.radiusLg),
+                            border: Border.all(
+                              color: _consent
+                                  ? SkinTokens.mintStrong
+                                  : const Color(0xFFF0DCD2),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Material(
+                                type: MaterialType.transparency,
+                                child: CheckboxListTile(
+                                  value: _consent,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(horizontal: 4),
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  onChanged: (value) =>
+                                      setState(() => _consent = value ?? false),
+                                  title: const Text(
+                                    'Saya mengizinkan foto diproses untuk analisis dan pemantauan.',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      height: 1.4,
+                                      fontWeight: FontWeight.w600,
+                                      color: SkinTokens.ink,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.only(left: 16),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.lock_outline_rounded,
+                                        size: 14, color: SkinTokens.muted),
+                                    SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Foto hanya dipakai untuk hasil dan pemantauan milikmu.',
+                                        style: TextStyle(
+                                          color: SkinTokens.muted,
+                                          fontSize: 12,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+                SkinBottomBar(
                   child: SizedBox(
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _consent ? _submit : null,
-                      child: const Text('Lanjut ke Scan'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(54),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.photo_camera_outlined, size: 20),
+                          SizedBox(width: 8),
+                          Flexible(child: Text('Lanjut ke Scan')),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -309,6 +481,83 @@ class _SkinQuizPageState extends State<SkinQuizPage> {
           ),
         ),
       )),
+    );
+  }
+}
+
+class _OptionPill extends StatelessWidget {
+  const _OptionPill({
+    required this.label,
+    required this.selected,
+    required this.multi,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool multi;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(14);
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: AnimatedContainer(
+        duration: SkinTokens.fast,
+        decoration: BoxDecoration(
+          color: selected ? SkinTokens.mint : SkinTokens.surfaceAlt,
+          borderRadius: radius,
+          border: Border.all(
+            color: selected ? SkinTokens.primary : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedSwitcher(
+                    duration: SkinTokens.fast,
+                    child: Icon(
+                      selected
+                          ? (multi
+                              ? Icons.check_box_rounded
+                              : Icons.radio_button_checked_rounded)
+                          : (multi
+                              ? Icons.check_box_outline_blank_rounded
+                              : Icons.radio_button_unchecked_rounded),
+                      key: ValueKey(selected),
+                      size: 18,
+                      color: selected ? SkinTokens.primary : SkinTokens.subtle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color:
+                            selected ? SkinTokens.primaryDark : SkinTokens.ink,
+                        fontSize: 14.5,
+                        fontWeight:
+                            selected ? FontWeight.w800 : FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
-import '../theme/skin_theme.dart';
 
+import '../data/skin_journey_store.dart';
+import '../pages/skin_quiz_page.dart';
+import '../pages/skin_scan_page.dart';
+import '../theme/skin_theme.dart';
+import 'skin_ui.dart';
+
+/// Bilah navigasi bawah melayang: kapsul kaca dengan tombol pindai bulat
+/// gelap yang menonjol di tengah.
 class SkinBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onSelected;
@@ -11,56 +18,57 @@ class SkinBottomNav extends StatelessWidget {
     this.onSelected,
   });
 
-  static const _teal = SkinTokens.primary;
-  static const _inactive = SkinTokens.muted;
   static const _routes = ['/home', '/education', '/profile'];
+
+  /// Tinggi area yang ditutupi bilah, untuk padding konten di belakangnya.
+  static const overlap = 104.0;
 
   @override
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 350;
-    // Kept outside the tab IndexedStack: shimmer/content changes never replace
+    // Kept outside the tab IndexedStack: content changes never replace
     // this navigation bar. A repaint boundary also isolates its paint work.
     return RepaintBoundary(
-      child: ColoredBox(
-        color: SkinTokens.surface,
-        child: SafeArea(
-          top: false,
-          child: Center(
-            heightFactor: 1,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Container(
-                height: compact ? 68 : 74,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    top: BorderSide(color: SkinTokens.border),
-                  ),
-                ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 12),
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 24),
+              child: SkinGlass(
+                radius: 999,
+                color: SkinTokens.glassStrong,
+                borderColor: Colors.white,
+                shadows: SkinTokens.shadowsLifted,
+                padding: const EdgeInsets.all(6),
                 child: Row(
                   children: [
                     _NavItem(
                       key: const Key('bottom-home'),
-                      icon: Icons.home_rounded,
+                      icon: Icons.home_outlined,
+                      activeIcon: Icons.home_rounded,
                       label: 'Home',
                       selected: currentIndex == 0,
-                      compact: compact,
                       onTap: () => _open(context, 0),
                     ),
                     _NavItem(
                       key: const Key('open-education'),
-                      icon: Icons.school_outlined,
+                      icon: Icons.auto_stories_outlined,
+                      activeIcon: Icons.auto_stories_rounded,
                       label: 'Edukasi',
                       selected: currentIndex == 1,
-                      compact: compact,
                       onTap: () => _open(context, 1),
                     ),
+                    _ScanButton(compact: compact),
                     _NavItem(
                       key: const Key('bottom-profile'),
                       icon: Icons.person_outline_rounded,
+                      activeIcon: Icons.person_rounded,
                       label: 'Profil',
                       selected: currentIndex == 2,
-                      compact: compact,
                       onTap: () => _open(context, 2),
                     ),
                   ],
@@ -99,57 +107,109 @@ class SkinBottomNav extends StatelessWidget {
   }
 }
 
+class _ScanButton extends StatelessWidget {
+  const _ScanButton({required this.compact});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = compact ? 52.0 : 58.0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Semantics(
+        button: true,
+        label: 'Pindai wajah',
+        excludeSemantics: true,
+        child: Tooltip(
+          message: 'Pindai wajah',
+          child: Material(
+            color: SkinTokens.primary,
+            shape: const CircleBorder(),
+            elevation: 0,
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              key: const Key('bottom-scan'),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => SkinJourneyStore.instance.questionnaireDone
+                    ? const SkinScanPage()
+                    : const SkinQuizPage(),
+              )),
+              child: SizedBox(
+                width: size,
+                height: size,
+                child: const Icon(
+                  Icons.center_focus_weak_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NavItem extends StatelessWidget {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
   final bool selected;
-  final bool compact;
   final VoidCallback onTap;
 
   const _NavItem({
     super.key,
     required this.icon,
+    required this.activeIcon,
     required this.label,
     required this.selected,
-    required this.compact,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? SkinBottomNav._teal : SkinBottomNav._inactive;
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 7, bottom: 4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: compact ? 22 : 24),
-                const SizedBox(height: 3),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 11,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Container(
-                  width: selected ? 18 : 0,
-                  height: 3,
+      child: Semantics(
+        selected: selected,
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        child: Tooltip(
+          message: label,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const StadiumBorder(),
+            child: SizedBox(
+              height: 52,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: SkinTokens.medium,
+                  curve: Curves.easeOutCubic,
+                  width: 46,
+                  height: 46,
                   decoration: BoxDecoration(
-                    color: SkinBottomNav._teal,
-                    borderRadius: BorderRadius.circular(3),
+                    color: selected ? Colors.white : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected
+                          ? Colors.white
+                          : SkinTokens.ink.withValues(alpha: .08),
+                    ),
+                    boxShadow: selected ? SkinTokens.shadows : null,
+                  ),
+                  child: AnimatedSwitcher(
+                    duration: SkinTokens.fast,
+                    child: Icon(
+                      selected ? activeIcon : icon,
+                      key: ValueKey(selected),
+                      color: selected ? SkinTokens.ink : SkinTokens.muted,
+                      size: 22,
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

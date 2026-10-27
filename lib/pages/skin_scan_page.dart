@@ -7,8 +7,7 @@ import '../data/skin_demo_data.dart';
 import '../data/skin_journey_store.dart';
 
 import '../theme/skin_theme.dart';
-import '../widgets/skin_page_header.dart';
-import '../widgets/skin_page_background.dart';
+import '../widgets/skin_ui.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'skin_result_page.dart';
@@ -28,9 +27,7 @@ class SkinScanPage extends StatefulWidget {
 
 class _SkinScanPageState extends State<SkinScanPage>
     with WidgetsBindingObserver {
-  static const _teal = SkinTokens.primary;
-  static const _deepTeal = SkinTokens.primaryDark;
-  static const _navy = SkinTokens.ink;
+  static const _night = Color(0xFF121614);
 
   CameraController? _controller;
   List<CameraDescription> _cameras = const [];
@@ -200,105 +197,208 @@ class _SkinScanPageState extends State<SkinScanPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: SkinTokens.background,
-      body: SkinPageBackground(
-          child: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 350;
-                return Stack(
-                  children: [
-                    Column(
-                      children: [
-                        _ScanHeader(
-                          compact: compact,
-                          onBack: () => Navigator.of(context).pop(),
+      backgroundColor: _night,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2A3330), _night],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact =
+                      constraints.maxWidth < 350 || constraints.maxHeight < 640;
+                  return Column(
+                    children: [
+                      const _ScanHeader(),
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 14 : 18,
+                          ),
+                          child: _CameraFrame(
+                            compact: compact,
+                            controller: _controller,
+                            loading: _isLoading,
+                            errorMessage: _errorMessage,
+                            onRetry: _initializeCamera,
+                          ),
                         ),
-                        Expanded(
-                          child: SingleChildScrollView(
-                            physics: const ClampingScrollPhysics(),
-                            padding: EdgeInsets.fromLTRB(
-                              compact ? 12 : 18,
-                              8,
-                              compact ? 12 : 18,
-                              24,
-                            ),
-                            child: Column(
-                              children: [
-                                _CameraFrame(
-                                  compact: compact,
-                                  controller: _controller,
-                                  loading: _isLoading,
-                                  errorMessage: _errorMessage,
-                                  onRetry: _initializeCamera,
-                                ),
-                                const SizedBox(height: 14),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 8),
-                                  child: Text(
-                                    'Ambil foto wajah tanpa filter, dengan pencahayaan merata dan posisi serupa tiap check-in. Foto tidak menentukan diagnosis.',
-                                    textAlign: TextAlign.center,
-                                    style: SkinTokens.caption,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                _ModeSwitch(
-                                  automatic: _automaticMode,
-                                  compact: compact,
-                                  onChanged: (value) => setState(
-                                    () => _automaticMode = value,
-                                  ),
-                                ),
-                                SizedBox(height: compact ? 16 : 22),
-                                _CaptureControls(
-                                  compact: compact,
-                                  canSwitch: _cameras.length > 1,
-                                  isCapturing: _isCapturing,
-                                  onGallery: _pickFromGallery,
-                                  onCapture: _takePicture,
-                                  onSwitch: _switchCamera,
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  _automaticMode
-                                      ? 'Pastikan wajah terang, lalu tekan tombol saat posisi sudah pas.'
-                                      : 'Mode manual aktif. Tekan tombol untuk mengambil selfie.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: _navy.withValues(alpha: .62),
-                                    fontSize: compact ? 12 : 13,
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ],
+                      ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          28,
+                          compact ? 10 : 14,
+                          28,
+                          compact ? 10 : 14,
+                        ),
+                        child: Text(
+                          'Ambil foto wajah tanpa filter, dengan pencahayaan merata dan posisi serupa tiap check-in. Foto tidak menentukan diagnosis.',
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: .62),
+                            fontSize: 12,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.fromLTRB(
+                          18,
+                          compact ? 12 : 16,
+                          18,
+                          compact ? 10 : 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .06),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(30),
+                          ),
+                          border: Border(
+                            top: BorderSide(
+                              color: Colors.white.withValues(alpha: .08),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                );
-              },
+                        child: Column(
+                          children: [
+                            _ModeSwitch(
+                              automatic: _automaticMode,
+                              compact: compact,
+                              onChanged: (value) => setState(
+                                () => _automaticMode = value,
+                              ),
+                            ),
+                            SizedBox(height: compact ? 12 : 18),
+                            _CaptureControls(
+                              compact: compact,
+                              canSwitch: _cameras.length > 1,
+                              isCapturing: _isCapturing,
+                              onGallery: _pickFromGallery,
+                              onCapture: _takePicture,
+                              onSwitch: _switchCamera,
+                            ),
+                            SizedBox(height: compact ? 8 : 12),
+                            Text(
+                              _automaticMode
+                                  ? 'Pastikan wajah terang, lalu tekan tombol saat posisi sudah pas.'
+                                  : 'Mode manual aktif. Tekan tombol untuk mengambil selfie.',
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: .72),
+                                fontSize: compact ? 12 : 13,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
-      )),
+      ),
     );
   }
 }
 
 class _ScanHeader extends StatelessWidget {
-  final bool compact;
-  final VoidCallback onBack;
-  const _ScanHeader({required this.compact, required this.onBack});
+  const _ScanHeader();
+
   @override
-  Widget build(BuildContext context) => SkinPageHeader(
-        title: 'Scan Wajah',
-        backKey: const Key('scan-back'),
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        child: Row(
+          children: [
+            SkinCircleButton(
+              key: const Key('scan-back'),
+              tooltip: 'Kembali',
+              icon: Icons.arrow_back_ios_new_rounded,
+              iconColor: Colors.white,
+              background: Colors.white.withValues(alpha: .12),
+              shadow: false,
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Scan Wajah',
+                    style: TextStyle(
+                      fontFamily: SkinTokens.serif,
+                      color: Colors.white,
+                      fontSize: 26,
+                      height: 1.05,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Hadap kamera dengan cahaya merata',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: .62),
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const _ScanBadge(),
+          ],
+        ),
       );
+}
+
+class _ScanBadge extends StatelessWidget {
+  const _ScanBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: SkinTokens.primaryBright.withValues(alpha: .18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: SkinTokens.primaryBright.withValues(alpha: .4),
+        ),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.auto_awesome, size: 13, color: Color(0xFFBFD8D2)),
+          SizedBox(width: 5),
+          Text(
+            'AI',
+            style: TextStyle(
+              color: Color(0xFFBFD8D2),
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: .6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CameraFrame extends StatelessWidget {
@@ -318,18 +418,16 @@ class _CameraFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height =
-        (MediaQuery.sizeOf(context).height * .52).clamp(300.0, 450.0);
     return Container(
-      height: height,
-      padding: const EdgeInsets.all(5),
+      width: double.infinity,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(SkinTokens.radius),
-        boxShadow: SkinTokens.shadows,
+        color: Colors.white.withValues(alpha: .08),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withValues(alpha: .1)),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(SkinTokens.radius),
+        borderRadius: BorderRadius.circular(28),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -338,24 +436,39 @@ class _CameraFrame extends StatelessWidget {
               const CustomPaint(painter: _FaceGuidePainter()),
             if (!loading && errorMessage == null)
               Align(
-                alignment: const Alignment(0, .84),
+                alignment: const Alignment(0, .9),
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 26),
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding: EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: compact ? 10 : 12,
+                    horizontal: 16,
+                    vertical: compact ? 8 : 10,
                   ),
                   decoration: BoxDecoration(
-                    color: _SkinScanPageState._navy.withValues(alpha: .88),
-                    borderRadius: BorderRadius.circular(SkinTokens.radius),
-                  ),
-                  child: const Text(
-                    'Posisikan wajah di dalam frame',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                    color: Colors.black.withValues(alpha: .45),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: .14),
                     ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.face_retouching_natural,
+                          size: 16, color: Color(0xFFBFD8D2)),
+                      SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          'Posisikan wajah di dalam frame',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -369,39 +482,52 @@ class _CameraFrame extends StatelessWidget {
     final camera = controller;
     if (loading) {
       return const ColoredBox(
-        color: Color(0xFFF4FAF8),
+        color: Color(0xFF1C2421),
         child: Center(
-          child: CircularProgressIndicator(color: _SkinScanPageState._teal),
+          child: CircularProgressIndicator(color: Colors.white),
         ),
       );
     }
     if (errorMessage != null) {
       return ColoredBox(
-        color: const Color(0xFFF4FAF8),
+        color: const Color(0xFF1C2421),
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.no_photography_outlined,
-                  color: _SkinScanPageState._deepTeal,
-                  size: 52,
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.no_photography_outlined,
+                    color: Colors.white,
+                    size: 30,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Text(
                   errorMessage!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: _SkinScanPageState._navy,
-                    height: 1.35,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: .86),
+                    height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 FilledButton.icon(
                   key: const Key('retry-camera'),
                   onPressed: onRetry,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: SkinTokens.primaryDark,
+                    minimumSize: const Size(0, 46),
+                  ),
                   icon: const Icon(Icons.refresh_rounded),
                   label: const Text('Coba lagi'),
                 ),
@@ -412,7 +538,14 @@ class _CameraFrame extends StatelessWidget {
       );
     }
     if (camera == null || !camera.value.isInitialized) {
-      return const ColoredBox(color: Color(0xFFF4FAF8));
+      return const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            colors: [Color(0xFF34403C), Color(0xFF141917)],
+            radius: .9,
+          ),
+        ),
+      );
     }
 
     return LayoutBuilder(
@@ -448,22 +581,23 @@ class _ModeSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 54,
+      height: compact ? 44 : 48,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .78),
-        borderRadius: BorderRadius.circular(SkinTokens.radius),
-        border: Border.all(color: const Color(0xFFD9E6E3)),
+        color: Colors.white.withValues(alpha: .08),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         children: [
           _ModeButton(
             label: 'Foto Otomatis',
+            icon: Icons.auto_mode_rounded,
             selected: automatic,
             onTap: () => onChanged(true),
           ),
           _ModeButton(
             label: 'Foto Manual',
+            icon: Icons.touch_app_outlined,
             selected: !automatic,
             onTap: () => onChanged(false),
           ),
@@ -475,36 +609,56 @@ class _ModeSwitch extends StatelessWidget {
 
 class _ModeButton extends StatelessWidget {
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
   const _ModeButton({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final foreground =
+        selected ? SkinTokens.primaryDark : Colors.white.withValues(alpha: .7);
     return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(SkinTokens.radius),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected ? _SkinScanPageState._teal : Colors.transparent,
-              borderRadius: BorderRadius.circular(SkinTokens.radius),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : SkinTokens.muted,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(999),
+            child: AnimatedContainer(
+              duration: SkinTokens.medium,
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: selected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, size: 17, color: foreground),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: foreground,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -533,12 +687,14 @@ class _CaptureControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shutter = compact ? 72.0 : 82.0;
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _SquareAction(
+        _RoundAction(
           key: const Key('scan-gallery'),
           icon: Icons.photo_library_outlined,
+          label: 'Galeri',
           onTap: onGallery,
         ),
         Semantics(
@@ -551,40 +707,56 @@ class _CaptureControls extends StatelessWidget {
               onTap: isCapturing ? null : onCapture,
               customBorder: const CircleBorder(),
               child: Container(
-                width: 76,
-                height: 76,
-                padding: const EdgeInsets.all(8),
+                width: shutter,
+                height: shutter,
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
-                  border: Border.all(
-                    color: _SkinScanPageState._deepTeal,
-                    width: 4,
+                  gradient: const SweepGradient(
+                    colors: [
+                      Color(0xFFBFD8D2),
+                      SkinTokens.primaryBright,
+                      Colors.white,
+                      Color(0xFFBFD8D2),
+                    ],
                   ),
-                  boxShadow: SkinTokens.shadows,
+                  boxShadow:
+                      SkinTokens.glow(SkinTokens.primaryBright, opacity: .45),
                 ),
-                child: DecoratedBox(
+                child: Container(
+                  padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: _SkinScanPageState._teal,
+                    color: _SkinScanPageState._night,
                     shape: BoxShape.circle,
                   ),
-                  child: isCapturing
-                      ? const Padding(
-                          padding: EdgeInsets.all(18),
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: isCapturing
+                        ? const Padding(
+                            padding: EdgeInsets.all(18),
+                            child: CircularProgressIndicator(
+                              color: SkinTokens.primary,
+                              strokeWidth: 3,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.camera_alt_rounded,
+                            color: SkinTokens.primaryDark,
+                            size: 26,
                           ),
-                        )
-                      : null,
+                  ),
                 ),
               ),
             ),
           ),
         ),
-        _SquareAction(
+        _RoundAction(
           key: const Key('switch-camera'),
           icon: Icons.cameraswitch_outlined,
+          label: 'Balik',
           onTap: canSwitch ? onSwitch : null,
         ),
       ],
@@ -592,31 +764,37 @@ class _CaptureControls extends StatelessWidget {
   }
 }
 
-class _SquareAction extends StatelessWidget {
+class _RoundAction extends StatelessWidget {
   final IconData icon;
+  final String label;
   final VoidCallback? onTap;
 
-  const _SquareAction({super.key, required this.icon, required this.onTap});
+  const _RoundAction({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(SkinTokens.radius),
-      elevation: 0,
-      shadowColor: _SkinScanPageState._deepTeal.withValues(alpha: .16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(SkinTokens.radius),
-        child: SizedBox(
-          width: 66,
-          height: 66,
-          child: Icon(
-            icon,
-            color: onTap == null
-                ? const Color(0xFFB5C1C0)
-                : _SkinScanPageState._deepTeal,
-            size: 30,
+    final enabled = onTap != null;
+    return Tooltip(
+      message: label,
+      child: Material(
+        color: Colors.white.withValues(alpha: enabled ? .12 : .05),
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 56,
+            height: 56,
+            child: Icon(
+              icon,
+              color: Colors.white.withValues(alpha: enabled ? .95 : .3),
+              size: 25,
+            ),
           ),
         ),
       ),
@@ -630,24 +808,35 @@ class _FaceGuidePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final oval = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height * .47),
+      center: Offset(size.width / 2, size.height * .45),
       width: size.width * .62,
-      height: size.height * .68,
+      height: size.height * .66,
     );
+
+    // Redupkan area di luar oval agar fokus ke wajah.
+    final scrim = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(Offset.zero & size)
+      ..addOval(oval);
+    canvas.drawPath(
+      scrim,
+      Paint()..color = Colors.black.withValues(alpha: .38),
+    );
+
     canvas.drawOval(
       oval,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
-        ..color = Colors.white.withValues(alpha: .70),
+        ..color = Colors.white.withValues(alpha: .85),
     );
 
     final dashPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
-      ..color = _SkinScanPageState._teal;
-    final path = Path()..addOval(oval.deflate(14));
+      ..color = const Color(0xFFBFD8D2);
+    final path = Path()..addOval(oval.deflate(12));
     for (final metric in path.computeMetrics()) {
       var distance = 0.0;
       while (distance < metric.length) {
@@ -655,34 +844,38 @@ class _FaceGuidePainter extends CustomPainter {
           metric.extractPath(distance, distance + 9),
           dashPaint,
         );
-        distance += 17;
+        distance += 18;
       }
     }
 
     final cornerPaint = Paint()
-      ..color = _SkinScanPageState._teal
+      ..color = const Color(0xFFBFD8D2)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 5
+      ..strokeWidth = 4.5
       ..strokeCap = StrokeCap.round;
-    const corner = 34.0;
-    final left = size.width * .17;
-    final right = size.width * .83;
-    final top = size.height * .16;
-    final bottom = size.height * .77;
-    canvas.drawLine(Offset(left, top + corner), Offset(left, top), cornerPaint);
-    canvas.drawLine(Offset(left, top), Offset(left + corner, top), cornerPaint);
-    canvas.drawLine(
-        Offset(right - corner, top), Offset(right, top), cornerPaint);
-    canvas.drawLine(
-        Offset(right, top), Offset(right, top + corner), cornerPaint);
-    canvas.drawLine(
-        Offset(left, bottom - corner), Offset(left, bottom), cornerPaint);
-    canvas.drawLine(
-        Offset(left, bottom), Offset(left + corner, bottom), cornerPaint);
-    canvas.drawLine(
-        Offset(right - corner, bottom), Offset(right, bottom), cornerPaint);
-    canvas.drawLine(
-        Offset(right, bottom), Offset(right, bottom - corner), cornerPaint);
+    const corner = 28.0;
+    final left = size.width * .12;
+    final right = size.width * .88;
+    final top = size.height * .08;
+    final bottom = size.height * .82;
+    void bracket(Offset a, Offset b, Offset c) {
+      canvas.drawPath(
+        Path()
+          ..moveTo(a.dx, a.dy)
+          ..lineTo(b.dx, b.dy)
+          ..lineTo(c.dx, c.dy),
+        cornerPaint,
+      );
+    }
+
+    bracket(Offset(left, top + corner), Offset(left, top),
+        Offset(left + corner, top));
+    bracket(Offset(right - corner, top), Offset(right, top),
+        Offset(right, top + corner));
+    bracket(Offset(left, bottom - corner), Offset(left, bottom),
+        Offset(left + corner, bottom));
+    bracket(Offset(right - corner, bottom), Offset(right, bottom),
+        Offset(right, bottom - corner));
   }
 
   @override

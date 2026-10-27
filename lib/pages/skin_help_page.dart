@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/app_assets.dart';
 import '../theme/skin_theme.dart';
 import '../widgets/skin_bottom_nav.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_page_header.dart';
+import '../widgets/skin_3d.dart';
+import '../widgets/skin_ui.dart';
 
 class SkinHelpPage extends StatelessWidget {
   final bool embedded;
 
   const SkinHelpPage({super.key, this.embedded = false});
-
-  static const _teal = SkinTokens.primary;
-  static const _deepTeal = SkinTokens.primaryDark;
-  static const _navy = SkinTokens.ink;
-  static const _coral = SkinTokens.coral;
 
   @override
   Widget build(BuildContext context) {
@@ -27,27 +26,42 @@ class SkinHelpPage extends StatelessWidget {
               return Column(
                 children: [
                   if (embedded)
-                    _EmbeddedHelpHeader(compact: compact)
+                    const _EmbeddedHelpHeader()
                   else
-                    _HelpHeader(compact: compact),
+                    const SkinPageHeader(
+                      title: 'Pusat Bantuan',
+                      backKey: Key('help-back'),
+                    ),
                   Expanded(
                     child: SingleChildScrollView(
                       key: const Key('help-scroll'),
                       physics: const ClampingScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(
-                        compact ? 12 : 18,
+                        compact ? 16 : 20,
                         4,
-                        compact ? 12 : 18,
+                        compact ? 16 : 20,
                         32,
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _WelcomeCard(compact: compact),
-                          const SizedBox(height: 18),
+                          SkinReveal(child: _WelcomeCard(compact: compact)),
+                          const SizedBox(height: 22),
+                          const SkinSectionTitle(
+                            title: 'Topik bantuan',
+                            subtitle:
+                                'Ketuk topik untuk membuka penjelasannya.',
+                          ),
+                          const SizedBox(height: 12),
                           const _HelpTopicsPanel(),
-                          const SizedBox(height: 20),
-                          const _DisclaimerNote(),
+                          const SizedBox(height: 18),
+                          const SkinNotice(
+                            icon: Icons.health_and_safety_outlined,
+                            tone: SkinTone.neutral,
+                            dense: true,
+                            message:
+                                'SkinSight hanya untuk skrining awal dan edukasi. Untuk keluhan kulit yang berlanjut, konsultasikan ke dokter kulit.',
+                          ),
                         ],
                       ),
                     ),
@@ -73,83 +87,15 @@ class SkinHelpPage extends StatelessWidget {
 // ───────────────────────── Header ─────────────────────────
 
 class _EmbeddedHelpHeader extends StatelessWidget {
-  final bool compact;
-
-  const _EmbeddedHelpHeader({required this.compact});
+  const _EmbeddedHelpHeader();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(compact ? 18 : 22, 18, 18, 8),
-      child: const Align(
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(20, 18, 20, 8),
+      child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          'Pusat Bantuan',
-          style: TextStyle(
-            color: SkinHelpPage._navy,
-            fontSize: 27,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.4,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HelpHeader extends StatelessWidget {
-  final bool compact;
-
-  const _HelpHeader({required this.compact});
-
-  @override
-  Widget build(BuildContext context) {
-    final size = compact ? 44.0 : 48.0;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(compact ? 14 : 18, 16, compact ? 14 : 18, 8),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: SkinTokens.shadows,
-            ),
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                key: const Key('help-back'),
-                onTap: () => Navigator.of(context).pop(),
-                child: Tooltip(
-                  message: 'Kembali',
-                  child: SizedBox(
-                    width: size,
-                    height: size,
-                    child: const Icon(
-                      Icons.chevron_left_rounded,
-                      color: SkinHelpPage._deepTeal,
-                      size: 32,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              'Pusat Bantuan',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: SkinHelpPage._navy,
-                fontSize: compact ? 22 : 25,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
-          ),
-          SizedBox(width: size),
-        ],
+        child: Text('Pusat Bantuan', style: SkinTokens.title),
       ),
     );
   }
@@ -164,42 +110,72 @@ class _WelcomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: SkinTokens.brandGradient,
+        borderRadius: BorderRadius.circular(SkinTokens.radiusXl),
+        boxShadow: SkinTokens.glow(SkinTokens.primary, opacity: .24),
+      ),
+      child: Stack(
         children: [
-          Container(
-            width: compact ? 52 : 60,
-            height: compact ? 52 : 60,
-            decoration: BoxDecoration(
-              color: SkinHelpPage._teal.withValues(alpha: .12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              Icons.support_agent_rounded,
-              color: SkinHelpPage._deepTeal,
-              size: compact ? 28 : 32,
+          Positioned(
+            right: -36,
+            top: -46,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .09),
+                shape: BoxShape.circle,
+              ),
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
+          Positioned(
+            right: compact ? -12 : -2,
+            bottom: -10,
+            width: compact ? 104 : 124,
+            height: compact ? 104 : 124,
+            child: const Skin3D(AppAssets.help3d, float: true),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 20, compact ? 96 : 120, 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .18),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.support_agent_rounded,
+                    color: Colors.white,
+                    size: 23,
+                    semanticLabel: 'Bantuan',
+                  ),
+                ),
+                const SizedBox(height: 14),
                 Text(
                   'Ada yang bisa kami bantu?',
                   style: TextStyle(
-                    color: SkinHelpPage._navy,
-                    fontSize: compact ? 17 : 19,
-                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    fontSize: compact ? 19 : 21,
                     height: 1.2,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -.3,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                const SizedBox(height: 6),
+                Text(
                   'Panduan penggunaan, privasi, dan jawaban untuk pertanyaanmu.',
-                  style: SkinTokens.body,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: .86),
+                    fontSize: 13.5,
+                    height: 1.45,
+                  ),
                 ),
               ],
             ),
@@ -217,90 +193,63 @@ class _HelpTopicsPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(SkinTokens.radius),
-        boxShadow: SkinTokens.shadows,
+    const topics = <Widget>[
+      _HelpTopic(
+        key: Key('help-how-to'),
+        icon: Icons.auto_awesome_rounded,
+        tone: SkinTone.primary,
+        title: 'Cara menggunakan SkinSight',
+        subtitle: 'Panduan scan kulit dari awal sampai hasil.',
+        initiallyExpanded: true,
+        child: _HowToContent(),
       ),
-      child: Material(
-        color: Colors.transparent,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(SkinTokens.radius),
-        ),
-        child: const Column(
-          children: [
-            _HelpTopic(
-              key: Key('help-how-to'),
-              icon: Icons.auto_awesome_rounded,
-              color: SkinHelpPage._teal,
-              title: 'Cara menggunakan SkinSight',
-              subtitle: 'Panduan scan kulit dari awal sampai hasil.',
-              initiallyExpanded: true,
-              child: _HowToContent(),
-            ),
-            _TopicDivider(),
-            _HelpTopic(
-              key: Key('help-faq'),
-              icon: Icons.question_answer_outlined,
-              color: SkinTokens.blue,
-              title: 'FAQ',
-              subtitle: 'Jawaban untuk pertanyaan yang sering muncul.',
-              child: _FaqContent(),
-            ),
-            _TopicDivider(),
-            _HelpTopic(
-              key: Key('help-contact'),
-              icon: Icons.mail_outline_rounded,
-              color: SkinHelpPage._coral,
-              title: 'Hubungi kami',
-              subtitle: 'Butuh bantuan lebih lanjut? Tim kami siap.',
-              child: _ContactContent(),
-            ),
-            _TopicDivider(),
-            _HelpTopic(
-              key: Key('help-privacy'),
-              icon: Icons.privacy_tip_outlined,
-              color: SkinHelpPage._deepTeal,
-              title: 'Kebijakan privasi',
-              subtitle: 'Cara kami memperlakukan foto dan datamu.',
-              child: _PrivacyContent(),
-            ),
-            _TopicDivider(),
-            _HelpTopic(
-              key: Key('help-about'),
-              icon: Icons.info_outline_rounded,
-              color: SkinTokens.amber,
-              title: 'Tentang SkinSight',
-              subtitle: 'Kenali tujuan dan batasan aplikasi.',
-              child: _AboutContent(),
-            ),
-          ],
-        ),
+      _HelpTopic(
+        key: Key('help-faq'),
+        icon: Icons.question_answer_outlined,
+        tone: SkinTone.info,
+        title: 'FAQ',
+        subtitle: 'Jawaban untuk pertanyaan yang sering muncul.',
+        child: _FaqContent(),
       ),
-    );
-  }
-}
-
-class _TopicDivider extends StatelessWidget {
-  const _TopicDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Divider(
-      height: 1,
-      thickness: 1,
-      indent: 76,
-      endIndent: 18,
-      color: SkinTokens.border,
+      _HelpTopic(
+        key: Key('help-contact'),
+        icon: Icons.mail_outline_rounded,
+        tone: SkinTone.peach,
+        title: 'Hubungi kami',
+        subtitle: 'Butuh bantuan lebih lanjut? Tim kami siap.',
+        child: _ContactContent(),
+      ),
+      _HelpTopic(
+        key: Key('help-privacy'),
+        icon: Icons.privacy_tip_outlined,
+        tone: SkinTone.lavender,
+        title: 'Kebijakan privasi',
+        subtitle: 'Cara kami memperlakukan foto dan datamu.',
+        child: _PrivacyContent(),
+      ),
+      _HelpTopic(
+        key: Key('help-about'),
+        icon: Icons.info_outline_rounded,
+        tone: SkinTone.warning,
+        title: 'Tentang SkinSight',
+        subtitle: 'Kenali tujuan dan batasan aplikasi.',
+        child: _AboutContent(),
+      ),
+    ];
+    return Column(
+      children: [
+        for (var i = 0; i < topics.length; i++) ...[
+          SkinReveal.staggered(index: i + 1, child: topics[i]),
+          if (i < topics.length - 1) const SizedBox(height: 12),
+        ],
+      ],
     );
   }
 }
 
 class _HelpTopic extends StatelessWidget {
   final IconData icon;
-  final Color color;
+  final SkinTone tone;
   final String title;
   final String subtitle;
   final Widget child;
@@ -309,7 +258,7 @@ class _HelpTopic extends StatelessWidget {
   const _HelpTopic({
     super.key,
     required this.icon,
-    required this.color,
+    required this.tone,
     required this.title,
     required this.subtitle,
     required this.child,
@@ -318,51 +267,61 @@ class _HelpTopic extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        dividerColor: Colors.transparent,
-        splashColor: color.withValues(alpha: .06),
-        highlightColor: color.withValues(alpha: .04),
+    final radius = BorderRadius.circular(SkinTokens.radiusLg);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: radius,
+        border: Border.all(color: SkinTokens.border),
+        boxShadow: SkinTokens.shadows,
       ),
-      child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
-        shape: const Border(),
-        collapsedShape: const Border(),
-        tilePadding: const EdgeInsets.fromLTRB(16, 8, 14, 8),
-        childrenPadding: const EdgeInsets.fromLTRB(18, 2, 18, 20),
-        expandedCrossAxisAlignment: CrossAxisAlignment.start,
-        expandedAlignment: Alignment.centerLeft,
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: .12),
-            borderRadius: BorderRadius.circular(14),
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            dividerColor: Colors.transparent,
+            splashColor: tone.foreground.withValues(alpha: .06),
+            highlightColor: tone.foreground.withValues(alpha: .04),
           ),
-          child: Icon(icon, color: color, size: 23),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: SkinHelpPage._navy,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 3),
-          child: Text(
-            subtitle,
-            style: const TextStyle(
-              color: SkinTokens.muted,
-              fontSize: 13.5,
-              height: 1.3,
+          child: ExpansionTile(
+            initiallyExpanded: initiallyExpanded,
+            shape: const Border(),
+            collapsedShape: const Border(),
+            tilePadding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+            expandedCrossAxisAlignment: CrossAxisAlignment.start,
+            expandedAlignment: Alignment.centerLeft,
+            leading: SkinIconTile(icon: icon, tone: tone, size: 44),
+            title: Text(
+              title,
+              style: const TextStyle(
+                color: SkinTokens.ink,
+                fontSize: 15.5,
+                fontWeight: FontWeight.w800,
+              ),
             ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Text(
+                subtitle,
+                style: const TextStyle(
+                  color: SkinTokens.muted,
+                  fontSize: 13,
+                  height: 1.3,
+                ),
+              ),
+            ),
+            iconColor: SkinTokens.primaryDark,
+            collapsedIconColor: SkinTokens.subtle,
+            children: [
+              const Divider(height: 1),
+              const SizedBox(height: 16),
+              child,
+            ],
           ),
         ),
-        iconColor: SkinHelpPage._deepTeal,
-        collapsedIconColor: SkinTokens.muted,
-        children: [child],
       ),
     );
   }
@@ -380,7 +339,7 @@ class _HowToContent extends StatelessWidget {
         _StepRow(
           1,
           'Isi kuis kondisi kulit',
-          'Jawab lima pertanyaan singkat sesuai kondisi wajahmu.',
+          'Jawab tujuh pertanyaan singkat sesuai kondisi wajahmu.',
         ),
         _StepRow(
           2,
@@ -390,7 +349,12 @@ class _HowToContent extends StatelessWidget {
         _StepRow(
           3,
           'Lihat hasil',
-          'Baca ringkasan kondisi kulit dan panduan perawatanmu.',
+          'Baca ringkasan temuan visual dan edukasi perawatannya.',
+        ),
+        _StepRow(
+          4,
+          'Pantau lewat check-in',
+          'Simpan ke Skin Journey lalu isi check-in mingguan.',
           isLast: true,
         ),
       ],
@@ -421,7 +385,7 @@ class _StepRow extends StatelessWidget {
                   height: 32,
                   alignment: Alignment.center,
                   decoration: const BoxDecoration(
-                    color: SkinHelpPage._teal,
+                    gradient: SkinTokens.brandGradient,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -438,7 +402,7 @@ class _StepRow extends StatelessWidget {
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
-                        color: SkinHelpPage._teal.withValues(alpha: .25),
+                        color: SkinTokens.mintStrong,
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
@@ -449,26 +413,20 @@ class _StepRow extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 18, top: 4),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16, top: 5),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
                     style: const TextStyle(
-                      color: SkinHelpPage._navy,
+                      color: SkinTokens.ink,
                       fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Text(
-                    body,
-                    style: const TextStyle(
-                      color: SkinTokens.muted,
-                      height: 1.4,
-                    ),
-                  ),
+                  Text(body, style: SkinTokens.caption),
                 ],
               ),
             ),
@@ -500,7 +458,12 @@ class _FaqContent extends StatelessWidget {
         SizedBox(height: 8),
         _FaqItem(
           'Apakah saya bisa mengulang scan?',
-          'Bisa. Kembali ke Home lalu pilih Scan Instan atau Scan Pemantauan.',
+          'Bisa. Buka Home lalu ketuk Mulai Scan, atau tambahkan foto baru saat mengisi check-in.',
+        ),
+        SizedBox(height: 8),
+        _FaqItem(
+          'Kapan check-in perlu diisi?',
+          'Pengingat muncul di Home sesuai jadwal pemantauan Skin Journey-mu.',
         ),
       ],
     );
@@ -517,7 +480,7 @@ class _FaqItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: SkinTokens.blue.withValues(alpha: .06),
+        color: SkinTokens.blueSoft,
         borderRadius: BorderRadius.circular(16),
       ),
       clipBehavior: Clip.antiAlias,
@@ -531,12 +494,12 @@ class _FaqItem extends StatelessWidget {
           expandedAlignment: Alignment.centerLeft,
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
           iconColor: SkinTokens.blue,
-          collapsedIconColor: SkinTokens.muted,
+          collapsedIconColor: SkinTokens.blue,
           title: Text(
             question,
             style: const TextStyle(
-              color: SkinHelpPage._navy,
-              fontSize: 14.5,
+              color: SkinTokens.ink,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
               height: 1.3,
             ),
@@ -546,7 +509,8 @@ class _FaqItem extends StatelessWidget {
               answer,
               style: const TextStyle(
                 color: SkinTokens.muted,
-                height: 1.45,
+                fontSize: 13.5,
+                height: 1.5,
               ),
             ),
           ],
@@ -567,7 +531,7 @@ class _ContactContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
       decoration: BoxDecoration(
-        color: SkinHelpPage._coral.withValues(alpha: .08),
+        color: SkinTokens.peachSoft,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -579,9 +543,9 @@ class _ContactContent extends StatelessWidget {
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.alternate_email_rounded,
-              color: SkinHelpPage._coral,
+              color: SkinTone.peach.foreground,
               size: 20,
             ),
           ),
@@ -592,17 +556,14 @@ class _ContactContent extends StatelessWidget {
               children: [
                 Text(
                   'Email dukungan',
-                  style: TextStyle(
-                    color: SkinTokens.muted,
-                    fontSize: 12.5,
-                  ),
+                  style: TextStyle(color: SkinTokens.muted, fontSize: 12.5),
                 ),
                 SizedBox(height: 2),
                 Text(
                   email,
                   style: TextStyle(
-                    color: SkinHelpPage._navy,
-                    fontWeight: FontWeight.w700,
+                    color: SkinTokens.ink,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
@@ -611,6 +572,7 @@ class _ContactContent extends StatelessWidget {
           IconButton.filledTonal(
             key: const Key('copy-support-email'),
             tooltip: 'Salin email',
+            style: IconButton.styleFrom(backgroundColor: Colors.white),
             onPressed: () async {
               await Clipboard.setData(const ClipboardData(text: email));
               if (!context.mounted) return;
@@ -618,12 +580,11 @@ class _ContactContent extends StatelessWidget {
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
                   const SnackBar(
-                    behavior: SnackBarBehavior.floating,
                     content: Text('Email dukungan berhasil disalin.'),
                   ),
                 );
             },
-            icon: const Icon(Icons.copy_rounded),
+            icon: const Icon(Icons.copy_rounded, size: 19),
           ),
         ],
       ),
@@ -668,30 +629,21 @@ class _PrivacyPoint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: SkinHelpPage._deepTeal.withValues(alpha: .1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: SkinHelpPage._deepTeal),
+          SkinIconTile(
+            icon: icon,
+            tone: SkinTone.lavender,
+            size: 32,
+            radius: 10,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(top: 5),
-              child: Text(
-                text,
-                style: const TextStyle(
-                  color: SkinTokens.muted,
-                  height: 1.45,
-                ),
-              ),
+              child: Text(text, style: SkinTokens.caption),
             ),
           ),
         ],
@@ -707,64 +659,20 @@ class _AboutContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'SkinSight membantu pengguna mengenali kondisi kulit melalui kuis dan foto wajah dengan pengalaman yang ringan dan mudah dipahami.',
-          style: TextStyle(color: SkinTokens.muted, height: 1.45),
+          style: SkinTokens.caption,
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: SkinHelpPage._deepTeal.withValues(alpha: .1),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: const Text(
-            'Versi 1.1.0',
-            style: TextStyle(
-              color: SkinHelpPage._deepTeal,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+        SizedBox(height: 12),
+        SkinPill(
+          label: 'Versi 1.1.0',
+          tone: SkinTone.warning,
+          icon: Icons.new_releases_outlined,
         ),
       ],
-    );
-  }
-}
-
-// ───────────────────────── Disclaimer ─────────────────────────
-
-class _DisclaimerNote extends StatelessWidget {
-  const _DisclaimerNote();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.health_and_safety_outlined,
-            size: 18,
-            color: SkinTokens.muted,
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'SkinSight hanya untuk skrining awal dan edukasi. Untuk keluhan kulit yang berlanjut, konsultasikan ke dokter kulit.',
-              style: TextStyle(
-                color: SkinTokens.muted,
-                fontSize: 12.5,
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

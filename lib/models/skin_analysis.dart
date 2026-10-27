@@ -14,8 +14,10 @@ class SkinAnalysis {
   final List<String> visualFindings;
   final bool modelConnected;
   final bool isDemo;
+
   /// Output asli inferensi: 3 kelas detection berupa jumlah bounding box.
   final Map<String, int> detectionCounts;
+
   /// 2 kelas segmentation: rasio mask terhadap area wajah valid (0..1).
   final Map<String, double> segmentationAreas;
   final Map<String, double> classConfidences;

@@ -122,7 +122,7 @@ Prinsip visual lintas halaman: **satu hero per layar**, tanpa skor/grafik/angka 
 
 **Anatomi (atas → bawah):**
 1. **Brand**: mark merek 34×34 (`CustomPaint`: cincin `primarySoft` + titik dan 8 titik `primary`) + wordmark "Skin" (`primary`) "Sight" (`primarySoft`), huruf `h1` dengan letterSpacing −0.8.
-2. **Hero**: satu gambar `lib/assets/images/start_avatar.png`, maks 300×300, `contain`, di tengah ruang kosong fleksibel.
+2. **Hero**: satu gambar `assets/images/start_avatar.png`, maks 300×300, `contain`, di tengah ruang kosong fleksibel.
 3. **Judul**: "Start your\n**skin journey**" — baris kedua `primary`.
 4. **Subjudul**: "Kenali kondisi kulitmu\nuntuk perawatan yang tepat." (`body`, `inkSecondary`, tengah).
 5. **CTA primer**: tombol `FilledButton` penuh lebar **"Mulai"**.

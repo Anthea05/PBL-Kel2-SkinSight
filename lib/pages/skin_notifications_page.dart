@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_assets.dart';
 import '../data/skin_journey_store.dart';
 import '../data/skin_notification_center.dart';
 import '../theme/skin_theme.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_page_header.dart';
+import '../widgets/skin_ui.dart';
 import 'skin_progress_page.dart';
 import 'skin_scan_page.dart';
 
@@ -15,7 +18,7 @@ class SkinNotificationsPage extends StatelessWidget {
     final store = SkinJourneyStore.instance;
     final center = SkinNotificationCenter.instance;
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF3),
+      backgroundColor: SkinTokens.background,
       body: SkinPageBackground(
           child: SafeArea(
         child: Center(
@@ -39,11 +42,38 @@ class SkinNotificationsPage extends StatelessWidget {
 
                 return Column(
                   children: [
-                    _NotificationHeader(
-                      unread: unread,
-                      onMarkAll: unread == 0
-                          ? null
-                          : () => center.markAllRead(notifications),
+                    SkinPageHeader(
+                      title: 'Notifikasi',
+                      subtitle: unread == 0
+                          ? 'Semua sudah dibaca'
+                          : '$unread belum dibaca',
+                      backKey: const Key('notifications-back'),
+                      trailing: unread == 0
+                          ? const SkinIconTile(
+                              icon: Icons.done_all_rounded,
+                              size: 40,
+                            )
+                          : TextButton(
+                              key: const Key('mark-all-notifications-read'),
+                              onPressed: () =>
+                                  center.markAllRead(notifications),
+                              style: TextButton.styleFrom(
+                                backgroundColor: SkinTokens.mint,
+                                foregroundColor: SkinTokens.primaryDark,
+                                minimumSize: const Size(0, 40),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 14),
+                                shape: const StadiumBorder(),
+                                textStyle: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                              ),
+                              child: const Text('Tandai dibaca'),
+                            ),
                     ),
                     Expanded(
                       child: notifications.isEmpty
@@ -51,7 +81,7 @@ class SkinNotificationsPage extends StatelessWidget {
                           : ListView(
                               key: const Key('notifications-list'),
                               physics: const ClampingScrollPhysics(),
-                              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                              padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
                               children: [
                                 if (today.isNotEmpty)
                                   _NotificationGroup(
@@ -60,14 +90,14 @@ class SkinNotificationsPage extends StatelessWidget {
                                     center: center,
                                   ),
                                 if (today.isNotEmpty && previous.isNotEmpty)
-                                  const SizedBox(height: 24),
+                                  const SizedBox(height: 22),
                                 if (previous.isNotEmpty)
                                   _NotificationGroup(
                                     title: 'Sebelumnya',
                                     items: previous,
                                     center: center,
                                   ),
-                                const SizedBox(height: 26),
+                                const SizedBox(height: 24),
                                 const _NotificationFootnote(),
                               ],
                             ),
@@ -79,65 +109,6 @@ class SkinNotificationsPage extends StatelessWidget {
           ),
         ),
       )),
-    );
-  }
-}
-
-class _NotificationHeader extends StatelessWidget {
-  const _NotificationHeader({required this.unread, required this.onMarkAll});
-
-  final int unread;
-  final VoidCallback? onMarkAll;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 11, 16, 12),
-      child: Row(
-        children: [
-          IconButton(
-            key: const Key('notifications-back'),
-            tooltip: 'Kembali',
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back_rounded),
-            color: SkinTokens.ink,
-          ),
-          const Expanded(
-            child: Text(
-              'Notifikasi',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: SkinTokens.ink,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -.3,
-              ),
-            ),
-          ),
-          SizedBox(
-            width: 48,
-            child: unread == 0
-                ? const Icon(Icons.done_all_rounded,
-                    color: SkinTokens.primary, size: 22)
-                : TextButton(
-                    key: const Key('mark-all-notifications-read'),
-                    onPressed: onMarkAll,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(48, 44),
-                    ),
-                    child: const Text(
-                      'Baca',
-                      style: TextStyle(
-                        color: SkinTokens.primary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -156,39 +127,26 @@ class _NotificationGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 10),
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
           child: Text(
-            title,
-            style: const TextStyle(
-              color: SkinTokens.ink,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
+            title.toUpperCase(),
+            style: SkinTokens.eyebrow.copyWith(color: SkinTokens.muted),
+          ),
+        ),
+        for (var index = 0; index < items.length; index++) ...[
+          SkinReveal.staggered(
+            index: index,
+            child: _NotificationTile(
+              item: items[index],
+              isRead: center.isRead(items[index].id),
+              onTap: () => _open(context, items[index]),
             ),
           ),
-        ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFDCE8E2)),
-          ),
-          child: Column(
-            children: [
-              for (var index = 0; index < items.length; index++) ...[
-                _NotificationTile(
-                  item: items[index],
-                  isRead: center.isRead(items[index].id),
-                  onTap: () => _open(context, items[index]),
-                ),
-                if (index != items.length - 1)
-                  const Divider(height: 1, indent: 70, endIndent: 16),
-              ],
-            ],
-          ),
-        ),
+          if (index != items.length - 1) const SizedBox(height: 10),
+        ],
       ],
     );
   }
@@ -216,112 +174,101 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visual = switch (item.kind) {
-      'result' => (
-          Icons.auto_graph_rounded,
-          const Color(0xFFFFE9D8),
-          const Color(0xFFB66446)
-        ),
-      'checkin' => (
-          Icons.task_alt_rounded,
-          const Color(0xFFE3F2EB),
-          SkinTokens.primary
-        ),
-      _ => (
-          Icons.notifications_active_outlined,
-          const Color(0xFFDDEFF1),
-          const Color(0xFF287D84)
-        ),
+    final (icon, tone) = switch (item.kind) {
+      'result' => (Icons.auto_graph_rounded, SkinTone.peach),
+      'checkin' => (Icons.task_alt_rounded, SkinTone.primary),
+      _ => (Icons.notifications_active_outlined, SkinTone.info),
     };
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        key: ValueKey('notification-${item.id}'),
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 15, 14, 15),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: visual.$2,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(visual.$1, color: visual.$3, size: 21),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+    return SkinCard(
+      inkKey: ValueKey('notification-${item.id}'),
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      color: isRead ? Colors.white : const Color(0xFFEFF5F2),
+      borderColor: isRead ? SkinTokens.border : SkinTokens.mintStrong,
+      shadow: isRead,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkinIconTile(icon: icon, tone: tone, size: 44),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: SkinTokens.ink,
-                              fontSize: 14,
-                              fontWeight:
-                                  isRead ? FontWeight.w700 : FontWeight.w900,
-                            ),
-                          ),
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: SkinTokens.ink,
+                          fontSize: 14.5,
+                          height: 1.3,
+                          fontWeight:
+                              isRead ? FontWeight.w700 : FontWeight.w800,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _dateLabel(
-                              item.date, SkinJourneyStore.instance.today),
-                          style: const TextStyle(
-                            color: SkinTokens.muted,
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (!isRead) ...[
-                          const SizedBox(width: 7),
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: SkinTokens.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item.message,
-                      style: const TextStyle(
-                        color: SkinTokens.muted,
-                        fontSize: 12,
-                        height: 1.35,
+                    if (!isRead) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 9,
+                        height: 9,
+                        margin: const EdgeInsets.only(top: 4),
+                        decoration: const BoxDecoration(
+                          color: SkinTokens.peach,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.message,
+                  style: const TextStyle(
+                    color: SkinTokens.muted,
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.schedule_rounded,
+                        size: 13, color: SkinTokens.subtle),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        _dateLabel(item.date, SkinJourneyStore.instance.today),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: SkinTokens.muted,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   String _dateLabel(DateTime date, DateTime now) {
     if (SkinJourneyStore.sameDay(date, now)) {
-      return '${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')}';
+      return 'Hari ini · ${SkinFormat.time(date)}';
     }
-    return '${date.day}/${date.month}/${date.year}';
+    return SkinFormat.shortDate(date);
   }
 }
 
@@ -333,7 +280,7 @@ class _NotificationFootnote extends StatelessWidget {
     return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.shield_outlined, size: 17, color: SkinTokens.primary),
+        Icon(Icons.shield_outlined, size: 16, color: SkinTokens.primary),
         SizedBox(width: 7),
         Flexible(
           child: Text(
@@ -341,7 +288,7 @@ class _NotificationFootnote extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: SkinTokens.muted,
-              fontSize: 11.5,
+              fontSize: 12,
             ),
           ),
         ),
@@ -358,21 +305,10 @@ class _EmptyNotifications extends StatelessWidget {
     return const Center(
       child: Padding(
         padding: EdgeInsets.all(34),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.notifications_none_rounded,
-                size: 45, color: SkinTokens.primary),
-            SizedBox(height: 14),
-            Text(
-              'Belum ada notifikasi',
-              style: TextStyle(
-                color: SkinTokens.ink,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ],
+        child: SkinEmptyState(
+          image: AppAssets.checkin3d,
+          title: 'Belum ada notifikasi',
+          message: 'Pengingat check-in dan hasil scan akan muncul di sini.',
         ),
       ),
     );

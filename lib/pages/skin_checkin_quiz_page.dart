@@ -3,6 +3,7 @@ import '../data/skin_journey_store.dart';
 import '../theme/skin_theme.dart';
 import '../widgets/skin_page_header.dart';
 import '../widgets/skin_page_background.dart';
+import '../widgets/skin_ui.dart';
 
 /// Pertanyaan lanjutan per kelas mengikuti SkinSight Rule Lab v1.3.
 /// Jawaban khusus kelas memengaruhi poin timeline setelah dikonfirmasi.
@@ -128,11 +129,44 @@ class _SkinCheckinQuizPageState extends State<SkinCheckinQuizPage> {
   void _error(String text) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
-  Widget _choice(String value, String? chosen, void Function() onTap) =>
+  Widget _choice(
+          String value, String? chosen, void Function() onTap) =>
       ChoiceChip(
           label: Text(value),
           selected: chosen == value,
+          avatar: chosen == value
+              ? const Icon(Icons.check_rounded,
+                  size: 16, color: SkinTokens.primaryDark)
+              : null,
           onSelected: (_) => setState(onTap));
+
+  Widget _section({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required List<Widget> children,
+  }) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: SkinCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                SkinIconTile(icon: icon, size: 38),
+                const SizedBox(width: 10),
+                Expanded(child: Text(title, style: SkinTokens.section)),
+              ]),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(subtitle, style: SkinTokens.caption),
+              ],
+              const SizedBox(height: 12),
+              ...children,
+            ],
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -141,105 +175,146 @@ class _SkinCheckinQuizPageState extends State<SkinCheckinQuizPage> {
       backgroundColor: SkinTokens.background,
       body: SkinPageBackground(
           child: SafeArea(
+              bottom: false,
               child: Center(
                   child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: SkinTokens.maxWidth),
-        child: Column(children: [
-          const SkinPageHeader(
-              title: 'Kuis Check-in', backKey: Key('checkin-quiz-back')),
-          Expanded(
-              child: ListView(padding: const EdgeInsets.all(20), children: [
-            const Text('Perubahan sejak check-in lalu',
-                style: SkinTokens.title),
-            const SizedBox(height: 8),
-            const Text('Ceritakan kondisi yang kamu rasakan minggu ini.',
-                style: SkinTokens.caption),
-            const SizedBox(height: 20),
-            ...classes.map((name) => Padding(
-                padding: const EdgeInsets.only(bottom: 22),
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name, style: SkinTokens.section),
-                      const SizedBox(height: 9),
-                      Wrap(spacing: 8, runSpacing: 7, children: [
-                        for (final v in [
-                          'Membaik',
-                          'Sama',
-                          'Memburuk',
-                          'Tidak yakin'
-                        ])
-                          _choice(v, reports[name], () => reports[name] = v),
-                      ]),
-                      for (final q in _questions[name] ??
-                          const <_FollowupQuestion>[]) ...[
-                        const SizedBox(height: 17),
-                        Text(q.label,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        Wrap(spacing: 7, runSpacing: 7, children: [
-                          for (final option in q.options.entries)
-                            ChoiceChip(
-                                label: Text(option.value),
-                                selected: followups[name]?[q.id] == option.key,
-                                onSelected: (_) => setState(() => followups
-                                        .putIfAbsent(name, () => {})[q.id] =
-                                    option.key)),
-                        ]),
-                      ],
-                    ]))),
-            const Divider(height: 30),
-            const Text('Apakah masih mengikuti perawatan sebelumnya?',
-                style: SkinTokens.section),
-            const SizedBox(height: 10),
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final v in ['Ya', 'Tidak', 'Berubah', 'Belum ada perawatan'])
-                _choice(v, care, () => care = v),
-            ]),
-            if (care == 'Berubah') ...[
-              const SizedBox(height: 11),
-              OutlinedButton.icon(
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                        context: context,
-                        firstDate: DateTime(2020),
-                        lastDate: store.today,
-                        initialDate: careDate ?? store.today);
-                    if (picked != null) setState(() => careDate = picked);
-                  },
-                  icon: const Icon(Icons.calendar_today_outlined),
-                  label: Text(careDate == null
-                      ? 'Tanggal perubahan (opsional)'
-                      : '${careDate!.day}/${careDate!.month}/${careDate!.year}')),
-              TextField(
-                  controller: careNote,
-                  decoration: const InputDecoration(
-                      labelText: 'Catatan perawatan (opsional)')),
-            ],
-            const SizedBox(height: 23),
-            const Text('Ada keluhan baru atau iritasi?',
-                style: SkinTokens.section),
-            const SizedBox(height: 10),
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final v in [
-                'Tidak',
-                'Ringan',
-                'Sedang-berat',
-                'Tidak yakin'
-              ])
-                _choice(v, irritation, () => irritation = v),
-            ]),
-          ])),
-          Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-              child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                      onPressed: _save,
-                      child: const Text('Simpan jawaban kuis')))),
-        ]),
-      )))),
+                constraints:
+                    const BoxConstraints(maxWidth: SkinTokens.maxWidth),
+                child: Column(children: [
+                  const SkinPageHeader(
+                      title: 'Kuis Check-in',
+                      subtitle: 'Perubahan sejak check-in lalu',
+                      backKey: Key('checkin-quiz-back')),
+                  Expanded(
+                      child: ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                          children: [
+                        const SkinNotice(
+                          dense: true,
+                          icon: Icons.edit_note_rounded,
+                          message:
+                              'Ceritakan kondisi yang kamu rasakan minggu ini.',
+                        ),
+                        const SizedBox(height: 14),
+                        ...classes.map((name) => _section(
+                              icon: Icons.spa_outlined,
+                              title: name,
+                              children: [
+                                Wrap(spacing: 8, runSpacing: 8, children: [
+                                  for (final v in [
+                                    'Membaik',
+                                    'Sama',
+                                    'Memburuk',
+                                    'Tidak yakin'
+                                  ])
+                                    _choice(v, reports[name],
+                                        () => reports[name] = v),
+                                ]),
+                                for (final q in _questions[name] ??
+                                    const <_FollowupQuestion>[]) ...[
+                                  const SizedBox(height: 16),
+                                  Text(q.label,
+                                      style: const TextStyle(
+                                        color: SkinTokens.ink,
+                                        fontSize: 14,
+                                        height: 1.35,
+                                        fontWeight: FontWeight.w700,
+                                      )),
+                                  const SizedBox(height: 8),
+                                  Wrap(spacing: 8, runSpacing: 8, children: [
+                                    for (final option in q.options.entries)
+                                      ChoiceChip(
+                                          label: Text(option.value),
+                                          selected: followups[name]?[q.id] ==
+                                              option.key,
+                                          onSelected: (_) => setState(() =>
+                                              followups.putIfAbsent(
+                                                      name, () => {})[q.id] =
+                                                  option.key)),
+                                  ]),
+                                ],
+                              ],
+                            )),
+                        _section(
+                          icon: Icons.medication_outlined,
+                          title: 'Apakah masih mengikuti perawatan sebelumnya?',
+                          children: [
+                            Wrap(spacing: 8, runSpacing: 8, children: [
+                              for (final v in [
+                                'Ya',
+                                'Tidak',
+                                'Berubah',
+                                'Belum ada perawatan'
+                              ])
+                                _choice(v, care, () => care = v),
+                            ]),
+                            if (care == 'Berubah') ...[
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final picked = await showDatePicker(
+                                        context: context,
+                                        firstDate: DateTime(2020),
+                                        lastDate: store.today,
+                                        initialDate: careDate ?? store.today);
+                                    if (picked != null) {
+                                      setState(() => careDate = picked);
+                                    }
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(46),
+                                  ),
+                                  icon: const Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 18),
+                                  label: Text(careDate == null
+                                      ? 'Tanggal perubahan (opsional)'
+                                      : SkinFormat.date(careDate!))),
+                              const SizedBox(height: 10),
+                              TextField(
+                                  controller: careNote,
+                                  decoration: const InputDecoration(
+                                      labelText:
+                                          'Catatan perawatan (opsional)')),
+                            ],
+                          ],
+                        ),
+                        _section(
+                          icon: Icons.healing_outlined,
+                          title: 'Ada keluhan baru atau iritasi?',
+                          children: [
+                            Wrap(spacing: 8, runSpacing: 8, children: [
+                              for (final v in [
+                                'Tidak',
+                                'Ringan',
+                                'Sedang-berat',
+                                'Tidak yakin'
+                              ])
+                                _choice(v, irritation, () => irritation = v),
+                            ]),
+                            if (irritation == 'Sedang-berat') ...[
+                              const SizedBox(height: 12),
+                              const SkinNotice(
+                                dense: true,
+                                tone: SkinTone.danger,
+                                icon: Icons.local_hospital_outlined,
+                                message:
+                                    'Keluhan sedang–berat sebaiknya diperiksa tenaga kesehatan.',
+                              ),
+                            ],
+                          ],
+                        ),
+                      ])),
+                  SkinBottomBar(
+                    child: SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                            onPressed: _save,
+                            icon: const Icon(Icons.save_outlined),
+                            label: const Text('Simpan jawaban kuis'))),
+                  ),
+                ]),
+              )))),
     );
   }
 }

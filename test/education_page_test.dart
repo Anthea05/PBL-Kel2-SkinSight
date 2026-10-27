@@ -13,7 +13,10 @@ void main() {
       (tester) async {
     await tester.pumpWidget(buildPage());
 
-    expect(find.text('Edukasi'), findsNWidgets(2));
+    // Bilah navigasi kini berupa ikon (label ada di Semantics/Tooltip),
+    // jadi teks "Edukasi" hanya muncul sebagai judul halaman.
+    expect(find.text('Edukasi'), findsOneWidget);
+    expect(find.bySemanticsLabel('Edukasi'), findsOneWidget);
     expect(find.textContaining('Kenali kulitmu'), findsNothing);
     expect(find.text('BACA SESUAI KEBUTUHAN'), findsNothing);
     expect(find.text('PILIHAN MINGGU INI'), findsNothing);
